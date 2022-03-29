@@ -1,5 +1,7 @@
 ﻿using Microsoft.Net.Http.Headers;
 using Polly;
+using Turnstile.Core.Interfaces;
+using Turnstile.Services.Clients;
 using static System.Environment;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
@@ -17,6 +19,19 @@ namespace Turnstile.Web.Extensions
             where TImplementation : class, TClient =>
             services.AddHttpClient<TClient, TImplementation>(ConfigureApiClient)
                     .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
+
+        public static IServiceCollection AddApiClients(this IServiceCollection services)
+        {
+            services.AddApiClient<PublisherConfigurationClient>();
+            services.AddApiClient<SeatsClient>();
+            services.AddApiClient<SubscriptionsClient>();
+
+            services.AddScoped<IPublisherConfigurationClient, PublisherConfigurationClient>();
+            services.AddScoped<ISeatsClient, SeatsClient>();
+            services.AddScoped<ISubscriptionsClient, SubscriptionsClient>();
+
+            return services;
+        }
 
         private static void ConfigureApiClient(HttpClient client)
         {
