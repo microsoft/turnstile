@@ -31,5 +31,11 @@
         {
             public const string StorageConnectionString = "Turnstile_PublisherConfigStorageConnectionString";
         }
+
+        public static class Publisher
+        {
+            public const string TenantId = "Turnstile_PublisherTenantId";
+            public const string AdminRoleName = "Turnstile_PublisherAdminRoleName";
+        }
     }
 }
