@@ -2,7 +2,7 @@
 
 namespace Turnstile.Core.Interfaces
 {
-    public interface ISubscriptionRepository
+    public interface ITurnstileRepository
     {
         /// <summary>
         /// Creates a new subscription

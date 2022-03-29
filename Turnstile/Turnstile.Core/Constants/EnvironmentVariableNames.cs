@@ -30,8 +30,6 @@
         public static class Storage
         {
             public const string StorageConnectionString = "Turnstile_PublisherConfigStorageConnectionString";
-            public const string StorageContainerName = "Turnstile_PublisherConfigStorageContainerName";
-            public const string StorageBlobName = "Turnstile_PublisherConfigStorageBlobName";
         }
     }
 }

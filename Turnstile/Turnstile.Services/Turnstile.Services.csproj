@@ -6,4 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Azure.Cosmos" Version="3.26.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Turnstile.Core\Turnstile.Core.csproj" />
+  </ItemGroup>
+
 </Project>

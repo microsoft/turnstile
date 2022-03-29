@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System.Text.Json.Serialization;
+using Turnstile.Core.Constants;
 
 namespace Turnstile.Core.Models
 {
@@ -37,6 +38,22 @@ namespace Turnstile.Core.Models
             {
                 yield return "User [email] is required.";
             }
+        }
+
+        public IEnumerable<string> ValidateSeatRequest(Subscription inSubscription)
+        {
+            ArgumentNullException.ThrowIfNull(inSubscription, nameof(inSubscription));
+
+            var validationErrors = new List<string>(Validate());
+
+            if (inSubscription.State != SubscriptionStates.Active)
+            {
+                validationErrors.Add(
+                    $"Subscription [{inSubscription.SubscriptionId}] is currently [{inSubscription.State}]; " +
+                    $"seats can be requested only in [{SubscriptionStates.Active}] subscriptions.");
+            }
+
+            return validationErrors;
         }
     }
 }
