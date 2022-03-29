@@ -17,7 +17,13 @@ namespace Turnstile.Core.Models.Configuration
         public string? ContactPageUrl { get; set; }
 
         [JsonProperty("privacy_notice_page_url")]
-        public string? PrivateNoticePageUrl { get; set; }
+        public string? PrivacyNoticePageUrl { get; set; }
+
+        [JsonProperty("contact_sales_url")]
+        public string? ContactSalesUrl { get; set; }
+
+        [JsonProperty("contact_support_url")]
+        public string? ContactSupportUrl { get; set; }
 
         [JsonProperty("is_setup_complete")]
         public bool IsSetupComplete { get; set; } = false;

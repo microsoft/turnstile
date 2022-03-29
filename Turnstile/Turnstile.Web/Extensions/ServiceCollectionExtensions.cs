@@ -1,4 +1,5 @@
 ﻿using Microsoft.Net.Http.Headers;
+using Polly;
 using static System.Environment;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
@@ -6,7 +7,18 @@ namespace Turnstile.Web.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        private static void ConfigureInternalApiClient(HttpClient client)
+        public static IHttpClientBuilder AddApiClient<TClient>(this IServiceCollection services)
+            where TClient : class =>
+            services.AddHttpClient<TClient>(ConfigureApiClient)
+                    .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
+
+        public static IHttpClientBuilder AddApiClient<TClient, TImplementation>(this IServiceCollection services)
+            where TClient : class
+            where TImplementation : class, TClient =>
+            services.AddHttpClient<TClient, TImplementation>(ConfigureApiClient)
+                    .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
+
+        private static void ConfigureApiClient(HttpClient client)
         {
             var apiKey = GetEnvironmentVariable(ApiAccess.AccessKey);
             var apiBaseUrl = GetEnvironmentVariable(ApiAccess.BaseUrl);

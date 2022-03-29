@@ -70,6 +70,8 @@ namespace SMM.API.Subscriptions
             existingSub.UserRoleName = patch.UserRoleName ?? existingSub.UserRoleName;
             existingSub.IsSetupComplete = patch.IsSetupComplete ?? existingSub.IsSetupComplete;
             existingSub.ManagementUrls = patch.ManagementUrls ?? existingSub.ManagementUrls;
+            existingSub.AdminName = patch.AdminName ?? existingSub.AdminName;
+            existingSub.AdminEmail = patch.AdminEmail ?? existingSub.AdminEmail;
 
             ApplySeatingConfigurationPatch(patch, existingSub);
 
@@ -88,19 +90,24 @@ namespace SMM.API.Subscriptions
                 var patchSeatConfig = patch.SeatingConfiguration;
 
                 existSeatConfig.DefaultSeatExpiryInDays =
-                    patchSeatConfig?.DefaultSeatExpiryInDays ?? existSeatConfig!.DefaultSeatExpiryInDays;
+                    patchSeatConfig?.DefaultSeatExpiryInDays ?? 
+                    existSeatConfig!.DefaultSeatExpiryInDays;
 
                 existSeatConfig.SeatReservationExpiryInDays =
-                    patchSeatConfig?.SeatReservationExpiryInDays ?? existSeatConfig!.SeatReservationExpiryInDays;
+                    patchSeatConfig?.SeatReservationExpiryInDays ?? 
+                    existSeatConfig!.SeatReservationExpiryInDays;
 
                 existSeatConfig.LimitedOverflowSeatingEnabled =
-                    patchSeatConfig?.LimitedOverflowSeatingEnabled ?? existSeatConfig!.LimitedOverflowSeatingEnabled;
+                    patchSeatConfig?.LimitedOverflowSeatingEnabled ?? 
+                    existSeatConfig!.LimitedOverflowSeatingEnabled;
 
                 existSeatConfig.LowSeatWarningLevelPercent =
-                    patchSeatConfig?.LowSeatWarningLevelPercent ?? existSeatConfig!.LowSeatWarningLevelPercent;
+                    patchSeatConfig?.LowSeatWarningLevelPercent ?? 
+                    existSeatConfig!.LowSeatWarningLevelPercent;
 
                 existSeatConfig.SeatingStrategyName =
-                    patchSeatConfig?.SeatingStrategyName ?? existSeatConfig!.SeatingStrategyName;
+                    patchSeatConfig?.SeatingStrategyName ?? 
+                    existSeatConfig!.SeatingStrategyName;
             }
         }
     }

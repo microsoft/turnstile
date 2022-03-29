@@ -45,6 +45,14 @@ namespace Turnstile.Core.Models
         [JsonProperty("management_urls")]
         public Dictionary<string, string>? ManagementUrls { get; set; }
 
+        [JsonPropertyName("admin_name")]
+        [JsonProperty("admin_name")]
+        public string? AdminName { get; set; }
+
+        [JsonPropertyName("admin_email")]
+        [JsonProperty("admin_email")]
+        public string? AdminEmail { get; set; }
+
         [JsonPropertyName("total_seats")]
         [JsonProperty("total_seats")]
         public int? TotalSeats { get; set; }
@@ -137,6 +145,8 @@ namespace Turnstile.Core.Models
                 patch.State == null &&
                 patch.AdminRoleName == null &&
                 patch.UserRoleName == null &&
+                patch.AdminName == null &&
+                patch.AdminEmail == null &&
                 patch.ManagementUrls == null &&
                 patch.TotalSeats == null &&
                 patch.IsBeingConfigured == null &&
@@ -149,7 +159,7 @@ namespace Turnstile.Core.Models
                     "No subscription properties have been patched; patchable subscription properties are " +
                     $"[subscription_name], [plan_id], [state] (must be {SubscriptionStates.ValidStates.ToOrList()}), " +
                     "[admin_role_name], [user_role_name], [management_urls], [total_seats] (if [total_seats] has already been set), " +
-                    "[is_being_configured], [is_setup_complete], [seating_config], [subscriber_info], and [source_subscription].");
+                    "[is_being_configured], [is_setup_complete], [seating_config], [subscriber_info], [source_subscription], [admin_name], and [admin_email].");
             }
             else
             {
