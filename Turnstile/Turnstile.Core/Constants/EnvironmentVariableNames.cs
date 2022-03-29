@@ -12,8 +12,8 @@
 
         public static class EventGrid
         {
-            public const string EndpointUrl = "Turnstile_EventGridEndpointUrl";
-            public const string AccessKey = "Turnstile_EventGridAccessKey";
+            public const string EndpointUrl = "Turnstile_EventGridTopicEndpointUrl";
+            public const string AccessKey = "Turnstile_EventGridTopicAccessKey";
         }
 
         public static class ApiAccess
