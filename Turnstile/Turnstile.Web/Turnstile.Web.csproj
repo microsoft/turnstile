@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Turnstile.Core\Turnstile.Core.csproj" />
+    <ProjectReference Include="..\Turnstile.Services\Turnstile.Services.csproj" />
   </ItemGroup>
 
 </Project>

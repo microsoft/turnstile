@@ -32,5 +32,13 @@ namespace Turnstile.Core.Models.Configuration
         [JsonProperty("on_subscription_not_found_url")]
         [JsonPropertyName("on_subscription_not_found_url")]
         public string? OnSubscriptionNotFoundUrl { get; set; }
+
+        public IEnumerable<string> Validate()
+        {
+            if (string.IsNullOrEmpty(OnAccessGrantedUrl))
+            {
+                yield return "[on_access_granted_url] is required.";
+            }
+        }
     }
 }

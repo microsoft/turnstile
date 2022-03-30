@@ -4,6 +4,11 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Turnstile.Core.Extensions;
+using Turnstile.Core.Models.Configuration;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Configuration
@@ -11,18 +16,33 @@ namespace Turnstile.Api.Configuration
     public static class PutPublisherConfiguration
     {
         [FunctionName("PutPublisherConfiguration")]
-        public static IActionResult Run(
+        public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "saas/publisher/configuration")] HttpRequest req,
-            [Blob("configuration/publisher_config.json", FileAccess.ReadWrite, Connection = Storage.StorageConnectionString)] out string publisherConfigJson,
+            [Blob("configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream,
             ILogger log)
         {
-            var httpContent =  new StreamReader(req.Body).ReadToEnd();
+            var httpContent =  await new StreamReader(req.Body).ReadToEndAsync();
 
-            // TODO: Validate publisher configuration model...
+            if (string.IsNullOrEmpty(httpContent))
+            {
+                return new BadRequestObjectResult("Publisher configuration is required.");
+            }
 
-            publisherConfigJson = httpContent;
+            var pubConfig = JsonSerializer.Deserialize<PublisherConfiguration>(httpContent);
 
-            return new OkResult();
+            if (pubConfig.IsSetupComplete == true)
+            {
+                var validationErrors = pubConfig.Validate().ToList();
+
+                if (validationErrors.Any())
+                {
+                    return new BadRequestObjectResult($"If [is_setup_complete]... {validationErrors.ToParagraph()}");
+                }
+            }
+
+            await JsonSerializer.SerializeAsync(pubConfigStream, pubConfig);
+
+            return new OkObjectResult(pubConfig);
         }
     }
 }

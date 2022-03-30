@@ -16,7 +16,7 @@ namespace Turnstile.Web.Extensions
             {
                 Email = principal.FindFirstValue(ClaimTypes.Email),
                 TenantId = principal.GetHomeTenantId(),
-                UserId = principal.GetObjectId(),
+                UserId = principal.GetHomeObjectId(),
                 UserName = principal.GetDisplayName()
             };
         }
