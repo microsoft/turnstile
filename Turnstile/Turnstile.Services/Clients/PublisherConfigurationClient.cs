@@ -1,5 +1,7 @@
 ﻿using System.Net;
+using System.Security.Policy;
 using System.Text.Json;
+using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models.Configuration;
 
@@ -7,6 +9,8 @@ namespace Turnstile.Services.Clients
 {
     public class PublisherConfigurationClient : IPublisherConfigurationClient
     {
+        private const string url = "api/saas/publisher/configuration";
+
         private readonly HttpClient httpClient;
 
         public PublisherConfigurationClient(HttpClient httpClient) =>
@@ -14,8 +18,6 @@ namespace Turnstile.Services.Clients
 
         public async Task<PublisherConfiguration?> GetConfiguration()
         {
-            var url = "api/saas/publisher/configuration";
-
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Get, url))
             {
                 var apiResponse = await httpClient.SendAsync(apiRequest);
@@ -38,9 +40,12 @@ namespace Turnstile.Services.Clients
         {
             ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
 
-            // TODO: Validate publisher configuration here...
+            var validationErrors = configuration.Validate().ToList();
 
-            var url = "api/saas/publisher/configuration";
+            if (validationErrors.Any())
+            {
+                throw new ArgumentException($"If [{nameof(PublisherConfiguration.IsSetupComplete)}]... {validationErrors.ToParagraph()}", nameof(configuration));
+            }
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Put, url))
             {

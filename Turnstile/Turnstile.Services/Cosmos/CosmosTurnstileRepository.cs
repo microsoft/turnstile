@@ -240,8 +240,7 @@ namespace Turnstile.Services.Cosmos
 
                 seatSummaryEnvelope.Data = currentSeatSummary;
 
-                var database = GetDatabase();
-                var container = GetContainer(database);
+                var container = GetContainer();
                 var seatEnvelope = PutInEnvelope(seat);
 
                 var txnBatchResponse = await container.CreateTransactionalBatch(new PartitionKey(subscription.SubscriptionId))
@@ -268,8 +267,7 @@ namespace Turnstile.Services.Cosmos
         {
             ArgumentNullException.ThrowIfNull(seat, nameof(seat));
 
-            var database = GetDatabase();
-            var container = GetContainer(database);
+            var container = GetContainer();
             var seatEnvelope = PutInEnvelope(seat);
 
             await container.ReplaceItemAsync(seatEnvelope, seatEnvelope.Id, new PartitionKey(seat.SubscriptionId));
@@ -282,10 +280,19 @@ namespace Turnstile.Services.Cosmos
             ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
-            var database = GetDatabase();
-            var container = GetContainer(database);
+            var container = GetContainer();
 
-            await container.DeleteItemAsync<CosmosEnvelope<Seat>>(seatId, new PartitionKey(subscriptionId));
+            try
+            {
+                await container.DeleteItemAsync<CosmosEnvelope<Seat>>(seatId, new PartitionKey(subscriptionId));
+            }
+            catch (CosmosException ex)
+            {
+                if (ex.StatusCode != HttpStatusCode.NotFound) // If the seat wasn't found, it's not _really_ a problem...
+                {
+                    throw;
+                }
+            }
         }
 
         public void Dispose()
@@ -320,8 +327,7 @@ namespace Turnstile.Services.Cosmos
         {
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
-            var database = GetDatabase();
-            var container = GetContainer(database);
+            var container = GetContainer();
 
             try
             {
@@ -358,8 +364,7 @@ namespace Turnstile.Services.Cosmos
                 "AND (IS_NULL(e.data.expires_utc) OR e.data.expires_utc > GetCurrentDateTime()) " +
                 "GROUP BY e.data.seat_type");
 
-            var database = GetDatabase();
-            var container = GetContainer(database);
+            var container = GetContainer();
             var queryOptions = new QueryRequestOptions { PartitionKey = new PartitionKey(subscriptionId) };
 
             using (var iterator = container.GetItemQueryIterator<CosmosSeatCount>(queryDefinition, requestOptions: queryOptions))
