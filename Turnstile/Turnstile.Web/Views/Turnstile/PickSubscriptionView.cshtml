@@ -1,0 +1,24 @@
+﻿@using Turnstile.Web.Controllers
+@model PickSubscriptionModel
+
+@{
+    ViewData["Title"] = "Turnstile | Pick subscription";
+}
+
+<h2>Please choose a subscription</h2>
+<hr />
+
+<div class="list-group">
+@foreach (var subscription in Model.Subscriptions)
+{
+    <a href="@Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile, new { subscriptionId = subscription.SubscriptionId })" class="list-group-item list-group-item-action">
+        @subscription.SubscriptionName &nbsp;
+        @if (subscription.CanAdminister == true)
+        {
+            <span class="badge badge bg-primary">Admin</span>
+        }
+        <br />
+        <small class="text-muted">ID: @subscription.SubscriptionId</small>
+    </a>
+}
+</div>

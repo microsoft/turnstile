@@ -1,5 +1,5 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using Newtonsoft.Json;
+using System.Net;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 
@@ -9,8 +9,8 @@ namespace Turnstile.Services.Clients
     {
         private readonly HttpClient httpClient;
 
-        public SeatsClient(HttpClient httpClient) =>
-            this.httpClient = httpClient;
+        public SeatsClient(IHttpClientFactory httpClientFactory) =>
+             httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
 
         public async Task<Seat?> GetSeat(string subscriptionId, string seatId)
         {
@@ -31,7 +31,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonSerializer.Deserialize<Seat>(jsonString);
+                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
                 return seat;
             }
@@ -51,7 +51,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seats = JsonSerializer.Deserialize<List<Seat>>(jsonString);
+                var seats = JsonConvert.DeserializeObject<List<Seat>>(jsonString);
 
                 // If there is one, there should be only one...
 
@@ -73,7 +73,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seats = JsonSerializer.Deserialize<List<Seat>>(jsonString);
+                var seats = JsonConvert.DeserializeObject<List<Seat>>(jsonString);
 
                 // If there is one, there should be only one...
 
@@ -94,7 +94,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seats = JsonSerializer.Deserialize<List<Seat>>(jsonString);
+                var seats = JsonConvert.DeserializeObject<List<Seat>>(jsonString);
 
                 return seats!;
             }
@@ -110,7 +110,7 @@ namespace Turnstile.Services.Clients
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                apiRequest.Content = new StringContent(JsonSerializer.Serialize(user));
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(user));
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
@@ -122,7 +122,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonSerializer.Deserialize<Seat>(jsonString);
+                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
                 return seat!;
             }
@@ -154,7 +154,7 @@ namespace Turnstile.Services.Clients
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                apiRequest.Content = new StringContent(JsonSerializer.Serialize(user));
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(user));
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
@@ -166,7 +166,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonSerializer.Deserialize<Seat>(jsonString);
+                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
                 return seat!;
             }
@@ -183,7 +183,7 @@ namespace Turnstile.Services.Clients
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                apiRequest.Content = new StringContent(JsonSerializer.Serialize(reservation));
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(reservation));
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
@@ -195,7 +195,7 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonSerializer.Deserialize<Seat>(jsonString);
+                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
                 return seat!;
             }

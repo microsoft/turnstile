@@ -8,7 +8,7 @@ namespace Turnstile.Web.Extensions
 {
     public static class ClaimsPrincipalExtensions
     {
-        public static User ToSubscriptionUser(this ClaimsPrincipal principal)
+        public static User ToCoreModel(this ClaimsPrincipal principal)
         {
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));
 

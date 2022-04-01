@@ -1,5 +1,5 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using Newtonsoft.Json;
+using System.Net;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 
@@ -9,8 +9,8 @@ namespace Turnstile.Services.Clients
     {
         private readonly HttpClient httpClient;
 
-        public SubscriptionsClient(HttpClient httpClient) =>
-            this.httpClient = httpClient;
+        public SubscriptionsClient(IHttpClientFactory httpClientFactory) =>
+            httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
 
         public async Task<Subscription?> CreateSubscription(Subscription subscription)
         {
@@ -20,7 +20,7 @@ namespace Turnstile.Services.Clients
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
-                apiRequest.Content = new StringContent(JsonSerializer.Serialize(subscription));
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(subscription));
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
@@ -28,7 +28,7 @@ namespace Turnstile.Services.Clients
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                return JsonSerializer.Deserialize<Subscription>(jsonString);
+                return JsonConvert.DeserializeObject<Subscription>(jsonString);
             }
         }
 
@@ -52,7 +52,7 @@ namespace Turnstile.Services.Clients
 
                     var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                    return JsonSerializer.Deserialize<Subscription>(jsonString);
+                    return JsonConvert.DeserializeObject<Subscription>(jsonString);
                 }
             }
         }
@@ -63,7 +63,7 @@ namespace Turnstile.Services.Clients
 
             if (!string.IsNullOrEmpty(tenantId))
             {
-                url += $"&tenant_id={tenantId}";
+                url += $"?tenant_id={tenantId}";
             }
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Get, url))
@@ -74,7 +74,7 @@ namespace Turnstile.Services.Clients
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                return JsonSerializer.Deserialize<List<Subscription>>(jsonString)!;
+                return JsonConvert.DeserializeObject<List<Subscription>>(jsonString)!;
             }
         }
 
@@ -86,7 +86,7 @@ namespace Turnstile.Services.Clients
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Patch, url))
             {
-                apiRequest.Content = new StringContent(JsonSerializer.Serialize(subscription));
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(subscription));
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
@@ -94,7 +94,7 @@ namespace Turnstile.Services.Clients
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                return JsonSerializer.Deserialize<Subscription>(jsonString);
+                return JsonConvert.DeserializeObject<Subscription>(jsonString);
             }
         }
     }

@@ -1,0 +1,78 @@
+﻿@model Turnstile.Web.Models.PublisherConfigurationViewModel
+
+@{
+    ViewData["Title"] = "Turnstile | Publisher configuration";
+}
+
+<h1>Publisher configuration</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="GetPublisherConfig">
+            <h4>Basics</h4><hr />
+            <div class="form-group">
+                <label asp-for="TurnstileName" class="control-label"></label>
+                <input asp-for="TurnstileName" class="form-control" />
+                <span asp-validation-for="TurnstileName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PublisherName" class="control-label"></label>
+                <input asp-for="PublisherName" class="form-control" />
+                <span asp-validation-for="PublisherName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="HomePageUrl" class="control-label"></label>
+                <input asp-for="HomePageUrl" class="form-control" />
+                <span asp-validation-for="HomePageUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ContactPageUrl" class="control-label"></label>
+                <input asp-for="ContactPageUrl" class="form-control" />
+                <span asp-validation-for="ContactPageUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="PrivacyNoticePageUrl" class="control-label"></label>
+                <input asp-for="PrivacyNoticePageUrl" class="form-control" />
+                <span asp-validation-for="PrivacyNoticePageUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ContactSalesUrl" class="control-label"></label>
+                <input asp-for="ContactSalesUrl" class="form-control" />
+                <span asp-validation-for="ContactSalesUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ContactSupportUrl" class="control-label"></label>
+                <input asp-for="ContactSupportUrl" class="form-control" />
+                <span asp-validation-for="ContactSupportUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ContactSalesEmail" class="control-label"></label>
+                <input asp-for="ContactSalesEmail" class="form-control" />
+                <span asp-validation-for="ContactSalesEmail" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ContactSupportEmail" class="control-label"></label>
+                <input asp-for="ContactSupportEmail" class="form-control" />
+                <span asp-validation-for="ContactSupportEmail" class="text-danger"></span>
+            </div>
+            <h4>Mona integration</h4><hr />
+            <div class="form-group">
+                <label asp-for="MonaIntegrationBaseStorageUrl" class="control-label"></label>
+                <input asp-for="MonaIntegrationBaseStorageUrl" class="form-control" />
+                <span asp-validation-for="MonaIntegrationBaseStorageUrl" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

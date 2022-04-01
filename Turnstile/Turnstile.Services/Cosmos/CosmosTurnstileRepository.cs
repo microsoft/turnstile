@@ -222,7 +222,8 @@ namespace Turnstile.Services.Cosmos
 
                 if (seat.SeatType == SeatTypes.Standard)
                 {
-                    if (subscription.TotalSeats != null && subscription.TotalSeats <= actualSeatSummary.StandardSeatCount)
+                    if (subscription.TotalSeats != null && 
+                        subscription.TotalSeats <= actualSeatSummary.StandardSeatCount)
                     {
                         return new SeatCreationContext
                         {

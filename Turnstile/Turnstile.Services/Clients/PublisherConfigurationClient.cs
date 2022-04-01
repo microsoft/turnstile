@@ -1,6 +1,5 @@
-﻿using System.Net;
-using System.Security.Policy;
-using System.Text.Json;
+﻿using Newtonsoft.Json;
+using System.Net;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models.Configuration;
@@ -13,8 +12,8 @@ namespace Turnstile.Services.Clients
 
         private readonly HttpClient httpClient;
 
-        public PublisherConfigurationClient(HttpClient httpClient) =>
-            this.httpClient = httpClient;
+        public PublisherConfigurationClient(IHttpClientFactory httpClientFactory) =>
+            httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
 
         public async Task<PublisherConfiguration?> GetConfiguration()
         {
@@ -30,9 +29,9 @@ namespace Turnstile.Services.Clients
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonSerializer.Deserialize<PublisherConfiguration>(jsonString);
+                var publisherConfig = JsonConvert.DeserializeObject<PublisherConfiguration>(jsonString);
 
-                return seat;
+                return publisherConfig;
             }
         }
 
@@ -49,7 +48,7 @@ namespace Turnstile.Services.Clients
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Put, url))
             {
-                apiRequest.Content = new StringContent(JsonSerializer.Serialize(configuration));
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(configuration));
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 

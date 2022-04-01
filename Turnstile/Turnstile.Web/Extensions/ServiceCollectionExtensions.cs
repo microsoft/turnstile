@@ -9,22 +9,10 @@ namespace Turnstile.Web.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IHttpClientBuilder AddApiClient<TClient>(this IServiceCollection services)
-            where TClient : class =>
-            services.AddHttpClient<TClient>(ConfigureApiClient)
-                    .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
-
-        public static IHttpClientBuilder AddApiClient<TClient, TImplementation>(this IServiceCollection services)
-            where TClient : class
-            where TImplementation : class, TClient =>
-            services.AddHttpClient<TClient, TImplementation>(ConfigureApiClient)
-                    .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
-
         public static IServiceCollection AddApiClients(this IServiceCollection services)
         {
-            services.AddApiClient<PublisherConfigurationClient>();
-            services.AddApiClient<SeatsClient>();
-            services.AddApiClient<SubscriptionsClient>();
+            services.AddHttpClient(HttpClientNames.TurnstileApi, ConfigureApiClient)
+                    .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
 
             services.AddScoped<IPublisherConfigurationClient, PublisherConfigurationClient>();
             services.AddScoped<ISeatsClient, SeatsClient>();
