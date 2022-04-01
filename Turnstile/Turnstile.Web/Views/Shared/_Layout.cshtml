@@ -9,11 +9,14 @@
     <link rel="stylesheet" href="~/Turnstile.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <div class="border-bottom header text-muted">
-        <div class="container">
-            Signed in as @User.Identity!.Name. - <a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
+    <nav class="navbar navbar-dark bg-dark" style="margin-bottom: 20px">
+        <div class="container-fluid">
+            <span class="navbar-brand">Turnstile</span>
+            <span class="d-flex navbar-text">
+                <span>Howdy, @User.Identity!.Name!</span>&nbsp;&nbsp;<a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
+            </span>
         </div>
-    </div>
+    </nav>
     <div class="container">
         <main role="main">
             @RenderBody()

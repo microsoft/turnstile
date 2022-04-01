@@ -1,5 +1,6 @@
 ﻿using Microsoft.Identity.Web;
 using System.Security.Claims;
+using Turnstile.Core.Constants;
 using Turnstile.Core.Models;
 using static System.Environment;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
@@ -30,6 +31,10 @@ namespace Turnstile.Web.Extensions
 
         public static bool CanAdministerTurnstile(this ClaimsPrincipal principal)
         {
+#if DEBUG
+            return true; // TODO: Come back and think about the implications of this...
+#endif
+
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));
 
             var pubTenantId = GetEnvironmentVariable(Publisher.TenantId) ??
@@ -73,6 +78,31 @@ namespace Turnstile.Web.Extensions
                 // Even the publisher can't directly administer a customer's subscription unless, of course, 
                 // the subscription's tenant ID == the publisher's tenant ID (e.g., in a testing scenario.)
                 principal.IsInRole(subscription.AdminRoleName!);
+        }
+
+        public static bool CanAdministerSubscriberTenant(this ClaimsPrincipal principal, string tenantId)
+        {
+            ArgumentNullException.ThrowIfNull(principal, nameof(principal));
+            ArgumentNullException.ThrowIfNull(tenantId, nameof(tenantId));
+
+            var adminRoleName = GetEnvironmentVariable(EnvironmentVariableNames.Subscriber.TenantAdminRoleName);
+
+            if (string.IsNullOrEmpty(adminRoleName))
+            {
+                // Subscriber tenant admin feature isn't enabled...
+
+                return false;
+            }
+            else
+            {
+                adminRoleName = adminRoleName.Replace("{tenant_id}", tenantId);
+
+                return
+                    // Do they belong to [tenantId]?
+                    principal.GetHomeTenantId() == tenantId &&
+                    // Do they belong to the subscriber's tenant admin role?
+                    principal.IsInRole(adminRoleName);
+            }
         }
     }
 }

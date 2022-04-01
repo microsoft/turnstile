@@ -1,78 +1,180 @@
-﻿@model Turnstile.Web.Models.PublisherConfigurationViewModel
-
+﻿@using Turnstile.Core.Constants
 @{
-    ViewData["Title"] = "Turnstile | Publisher configuration";
+    ViewData["Title"] = "Turnstile | Publisher setup";
 }
 
-<h1>Publisher configuration</h1>
+@model PublisherConfigurationViewModel
 
+<h1>Publisher setup</h1>
 <hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="GetPublisherConfig">
-            <h4>Basics</h4><hr />
-            <div class="form-group">
-                <label asp-for="TurnstileName" class="control-label"></label>
-                <input asp-for="TurnstileName" class="form-control" />
-                <span asp-validation-for="TurnstileName" class="text-danger"></span>
+
+<form asp-action="PostPublisherConfig" method="post">
+    <div class="row">
+        <div class="col-3 sticky-top">
+            <div id="scroll-spy-list" class="list-group sticky-top">
+                <a class="list-group-item list-group-item-action" href="#basics-section">Basics</a>
+                <a class="list-group-item list-group-item-action" href="#seating-section">Default seating configuration</a>
+                <a class="list-group-item list-group-item-action" href="#turnstile-section">Turnstile redirection</a>
+                <a class="list-group-item list-group-item-action" href="#mona-integration">Mona integration</a>
+                <a class="list-group-item list-group-item-action" href="#save-changes">Save changes</a>
             </div>
-            <div class="form-group">
-                <label asp-for="PublisherName" class="control-label"></label>
-                <input asp-for="PublisherName" class="form-control" />
-                <span asp-validation-for="PublisherName" class="text-danger"></span>
+        </div>
+        <div class="col-9">
+            <div data-bs-spy="scroll" data-bs-target="#scroll-spy-list" data-bs-offset="0" class="scroll-spy-contents" tabindex="0">
+                <h2 id="basics-section">Basics</h2><hr />
+                <div class="mb-3">
+                    <label asp-for="@Model.TurnstileName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <input asp-for="@Model.TurnstileName" type="text" class="form-control" aria-describedBy="turnstileNameHelp" />
+                    <span asp-validation-for="@Model.TurnstileName" class="text-danger"></span>
+                    <div id="turnstileNameHelp" class="form-text">The name of this turnstile as it will appear in the subscriber UI; typically, the name of your SaaS app.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.PublisherName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <input asp-for="@Model.PublisherName" type="text" class="form-control" aria-describedBy="publisherNameHelp" />
+                    <span asp-validation-for="@Model.PublisherName" class="text-danger"></span>
+                    <div id="publisherNameHelp" class="form-text">The name of the organization (you, the ISV) publishing the SaaS app as it will appear in the subscriber UI.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.HomePageUrl" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <input asp-for="@Model.HomePageUrl" type="url" class="form-control" aria-describedBy="homePageUrlHelp" />
+                    <span asp-validation-for="@Model.HomePageUrl" class="text-danger"></span>
+                    <div id="homePageUrlHelp" class="form-text">The URL of your organization's home page. This link will appear in the subscriber UI.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.ContactPageUrl" class="form-label"></label>
+                    <input asp-for="@Model.ContactPageUrl" type="url" class="form-control" aria-describedBy="contactPageUrlHelp" />
+                    <span asp-validation-for="@Model.ContactPageUrl" class="text-danger"></span>
+                    <div id="homePageUrlHelp" class="form-text">The URL of your organization's contact page. This link will appear in the subscriber UI.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.PrivacyNoticePageUrl" class="form-label"></label>
+                    <input asp-for="@Model.PrivacyNoticePageUrl" type="url" class="form-control" aria-describedBy="contactPageUrlHelp" />
+                    <span asp-validation-for="@Model.PrivacyNoticePageUrl" class="text-danger"></span>
+                    <div id="homePageUrlHelp" class="form-text">The URL of your organization's privacy notice page. This link will appear in the subscriber UI.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.ContactSalesUrl" class="form-label"></label>
+                    <input asp-for="@Model.ContactSalesUrl" type="url" class="form-control" aria-describedBy="contactSalesUrlHelp" />
+                    <span asp-validation-for="@Model.ContactSalesUrl" class="text-danger"></span>
+                    <div id="contactSalesUrlHelp" class="form-text">Where should a customer be redirected to if they need to buy or upgrade a subscription?</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.ContactSupportUrl" class="form-label"></label>
+                    <input asp-for="@Model.ContactSupportUrl" type="url" class="form-control" aria-describedBy="contactSupportUrlHelp" />
+                    <span asp-validation-for="@Model.ContactSupportUrl" class="text-danger"></span>
+                    <div id="contactSupportUrlHelp" class="form-text">Where should a customer be redirected to if they need subscription technical support?</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.ContactSalesEmail" class="form-label"></label>
+                    <input asp-for="@Model.ContactSalesEmail" type="email" class="form-control" aria-describedBy="contactSalesEmailHelp" />
+                    <span asp-validation-for="@Model.ContactSalesEmail" class="text-danger"></span>
+                    <div id="contactSalesEmailHelp" class="form-text">Who should the customer contact if they need to buy or upgrade a subscription?</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.ContactSupportEmail" class="form-label"></label>
+                    <input asp-for="@Model.ContactSupportEmail" type="email" class="form-control" aria-describedBy="contactSupportEmailHelp" />
+                    <span asp-validation-for="@Model.ContactSupportEmail" class="text-danger"></span>
+                    <div id="contactSupportEmailHelp" class="form-text">Who should the customer contact if they need subscription technical support?</div>
+                </div>
+                <h2 id="seating-section">Default seating configuration</h2>
+                <lead>Each subscription has its own seating configuration allowing you to customize how seats are managed on a subscription-by-subscription basis. Unless otherwise specified when a subscription is created, this configuration will be applied to all new subscriptions.</lead>
+                <hr />
+                <div class="mb-3">
+                    <label asp-for="@Model.SeatingConfiguration.SeatingStrategyName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <select asp-for="@Model.SeatingConfiguration.SeatingStrategyName" asp-items="@Model.SeatingConfiguration.AvailableSeatingStrategies" class="form-select" aria-describedBy="seatingStrategyHelp"></select>
+                    <span asp-validation-for="@Model.SeatingConfiguration.SeatingStrategyName" class="text-danger"></span>
+                    <div id="seatingStrategyHelp" class="form-text">Specifies the strategy that should be applied when a new subscription seat is provided to your customer.</div>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.SeatingConfiguration.LowSeatWarningEnabled" aria-described-by="lowSeatWarningHelp" />
+                    <label asp-for="@Model.SeatingConfiguration.LowSeatWarningEnabled" class="form-check-label"></label>
+                    <div id="lowSeatWarningHelp" class="form-text">Indicates whether or not an event (<code>@EventTypes.SeatingWarningLeavelReached</code>) will be published when available seats drop below 25% of total subscription seats.</div>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.SeatingConfiguration.LimitedOverflowSeatingEnabled" aria-described-by="limitedSeatHelp" />
+                    <label asp-for="@Model.SeatingConfiguration.LimitedOverflowSeatingEnabled" class="form-check-label"></label>
+                    <div id="limitedSeatHelp" class="form-text">Indicates whether or not limited seats should be provided when there are no more standard seats available.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.SeatingConfiguration.SeatExpiryInDays" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <input asp-for="@Model.SeatingConfiguration.SeatExpiryInDays" type="number" class="form-control" aria-describedBy="seatExpiryHelp" />
+                    <span asp-validation-for="@Model.SeatingConfiguration.SeatExpiryInDays" class="text-danger"></span>
+                    <div id="seatingStrategyHelp" class="form-text">How many days should a user be able to hold a seat by default?</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.SeatingConfiguration.SeatReservationExpiryInDays" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <input asp-for="@Model.SeatingConfiguration.SeatReservationExpiryInDays" type="number" class="form-control" aria-describedBy="reservationExpiryHelp" />
+                    <span asp-validation-for="@Model.SeatingConfiguration.SeatReservationExpiryInDays" class="text-danger"></span>
+                    <div id="reservationExpiryHelp" class="form-text">How long should a seat remain reserved for until it's redeemed?</div>
+                </div>
+                <h2 id="turnstile-section">Turnstile configuration</h2>
+                <lead>Depending on the outcome of a user trying to obtain a seat in a subscription, the turnstile will redirect them to an appropriate endpoint. These settings allow you to configure what those endpoints are.</lead>
+                <hr />
+                <div class="mb-3">
+                    <label class="form-label">On <b>seat provided</b> URL</label>&nbsp;<span class="text-danger">*</span>
+                    <input asp-for="@Model.TurnstileConfiguration.OnAccessGrantedUrl" type="url" class="form-control" aria-describedBy="onAccessGrantedHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnAccessGrantedUrl" class="text-danger"></span>
+                    <div id="onAccessGrantedHelp" class="form-text">If a seat is provided, where should the user be redirected to?</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">On <b>no seats available</b> URL</label>
+                    <input asp-for="@Model.TurnstileConfiguration.OnNoSeatsAvailableUrl" type="url" class="form-control" aria-describedBy="onNoSeatsHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnNoSeatsAvailableUrl" class="text-danger"></span>
+                    <div id="onAccessGrantedHelp" class="form-text">If no seats are available, where should the user be redirected to?</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">On <b>subscription not ready</b> URL</label>
+                    <input asp-for="@Model.TurnstileConfiguration.OnSubscriptionPurchasedUrl" type="url" class="form-control" aria-describedBy="onNotReadyHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnSubscriptionPurchasedUrl" class="text-danger"></span>
+                    <div id="onNotReadyHelp" class="form-text">If the subscription isn't currently ready (e.g., it's being configured), where should the user be redirected to?</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">On <b>subscription suspended</b> URL</label>
+                    <input asp-for="@Model.TurnstileConfiguration.OnSubscriptionSuspendedUrl" type="url" class="form-control" aria-describedBy="onSuspendedHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnSubscriptionSuspendedUrl" class="text-danger"></span>
+                    <div id="onSuspendedHelp" class="form-text">If the subscription has been suspended (e.g., for non-payment), where should the user be redirected to?</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">On <b>subscription canceled</b> URL</label>
+                    <input asp-for="@Model.TurnstileConfiguration.OnSubscriptionCanceledUrl" type="url" class="form-control" aria-describedBy="onCanceledHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnSubscriptionCanceledUrl" class="text-danger"></span>
+                    <div id="onCanceledHelp" class="form-text">If the subscription has been canceled, where should the user be redirected to?</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">On <b>subscription not found</b> URL</label>
+                    <input asp-for="@Model.TurnstileConfiguration.OnSubscriptionNotFoundUrl" type="url" class="form-control" aria-describedBy="onNotFoundHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnSubscriptionNotFoundUrl" class="text-danger"></span>
+                    <div id="onCanceledHelp" class="form-text">If the requested subscription can't be found, where should the user be redirected to?</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">On <b>no subscriptions available</b> URL</label>
+                    <input asp-for="@Model.TurnstileConfiguration.OnNoSubscriptionsFoundUrl" type="url" class="form-control" aria-describedBy="onNoSubsHelp" />
+                    <span asp-validation-for="@Model.TurnstileConfiguration.OnNoSubscriptionsFoundUrl" class="text-danger"></span>
+                    <div id="onNoSubsHelp" class="form-text">If the user doesn't have any available subscriptions, where should they be redirected to?</div>
+                </div>
+                <h2 id="mona-integration">Mona integration</h2>
+                <lead>Turnstile works seamlessly with Mona (Marketplace Onboarding Accelerator) to provide a complete Azure Marketplace/AppSource SaaS transactable solution.</lead>
+                <hr />
+                <div class="mb-3">
+                    <label asp-for="@Model.MonaIntegrationBaseStorageUrl" class="form-label"></label>
+                    <input asp-for="@Model.MonaIntegrationBaseStorageUrl" type="url" class="form-control" aria-describedBy="onMonaUrlHelp" />
+                    <span asp-validation-for="@Model.MonaIntegrationBaseStorageUrl" class="text-danger"></span>
+                    <div id="onMonaUrlHelp" class="form-text">The Mona base storage URL</div>
+                </div>
+                <div id="save-changes" style="margin-bottom: 20px">
+                    <hr />
+                    <button type="submit" class="btn-primary btn">Save changes</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="HomePageUrl" class="control-label"></label>
-                <input asp-for="HomePageUrl" class="form-control" />
-                <span asp-validation-for="HomePageUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactPageUrl" class="control-label"></label>
-                <input asp-for="ContactPageUrl" class="form-control" />
-                <span asp-validation-for="ContactPageUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PrivacyNoticePageUrl" class="control-label"></label>
-                <input asp-for="PrivacyNoticePageUrl" class="form-control" />
-                <span asp-validation-for="PrivacyNoticePageUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactSalesUrl" class="control-label"></label>
-                <input asp-for="ContactSalesUrl" class="form-control" />
-                <span asp-validation-for="ContactSalesUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactSupportUrl" class="control-label"></label>
-                <input asp-for="ContactSupportUrl" class="form-control" />
-                <span asp-validation-for="ContactSupportUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactSalesEmail" class="control-label"></label>
-                <input asp-for="ContactSalesEmail" class="form-control" />
-                <span asp-validation-for="ContactSalesEmail" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ContactSupportEmail" class="control-label"></label>
-                <input asp-for="ContactSupportEmail" class="form-control" />
-                <span asp-validation-for="ContactSupportEmail" class="text-danger"></span>
-            </div>
-            <h4>Mona integration</h4><hr />
-            <div class="form-group">
-                <label asp-for="MonaIntegrationBaseStorageUrl" class="control-label"></label>
-                <input asp-for="MonaIntegrationBaseStorageUrl" class="form-control" />
-                <span asp-validation-for="MonaIntegrationBaseStorageUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    @section Scripts {
+    @{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    }
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
+</form>
+
+

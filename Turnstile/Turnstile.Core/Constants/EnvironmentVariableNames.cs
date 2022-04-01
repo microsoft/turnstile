@@ -37,5 +37,10 @@
             public const string TenantId = "Turnstile_PublisherTenantId";
             public const string AdminRoleName = "Turnstile_PublisherAdminRoleName";
         }
+
+        public static class Subscriber
+        {
+            public const string TenantAdminRoleName = "Turnstile_SubscriberTenantAdminRoleName";
+        }
     }
 }

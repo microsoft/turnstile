@@ -2,23 +2,21 @@
 @model PickSubscriptionModel
 
 @{
-    ViewData["Title"] = "Turnstile | Pick subscription";
+    ViewData["Title"] = "Turnstile | Choose subscription";
 }
 
-<h2>Please choose a subscription</h2>
-<hr />
+<h1>Please choose a subscription</h1>
 
-<div class="list-group">
-@foreach (var subscription in Model.Subscriptions)
-{
-    <a href="@Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile, new { subscriptionId = subscription.SubscriptionId })" class="list-group-item list-group-item-action">
-        @subscription.SubscriptionName &nbsp;
-        @if (subscription.CanAdminister == true)
-        {
-            <span class="badge badge bg-primary">Admin</span>
-        }
-        <br />
-        <small class="text-muted">ID: @subscription.SubscriptionId</small>
-    </a>
-}
+<div class="list-group" style="margin-top: 20px">
+    @foreach (var subscription in Model.Subscriptions)
+    {
+        <a href="@Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile, new { subscriptionId = subscription.SubscriptionId })" class="list-group-item list-group-item-action">
+            @subscription.SubscriptionName &nbsp;
+            @if (subscription.CanAdminister == true)
+            {
+                <span class="badge badge bg-primary">Admin</span>
+            }
+            <br /><small class="text-muted">@subscription.SubscriptionId</small>
+        </a>
+    }
 </div>

@@ -40,6 +40,12 @@ button.accept-policy {
     line-height: inherit;
 }
 
+.scroll-spy-contents {
+    position: relative;
+    height: 100%;
+    overflow: auto;
+}
+
 .header {
     width: 100%;
     white-space: nowrap;

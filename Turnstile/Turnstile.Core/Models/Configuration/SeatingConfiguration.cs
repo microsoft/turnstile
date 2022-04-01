@@ -7,6 +7,8 @@ namespace Turnstile.Core.Models.Configuration
 {
     public class SeatingConfiguration
     {
+        public const double DefaultLowSeatWarningLevelPercent = .25;
+
         [JsonPropertyName("seating_strategy_name")]
         [JsonProperty("seating_strategy_name")]
         public string? SeatingStrategyName { get; set; }

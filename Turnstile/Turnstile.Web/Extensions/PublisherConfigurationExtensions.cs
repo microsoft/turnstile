@@ -31,7 +31,7 @@ namespace Turnstile.Web.Extensions
                         "Unable to service request. Turnstile not yet set up. " +
                         $"Redirecting turnstile administrator to route [{PublisherConfigurationController.RouteNames.GetPublisherConfiguration}].");
 
-                    return new RedirectToRouteResult(PublisherConfigurationController.RouteNames.GetPublisherConfiguration);
+                    return new RedirectToRouteResult(PublisherConfigurationController.RouteNames.GetPublisherConfiguration, null);
                 }
                 else
                 {
