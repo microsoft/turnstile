@@ -21,6 +21,10 @@ namespace Turnstile.Core.Models
         [JsonProperty("tenant_id")]
         public string? TenantId { get; set; }
 
+        [JsonPropertyName("tenant_name")]
+        [JsonProperty("tenant_name")]
+        public string? TenantName { get; set; }
+
         [JsonPropertyName("offer_id")]
         [JsonProperty("offer_id")]
         public string? OfferId { get; set; }

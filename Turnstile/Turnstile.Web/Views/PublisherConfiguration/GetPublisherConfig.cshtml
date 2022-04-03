@@ -1,4 +1,5 @@
 ﻿@using Turnstile.Core.Constants
+
 @{
     ViewData["Title"] = "Turnstile | Publisher setup";
 }
@@ -8,11 +9,24 @@
 <h1>Publisher setup</h1>
 <hr />
 
+@if (Model.IsConfigurationSaved)
+{
+    <div class="alert alert-success" style="margin-top: 20px; margin-bottom: 20px">
+        Publisher configuration saved successfully.
+    </div>
+}
+else if (Model.HasValidationErrors)
+{
+    <div class="alert alert-danger" style="margin-top: 20px; margin-bottom: 20px">
+        Validation failed. Please review issues below and try again.
+    </div>
+}
+
 <form asp-action="PostPublisherConfig" method="post">
     <div class="row">
         <div class="col-3 sticky-top">
-            <div id="scroll-spy-list" class="list-group sticky-top">
-                <a class="list-group-item list-group-item-action" href="#basics-section">Basics</a>
+            <div id="scroll-spy-list" class="list-group sticky-top" style="padding-top: 20px">
+                <a class="list-group-item list-group-item-action active" href="#basics-section">Basics</a>
                 <a class="list-group-item list-group-item-action" href="#seating-section">Default seating configuration</a>
                 <a class="list-group-item list-group-item-action" href="#turnstile-section">Turnstile redirection</a>
                 <a class="list-group-item list-group-item-action" href="#mona-integration">Mona integration</a>

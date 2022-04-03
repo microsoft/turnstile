@@ -80,7 +80,7 @@ namespace Turnstile.Web.Extensions
                 principal.IsInRole(subscription.AdminRoleName!);
         }
 
-        public static bool CanAdministerSubscriberTenant(this ClaimsPrincipal principal, string tenantId)
+        public static bool CanAdministerAllTenantSubscriptions(this ClaimsPrincipal principal, string tenantId)
         {
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));
             ArgumentNullException.ThrowIfNull(tenantId, nameof(tenantId));
