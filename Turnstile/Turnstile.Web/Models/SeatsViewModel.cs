@@ -22,12 +22,16 @@ namespace Turnstile.Web.Models
 
             if (subscription.TotalSeats != null)
             {
+<<<<<<< HEAD
                 IsLimitedOverflowSeatingEnabled = seatConfig.LimitedOverflowSeatingEnabled == true;
+=======
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
                 TotalSeats = subscription.TotalSeats!.Value;
                 TotalUsedSeats = seatList.Count(s => s.SeatType == SeatTypes.Standard);
 
                 ShowSeatingMeter = true;
 
+<<<<<<< HEAD
                 if (TotalSeats != 0 && TotalUsedSeats != 0)
                 {
                     var pctConsumed = ((double)TotalUsedSeats / TotalSeats);
@@ -42,6 +46,22 @@ namespace Turnstile.Web.Models
                     {
                         HasReachedLowSeatLevel = true;
                     }
+=======
+                if (TotalSeats <= TotalUsedSeats)
+                {
+                    HasNoMoreSeats = true;
+                }
+                else if (TotalSeats != 0 && TotalUsedSeats != 0)
+                {
+                    var pctConsumed = ((double)TotalUsedSeats / TotalSeats);
+
+                    if ((1 - pctConsumed) <= SeatingConfiguration.DefaultLowSeatWarningLevelPercent)
+                    {
+                        HasReachedLowSeatLevel = true;
+                    }
+
+                    ConsumedSeatsPct = (int)(pctConsumed * 100);
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
                 }
             }
 

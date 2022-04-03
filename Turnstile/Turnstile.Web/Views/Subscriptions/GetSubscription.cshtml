@@ -26,7 +26,11 @@
         {
             return "progress-bar progress-bar-striped bg-warning";
         }
+<<<<<<< HEAD
         else
+=======
+        else     
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
         {
             return "progress-bar progress-bar-striped bg-success";
         }
@@ -79,7 +83,11 @@
 
 @if (Model.IsBeingConfigured)
 {
+<<<<<<< HEAD
     <div class="alert alert-warning d-flex align-items-center" style="margin-top: 10px; margin-bottom: 20px">
+=======
+    <div class="alert alert-warning d-flex align-items-center" style="margin-top: 20px; margin-bottom: 20px">
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
         <div>
             This subscription is being configured and is temporarily unavailable.
         </div>
@@ -90,10 +98,14 @@
 {
     <div class="alert alert-warning d-flex align-items-center" role="alert" style="margin-top: 20px; margin-bottom: 20px">
         <div>
+<<<<<<< HEAD
             This subscription has less than 25% available seating. @if (!Model.UserIsTurnstileAdmin)
             {
                 <a href="#" class="alert-link" target="_blank">Buy more »</a>
             }
+=======
+            This subscription has less than 25% available seating. <a href="#" class="alert-link">Buy more »</a>
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
         </div>
     </div>
 }
@@ -102,14 +114,19 @@
 {
     <div class="alert alert-danger d-flex align-items-center" style="margin-top: 20px; margin-bottom: 20px">
         <div>
+<<<<<<< HEAD
             This subscription has no available seats. @if (!Model.UserIsTurnstileAdmin)
             {
                 <a href="#" class="alert-link" target="_blank">Buy more »</a>
             }
+=======
+            This subscription has no available seats. <a href="#" class="alert-link">Buy more »</a>
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
         </div>
     </div>
 }
 
+<<<<<<< HEAD
 <div class="btn-group" style="margin-top: 20px; margin-bottom: 20px">
     @if (Model.UserIsSubscriberAdmin)
     {
@@ -131,6 +148,8 @@
     }
 </div>
 
+=======
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
 <table class="table" style="margin-bottom: 20px">
     <tbody>
         <tr style="width: 25%">
@@ -184,6 +203,7 @@
 <hr />
 
 <table class="table" style="margin-bottom: 20px">
+<<<<<<< HEAD
     <thead>
         <tr>
             <th>Seating strategy</th>
@@ -193,6 +213,11 @@
     </thead>
     <tbody>
         <tr>
+=======
+    <tbody>
+        <tr style="width: 25%">
+            <th scope="row">Seating strategy</th>
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
             <td>
                 @DescribeSeatingStrategy()
                 @if (Model.Seating!.IsLimitedOverflowSeatingEnabled)
@@ -201,7 +226,17 @@
                     <small class="text-muted">Limited overflow seating enabled</small>
                 }
             </td>
+<<<<<<< HEAD
             <td>@($"{Model.Seating!.SeatExpiryInDays} day(s)")</td>
+=======
+        </tr>
+        <tr>
+            <th scope="row">Default seat expiry</th>
+            <td>@($"{Model.Seating!.SeatExpiryInDays} day(s)")</td>
+        </tr>
+        <tr>
+            <th scope="row">Seat reservation expiry</th>
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
             <td>@($"{Model.Seating!.SeatReservationExpiryInDays} day(s)")</td>
         </tr>
     </tbody>
@@ -216,6 +251,7 @@
             </div>
         </div>
     </div>
+<<<<<<< HEAD
 }
 
 <table class="table" style="margin-bottom: 20px">
@@ -272,3 +308,6 @@
         }
     </tbody>
 </table>
+=======
+}
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959

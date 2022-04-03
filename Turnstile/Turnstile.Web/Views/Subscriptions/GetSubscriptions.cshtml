@@ -2,15 +2,25 @@
 @using Turnstile.Web.Controllers
 
 @{
+<<<<<<< HEAD
     ViewData["Title"] = "Subscriptions | Turnstile";
+=======
+    ViewData["Title"] = "Turnstile | Publisher setup";
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
 
     string ChooseRowClass(SubscriptionRowViewModel subscription)
     {
         return subscription.State switch
         {
+<<<<<<< HEAD
             SubscriptionStates.Canceled => "table-danger",
             SubscriptionStates.Suspended => "table-warning",
             SubscriptionStates.Purchased => "table-success",
+=======
+            SubscriptionStates.Canceled => "table-secondary",
+            SubscriptionStates.Suspended => "table-warning",
+            SubscriptionStates.Purchased => "table-primary",
+>>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
             _ => string.Empty
         };
     }
