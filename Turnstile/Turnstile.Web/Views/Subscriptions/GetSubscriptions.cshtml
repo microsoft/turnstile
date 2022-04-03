@@ -2,25 +2,15 @@
 @using Turnstile.Web.Controllers
 
 @{
-<<<<<<< HEAD
     ViewData["Title"] = "Subscriptions | Turnstile";
-=======
-    ViewData["Title"] = "Turnstile | Publisher setup";
->>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
 
     string ChooseRowClass(SubscriptionRowViewModel subscription)
     {
         return subscription.State switch
         {
-<<<<<<< HEAD
             SubscriptionStates.Canceled => "table-danger",
             SubscriptionStates.Suspended => "table-warning",
             SubscriptionStates.Purchased => "table-success",
-=======
-            SubscriptionStates.Canceled => "table-secondary",
-            SubscriptionStates.Suspended => "table-warning",
-            SubscriptionStates.Purchased => "table-primary",
->>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
             _ => string.Empty
         };
     }
@@ -36,21 +26,6 @@
             _ => throw new InvalidOperationException($"Subscription state [{subscription.State}] not supported.")
         };
     }
-
-    string DescribeSeatingStrategy(SubscriptionRowViewModel subscription)
-    {
-        return subscription.SeatingStrategyName switch
-        {
-            SeatingStrategies.FirstComeFirstServed => "First come, first served",
-            SeatingStrategies.MonthlyActiveUser => "Monthly active user",
-            _ => throw new InvalidOperationException($"Subscription seating strategy [{subscription.SeatingStrategyName}] not supported.")
-        };
-    }
-
-    string DescribeTotalSeats(SubscriptionRowViewModel subscription)
-    {
-        return (subscription.TotalSeats == null ? "N/A" : subscription.TotalSeats!.Value.ToString());
-    }
 }
 
 @model SubscriptionsViewModel
@@ -61,14 +36,12 @@
 <table class="table">
     <thead>
         <tr>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.SubscriptionName})">Name</a></th>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.TenantName})">Tenant Name</a></th>
-            <th colspan="2"><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.State})">State</a></th>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.OfferId})">Offer</a></th>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.PlanId})">Plan</a></th>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.SeatingStrategy})">Seating</a></th>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.TotalSeats})">Total Seats</a></th>
-            <th><a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.CreatedDate})">Created</a></th>
+            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.SubscriptionName})">Name</a></th>
+            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.TenantName})">Tenant Name</a></th>
+            <th colspan="2"><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.State})">State</a></th>
+            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.OfferId})">Offer</a></th>
+            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.PlanId})">Plan</a></th>
+            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.CreatedDate})">Created</a></th>
         </tr>
     </thead>
     <tbody>
@@ -76,7 +49,7 @@
         {
             <tr class="@ChooseRowClass(subscription)">
                 <td>
-                    <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId })">@subscription.SubscriptionName</a> <br />
+                    <a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId })">@subscription.SubscriptionName</a> <br />
                     <small class="text-muted">@subscription.SubscriptionId</small>
                 </td>
                 <td>
@@ -100,12 +73,6 @@
                 </td>
                 <td>
                     @subscription.PlanId
-                </td>
-                <td>
-                    @DescribeSeatingStrategy(subscription)
-                </td>
-                <td>
-                    @DescribeTotalSeats(subscription)
                 </td>
                 <td>
                     @subscription.CreatedDateTimeUtc!.Value.ToString("g") UTC

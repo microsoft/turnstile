@@ -21,6 +21,7 @@ namespace Turnstile.Web.Models
             AdminName = subscription.AdminName;
             AdminEmail = subscription.AdminEmail;
 
+            IsBeingConfigured = subscription.IsBeingConfigured == true;
             IsTestSubscription = subscription.IsTestSubscription;
             IsFreeSubscription = subscription.IsFreeTrial;
             UserIsTurnstileAdmin = userIsTurnstileAdmin;
@@ -29,11 +30,8 @@ namespace Turnstile.Web.Models
             CreatedDateTimeUtc = subscription.CreatedDateTimeUtc;
             StateLastUpdatedDateTimeUtc = subscription.StateLastUpdatedDateTimeUtc;
 
-<<<<<<< HEAD
             ManagementUrls = subscription.ManagementUrls;
 
-=======
->>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
             Seating = new SeatsViewModel(subscription, seats);
         }
 
@@ -53,11 +51,8 @@ namespace Turnstile.Web.Models
         public bool UserIsTurnstileAdmin { get; set; }
         public bool UserIsSubscriberAdmin { get; set; }
 
-<<<<<<< HEAD
         public Dictionary<string, string>? ManagementUrls { get; set; }
 
-=======
->>>>>>> c9bb448a63c173ad7d2f7096ab607bc2d78f7959
         public DateTime? CreatedDateTimeUtc { get; set; }
         public DateTime? StateLastUpdatedDateTimeUtc { get; set; }
 
