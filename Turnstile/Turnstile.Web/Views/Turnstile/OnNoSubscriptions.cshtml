@@ -1,0 +1,13 @@
+﻿@using Turnstile.Web.Controllers
+@model SubscriptionMessageViewModel
+
+@{
+    ViewData["Title"] = "No subscriptions | Turnstile";
+}
+
+<h1>No subscriptions available</h1>
+<lead>But that can change! To subscribe, @Html.Raw(Model.SalesContactHtml).</lead>
+
+<div style="margin-top: 20px">
+<a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Back to turnstile »</a>
+</div>

@@ -1,0 +1,21 @@
+﻿@using Turnstile.Web.Controllers
+@model SubscriptionMessageViewModel
+
+@{
+    ViewData["Title"] = "Subscription canceled | Turnstile";
+}
+
+<h1>Subscription canceled</h1>
+
+@if (Model.IsTenantSubscriptionAdministrator)
+{
+    <lead>To purchase a new subscription, @Html.Raw(Model.SalesContactHtml).</lead>
+}
+else
+{
+    <lead>For assistance, @Html.Raw(Model.SubscriptionAdminContactHtml).</lead>
+}
+
+<div style="margin-top: 20px">
+<a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Back to turnstile »</a>
+</div>

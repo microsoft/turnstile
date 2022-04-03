@@ -17,6 +17,7 @@ namespace Turnstile.Web.Models
             OfferId = subscription.OfferId;
             PlanId = subscription.PlanId;
             SeatingStrategyName = subscription.SeatingConfiguration?.SeatingStrategyName;
+            IsBeingConfigured = subscription.IsBeingConfigured;
             TotalSeats = subscription.TotalSeats;
             CreatedDateTimeUtc = subscription.CreatedDateTimeUtc;
             StateLastUpdatedDateTimeUtc = subscription.StateLastUpdatedDateTimeUtc;
@@ -26,10 +27,15 @@ namespace Turnstile.Web.Models
         public string? SubscriptionName { get; set; }
         public string? State { get; set; }
         public string? TenantId { get; set; }
+        public string? TenantName { get; set; }
         public string? OfferId { get; set; }
         public string? PlanId { get; set; }
         public string? SeatingStrategyName { get; set; }
+
+        public bool? IsBeingConfigured { get; set; }
+
         public int? TotalSeats { get; set; }
+
         public DateTime? CreatedDateTimeUtc { get; set; }
         public DateTime? StateLastUpdatedDateTimeUtc { get; set; }
     }

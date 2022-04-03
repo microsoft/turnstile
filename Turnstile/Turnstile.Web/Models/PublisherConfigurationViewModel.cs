@@ -25,7 +25,7 @@ namespace Turnstile.Web.Models
             TurnstileConfiguration = new TurnstileConfigurationViewModel(publisherConfig.TurnstileConfiguration ?? new TurnstileConfiguration());
         }
 
-        public PublisherConfiguration ToCoreModel() =>
+        public PublisherConfiguration ToCoreModel(bool isSetupComplete) =>
             new PublisherConfiguration
             {
                 TurnstileName = TurnstileName,
@@ -38,6 +38,7 @@ namespace Turnstile.Web.Models
                 ContactSalesEmail = ContactSalesEmail,
                 ContactSupportEmail = ContactSupportEmail,
                 MonaBaseStorageUrl = MonaIntegrationBaseStorageUrl,
+                IsSetupComplete = isSetupComplete,
                 SeatingConfiguration = SeatingConfiguration?.ToCoreModel(),
                 TurnstileConfiguration = TurnstileConfiguration?.ToCoreModel()
             };
@@ -86,5 +87,9 @@ namespace Turnstile.Web.Models
         public SeatingConfigurationViewModel SeatingConfiguration { get; set; } = new SeatingConfigurationViewModel();
 
         public TurnstileConfigurationViewModel TurnstileConfiguration { get; set; } = new TurnstileConfigurationViewModel();
+
+        public bool IsConfigurationSaved { get; set; } = false;
+
+        public bool HasValidationErrors { get; set; } = false;
     }
 }

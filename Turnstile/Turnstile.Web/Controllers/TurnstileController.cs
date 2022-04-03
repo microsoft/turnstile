@@ -222,6 +222,25 @@ namespace Turnstile.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("turnstile/on/no-subscriptions", Name = RouteNames.OnNoSubscriptions)]
+        public async Task<IActionResult> OnNoSubscriptions()
+        {
+            try
+            {
+                var pubConfig = await GetPublisherConfiguration();
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!);
+
+                return View(messageModel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ [{nameof(OnNoSubscriptions)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
         private async Task<IActionResult> SubscriptionCanceled(string subscriptionId)
         {
             var pubConfig = await GetPublisherConfiguration();
@@ -237,6 +256,38 @@ namespace Turnstile.Web.Controllers
                 return Redirect(MergeSubscriptionId(
                     pubConfig!.TurnstileConfiguration!.OnSubscriptionCanceledUrl,
                     subscriptionId));
+            }
+        }
+
+        [HttpGet]
+        [Route("turnstile/on/subscription-canceled/{subscriptionId}", Name = RouteNames.OnSubscriptionCanceled)]
+        public async Task<IActionResult> OnSubscriptionCanceled(string subscriptionId)
+        {
+            try
+            {
+                var pubConfig = await GetPublisherConfiguration();
+                var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                if (subscription == null)
+                {
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                }
+
+                var subUser = User.ToCoreModel();
+
+                var isTenantAdmin =
+                    User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
+                    User.CanAdministerSubscription(subscription);
+
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+
+                return View(messageModel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ [{nameof(OnSubscriptionCanceled)}]: [{ex.Message}]");
+
+                throw;
             }
         }
 
@@ -258,6 +309,38 @@ namespace Turnstile.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("turnstile/on/subscription-suspended/{subscriptionId}", Name = RouteNames.OnSubscriptionSuspended)]
+        public async Task<IActionResult> OnSubscriptionSuspended(string subscriptionId)
+        {
+            try
+            {
+                var pubConfig = await GetPublisherConfiguration();
+                var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                if (subscription == null)
+                {
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                }
+
+                var subUser = User.ToCoreModel();
+
+                var isTenantAdmin =
+                    User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
+                    User.CanAdministerSubscription(subscription);
+
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+
+                return View(messageModel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ [{nameof(OnSubscriptionSuspended)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
         private async Task<IActionResult> SubscriptionNotFound(string subscriptionId)
         {
             var pubConfig = await GetPublisherConfiguration();
@@ -276,21 +359,71 @@ namespace Turnstile.Web.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("turnstile/on/subscription-not-found/{subscriptionId}", Name = RouteNames.OnSubscriptionNotFound)]
+        public async Task<IActionResult> OnSubscriptionNotFound(string subscriptionId)
+        {
+            try
+            { 
+                var pubConfig = await GetPublisherConfiguration();
+                var subUser = User.ToCoreModel();
+                var isTenantAdmin = User.CanAdministerAllTenantSubscriptions(subUser.TenantId!);
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, isTenantAdmin);
+
+                return View(messageModel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ [{nameof(OnSubscriptionNotFound)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
         private async Task<IActionResult> AccessDenied(string subscriptionId)
         {
             var pubConfig = await GetPublisherConfiguration();
 
             if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnAccessDeniedUrl))
             {
-                return RedirectToRoute(
-                    RouteNames.OnAccessDenied,
-                    new { subscriptionId = subscriptionId });
+                return Forbid();
             }
             else
             {
                 return Redirect(MergeSubscriptionId(
                     pubConfig!.TurnstileConfiguration!.OnAccessDeniedUrl!,
                     subscriptionId));
+            }
+        }
+
+        [Route("turnstile/on/no-seats/{subscriptionId}", Name = RouteNames.OnNoSeatsAvailable)]
+        public async Task<IActionResult> OnNoSeatsAvailable(string subscriptionId)
+        {
+            try
+            {
+                var pubConfig = await GetPublisherConfiguration();
+                var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                if (subscription == null)
+                {
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                }
+
+                var subUser = User.ToCoreModel();
+
+                var isTenantAdmin =
+                    User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
+                    User.CanAdministerSubscription(subscription);
+
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+
+                return View(messageModel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ [{nameof(OnNoSeatsAvailable)}]: [{ex.Message}]");
+
+                throw;
             }
         }
 

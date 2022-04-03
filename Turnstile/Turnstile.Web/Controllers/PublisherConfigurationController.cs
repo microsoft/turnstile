@@ -15,33 +15,46 @@ namespace Turnstile.Web.Controllers
             public const string PostPublisherConfiguration = "post_publisher_config";
         }
 
+        private readonly ILogger logger;
         private readonly IPublisherConfigurationClient pubConfigClient;
 
-        public PublisherConfigurationController(IPublisherConfigurationClient pubConfigClient)
+        public PublisherConfigurationController(
+            ILogger<PublisherConfigurationController> logger,
+            IPublisherConfigurationClient pubConfigClient)
         {
+            this.logger = logger;
             this.pubConfigClient = pubConfigClient;
         }
 
         [HttpGet]
         [Route("publisher/setup", Name = RouteNames.GetPublisherConfiguration)]
         public async Task<IActionResult> GetPublisherConfig()
-        {   
-            if (User.CanAdministerTurnstile())
+        {
+            try
             {
-                var pubConfig = await pubConfigClient.GetConfiguration();
-
-                if (pubConfig == null)
+                if (User.CanAdministerTurnstile())
                 {
-                    return View(new PublisherConfigurationViewModel());
+                    var pubConfig = await pubConfigClient.GetConfiguration();
+
+                    if (pubConfig == null)
+                    {
+                        return View(new PublisherConfigurationViewModel());
+                    }
+                    else
+                    {
+                        return View(new PublisherConfigurationViewModel(pubConfig));
+                    }
                 }
                 else
                 {
-                    return View(new PublisherConfigurationViewModel(pubConfig));
+                    return Forbid();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                return Forbid();
+                logger.LogError($"Exception @ [{nameof(GetPublisherConfig)}: [{ex.Message}]");
+
+                throw;
             }
         }
 
@@ -49,18 +62,35 @@ namespace Turnstile.Web.Controllers
         [Route("publisher/setup")]
         public async Task<IActionResult> PostPublisherConfig([FromForm] PublisherConfigurationViewModel pubConfigModel)
         {
-            if (User.CanAdministerTurnstile())
+            try
             {
-                if (ModelState.IsValid)
+                if (User.CanAdministerTurnstile())
                 {
-                    await pubConfigClient.UpdateConfiguration(pubConfigModel.ToCoreModel());
-                }
+                    if (ModelState.IsValid)
+                    {
+                        await pubConfigClient.UpdateConfiguration(pubConfigModel.ToCoreModel(true));
 
-                return View(nameof(GetPublisherConfig), pubConfigModel);
+                        pubConfigModel.HasValidationErrors = false;
+                        pubConfigModel.IsConfigurationSaved = true;
+                    }
+                    else
+                    {
+                        pubConfigModel.HasValidationErrors = true;
+                        pubConfigModel.IsConfigurationSaved = false;
+                    }
+
+                    return View(nameof(GetPublisherConfig), pubConfigModel);
+                }
+                else
+                {
+                    return Forbid();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return Forbid();
+                logger.LogError($"Exception @ [{nameof(PostPublisherConfig)}: [{ex.Message}]");
+
+                throw;
             }
         }    
     }

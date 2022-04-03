@@ -136,7 +136,7 @@ namespace Turnstile.Services.Cosmos
                 "SELECT * FROM s WHERE s.data_type = 'Seat' " +
                 "AND (IS_NULL(s.data.expires_utc) OR s.data.expires_utc > GetCurrentDateTime()) " +
                 (string.IsNullOrEmpty(byUserId) ? string.Empty : "AND (s.data.occupant.user_id = @userId OR s.data.reservation.user_id = @userId) ") +
-                (string.IsNullOrEmpty(byEmail) ? string.Empty : "AND s.data.reservation.email = @userEmail"));
+                (string.IsNullOrEmpty(byEmail) ? string.Empty : "AND (s.data.occupant.email = @userEmail OR s.data.reservation.email = @userEmail)"));
 
             if (!string.IsNullOrEmpty(byUserId))
             {

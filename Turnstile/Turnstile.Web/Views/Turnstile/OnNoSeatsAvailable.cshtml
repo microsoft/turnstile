@@ -1,0 +1,21 @@
+﻿@using Turnstile.Web.Controllers
+@model SubscriptionMessageViewModel
+
+@{
+    ViewData["Title"] = "No seats available | Turnstile";
+}
+
+<h1>No seats available</h1>
+
+@if (Model.IsTenantSubscriptionAdministrator)
+{
+    <lead>No more seats available. To purchase additional seats, @Html.Raw(Model.SalesContactHtml).</lead>
+}
+else
+{
+    <lead>No more seats available. For assistance, @Html.Raw(Model.SubscriptionAdminContactHtml).</lead>
+}
+
+<div style="margin-top: 20px">
+<a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Back to turnstile »</a>
+</div>
