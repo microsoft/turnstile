@@ -159,11 +159,12 @@ namespace Turnstile.Core.Models
                 patch.IsSetupComplete == null &&
                 patch.SeatingConfiguration == null &&
                 patch.SubscriberInfo == null &&
+                patch.TenantName == null &&
                 patch.SourceSubscription == null)
             {
                 errors.Add(
                     "No subscription properties have been patched; patchable subscription properties are " +
-                    $"[subscription_name], [plan_id], [state] (must be {SubscriptionStates.ValidStates.ToOrList()}), " +
+                    $"[subscription_name], [plan_id], [state] (must be {SubscriptionStates.ValidStates.ToOrList()}), [tenant_name], " +
                     "[admin_role_name], [user_role_name], [management_urls], [total_seats] (if [total_seats] has already been set), " +
                     "[is_being_configured], [is_setup_complete], [seating_config], [subscriber_info], [source_subscription], [admin_name], and [admin_email].");
             }

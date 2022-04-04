@@ -121,6 +121,8 @@
         {
             <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = Model.SubscriptionId })" class="btn btn-outline-primary">Reserve seat »</a>
         }
+
+        <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = Model.SubscriptionId })" class="btn btn-outline-primary">Setup »</a>
     }
     @if (Model.ManagementUrls != null)
     {

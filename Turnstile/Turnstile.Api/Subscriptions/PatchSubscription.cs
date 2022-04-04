@@ -72,6 +72,7 @@ namespace SMM.API.Subscriptions
             existingSub.ManagementUrls = patch.ManagementUrls ?? existingSub.ManagementUrls;
             existingSub.AdminName = patch.AdminName ?? existingSub.AdminName;
             existingSub.AdminEmail = patch.AdminEmail ?? existingSub.AdminEmail;
+            existingSub.TenantName = patch.TenantName ?? existingSub.TenantName;
 
             ApplySeatingConfigurationPatch(patch, existingSub);
 

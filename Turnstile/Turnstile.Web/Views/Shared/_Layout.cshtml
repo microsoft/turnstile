@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.Identity.Web
+@using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,19 +12,39 @@
     <link rel="stylesheet" href="~/Turnstile.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark" style="margin-bottom: 20px">
-        <div class="container-fluid">
-            <a class="navbar-brand" asp-area="" asp-controller="Turnstile" asp-action="DefaultTurnstile">Turnstile</a>
-            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                <ul class="navbar-nav flex-grow-1">
-                    
-                </ul>
-                <span class="d-flex navbar-text">
-                    <span>Howdy, @User.Identity!.Name!</span>&nbsp;&nbsp;<a asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
-                </span>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom mb-3 sticky-top">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">Turnstile</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        @if (User.CanAdministerTurnstile() || User.CanAdministerAllTenantSubscriptions(User.GetHomeTenantId()!))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions)">Subscriptions</a>
+                            </li>
+                        }
+                        @if (User.CanAdministerTurnstile())
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.RouteUrl(PublisherConfigurationController.RouteNames.GetPublisherConfiguration)">Setup</a>
+                            </li>
+                        }
+                    </ul>
+                    <span class="navbar-text">
+                        Howdy, @User.Identity!.Name!
+                    </span>
+                    <span class="navbar-text">
+                        <a class="nav-link" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
+                    </span>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
+    </header>
     <div class="container">
         <main role="main">
             @RenderBody()

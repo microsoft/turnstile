@@ -79,6 +79,8 @@ namespace Turnstile.Web.Controllers
                         pubConfigModel.IsConfigurationSaved = false;
                     }
 
+                    var pubConfig = await pubConfigClient.GetConfiguration();
+
                     return View(nameof(GetPublisherConfig), pubConfigModel);
                 }
                 else

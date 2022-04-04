@@ -1,12 +1,57 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Turnstile.Core.Constants;
+using Turnstile.Core.Models;
+using Turnstile.Core.Models.Configuration;
 
 namespace Turnstile.Web.Models
 {
     public class SubscriptionConfigurationViewModel
     {
+        public SubscriptionConfigurationViewModel() { }
+
+        public SubscriptionConfigurationViewModel(
+            PublisherConfiguration publisherConfig,
+            Subscription subscription,
+            ClaimsPrincipal forPrincipal)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
+            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
+
+            SubscriptionName = subscription.SubscriptionName;
+
+            SeatingStrategyName = 
+                subscription.SeatingConfiguration?.SeatingStrategyName ?? 
+                publisherConfig.SeatingConfiguration!.SeatingStrategyName;
+
+            SeatExpiryInDays =
+                subscription.SeatingConfiguration?.DefaultSeatExpiryInDays ??
+                publisherConfig.SeatingConfiguration!.DefaultSeatExpiryInDays;
+
+            SeatReservationExpiryInDays =
+                subscription.SeatingConfiguration?.SeatReservationExpiryInDays ??
+                publisherConfig.SeatingConfiguration!.SeatReservationExpiryInDays;
+        } 
+
+        public Subscription ApplyTo(Subscription patch)
+        {
+            ArgumentNullException.ThrowIfNull(patch, nameof(patch));
+
+            patch.SubscriptionName = SubscriptionName;
+
+            patch.SeatingConfiguration = new SeatingConfiguration
+            {
+                SeatingStrategyName = SeatingStrategyName,
+                DefaultSeatExpiryInDays = SeatExpiryInDays,
+                SeatReservationExpiryInDays = SeatReservationExpiryInDays
+            };
+
+            return patch;
+        }
+
         [Display(Name = "Subscription name")]
         [Required(ErrorMessage = "Subscription name is required.")]
         public string? SubscriptionName { get; set; }
