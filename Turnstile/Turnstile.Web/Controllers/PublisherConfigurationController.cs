@@ -42,6 +42,8 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
+                        this.ApplyLayout(pubConfig, User!);
+
                         return View(new PublisherConfigurationViewModel(pubConfig));
                     }
                 }
@@ -80,6 +82,11 @@ namespace Turnstile.Web.Controllers
                     }
 
                     var pubConfig = await pubConfigClient.GetConfiguration();
+
+                    if (pubConfig != null)
+                    {
+                        this.ApplyLayout(pubConfig, User!);
+                    }
 
                     return View(nameof(GetPublisherConfig), pubConfigModel);
                 }

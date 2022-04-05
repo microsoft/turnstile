@@ -75,6 +75,8 @@ namespace Turnstile.Web.Controllers
                     return setupAction;
                 }
 
+                this.ApplyLayout(publisherConfig!, User!);
+
                 var subUser = User.ToCoreModel();
                 var subscriptions = new List<Subscription>();
 
@@ -132,6 +134,8 @@ namespace Turnstile.Web.Controllers
 
                 if (isTurnstileAdmin || isSubscriberAdmin)
                 {
+                    this.ApplyLayout(publisherConfig!, User!);
+
                     var seats = await seatsClient.GetSeats(subscriptionId);
 
                     return View(new SubscriptionDetailViewModel(subscription, seats, isTurnstileAdmin, isSubscriberAdmin));
@@ -176,6 +180,8 @@ namespace Turnstile.Web.Controllers
 
                 if (isSubscriberAdmin)
                 {
+                    this.ApplyLayout(publisherConfig!, User!);
+
                     return View(new ReserveSeatViewModel(subscription));
                 }
                 else
@@ -243,6 +249,8 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
+                        this.ApplyLayout(publisherConfig!, User!);
+
                         return View(nameof(ReserveSeat), model);
                     }
                 }
@@ -283,6 +291,8 @@ namespace Turnstile.Web.Controllers
                 {
                     return NotFound();
                 }
+
+                this.ApplyLayout(publisherConfig!, User!);
 
                 var setupModel = new SubscriptionSetupViewModel(publisherConfig!, subscription, User!);
 
@@ -329,6 +339,8 @@ namespace Turnstile.Web.Controllers
                 }
                 else
                 {
+                    this.ApplyLayout(publisherConfig!, User!);
+
                     return View(setupModel);
                 }
             }

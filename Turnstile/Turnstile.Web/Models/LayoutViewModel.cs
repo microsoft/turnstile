@@ -10,21 +10,17 @@ namespace Turnstile.Web.Models
         public LayoutViewModel() { }
 
         public LayoutViewModel(PublisherConfiguration publisherConfig, ClaimsPrincipal forPrincipal)
-            : this(forPrincipal)
         {
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
-          
+            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
+
             TurnstileName = publisherConfig.TurnstileName;
             PublisherName = publisherConfig.PublisherName;
             HomePageUrl = publisherConfig.HomePageUrl;
             ContactPageUrl = publisherConfig.ContactPageUrl;
             PrivacyNoticePageUrl = publisherConfig.PrivacyNoticePageUrl;
-        }
-
-        public LayoutViewModel(ClaimsPrincipal forPrincipal)
-        {
-            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
-
+            ContactSalesUrl = publisherConfig.ContactSalesUrl;
+            ContactSupportUrl = publisherConfig.ContactSupportUrl;
             IsTurnstileAdmin = forPrincipal.CanAdministerTurnstile();
             IsTenantSubscriptionAdmin = forPrincipal.CanAdministerAllTenantSubscriptions(forPrincipal.GetHomeTenantId()!);
         }
@@ -33,6 +29,8 @@ namespace Turnstile.Web.Models
         public string? PublisherName { get; set; }
         public string? HomePageUrl { get; set; }
         public string? ContactPageUrl { get; set; }
+        public string? ContactSalesUrl { get; set; }
+        public string? ContactSupportUrl { get; set; }
         public string? PrivacyNoticePageUrl { get; set; }
 
         public bool IsTurnstileAdmin { get; set; } = false;

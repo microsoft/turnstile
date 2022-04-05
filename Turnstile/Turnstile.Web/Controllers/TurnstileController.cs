@@ -89,6 +89,8 @@ namespace Turnstile.Web.Controllers
                 }
                 else
                 {
+                    this.ApplyLayout(publisherConfig!, User!);
+
                     return View(ViewNames.PickSubscription, new PickSubscriptionModel(availableSubs, User));
                 }
 
@@ -231,6 +233,8 @@ namespace Turnstile.Web.Controllers
                 var pubConfig = await GetPublisherConfiguration();
                 var messageModel = new SubscriptionMessageViewModel(pubConfig!);
 
+                this.ApplyLayout(pubConfig!, User!);
+
                 return View(messageModel);
             }
             catch (Exception ex)
@@ -281,6 +285,8 @@ namespace Turnstile.Web.Controllers
 
                 var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
 
+                this.ApplyLayout(pubConfig!, User!);
+
                 return View(messageModel);
             }
             catch (Exception ex)
@@ -329,6 +335,8 @@ namespace Turnstile.Web.Controllers
                     User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
                     User.CanAdministerSubscription(subscription);
 
+                this.ApplyLayout(pubConfig!, User!);
+
                 var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
 
                 return View(messageModel);
@@ -369,6 +377,8 @@ namespace Turnstile.Web.Controllers
                 var subUser = User.ToCoreModel();
                 var isTenantAdmin = User.CanAdministerAllTenantSubscriptions(subUser.TenantId!);
                 var messageModel = new SubscriptionMessageViewModel(pubConfig!, isTenantAdmin);
+
+                this.ApplyLayout(pubConfig!, User!);
 
                 return View(messageModel);
             }
@@ -416,6 +426,8 @@ namespace Turnstile.Web.Controllers
                     User.CanAdministerSubscription(subscription);
 
                 var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+
+                this.ApplyLayout(pubConfig!, User!);
 
                 return View(messageModel);
             }

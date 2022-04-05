@@ -53,11 +53,6 @@
             _ => throw new InvalidOperationException($"Subscription seating strategy [{Model.Seating!.SeatingStrategyName}] not supported.")
         };
     }
-
-    string DescribeTotalSeats(SubscriptionRowViewModel subscription)
-    {
-        return (subscription.TotalSeats == null ? "N/A" : subscription.TotalSeats!.Value.ToString());
-    }
 }
 
 @model SubscriptionDetailViewModel
@@ -74,6 +69,30 @@
         <span>&nbsp;<span class="badge bg-warning text-dark">Test</span></span>
     }
 </h1>
+
+<nav class="nav">
+    @if (Model.UserIsSubscriberAdmin)
+    {
+        if (Model.Seating!.HasNoMoreSeats)
+        {
+            <a href="#" class="nav-link disabled">Reserve seat</a>
+        }
+        else
+        {
+            <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Reserve seat</a>
+        }
+
+        <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Setup subscription</a>
+    }
+
+    @if (Model.ManagementUrls != null)
+    {
+        foreach (var urlName in Model.ManagementUrls.Keys)
+        {
+            <a href="@Model.ManagementUrls[urlName]" class="nav-link" target="_blank">@urlName</a>
+        }
+    }
+</nav>
 
 <hr />
 
@@ -109,29 +128,6 @@
         </div>
     </div>
 }
-
-<div class="btn-group" style="margin-top: 20px; margin-bottom: 20px">
-    @if (Model.UserIsSubscriberAdmin)
-    {
-        if (Model.Seating!.HasNoMoreSeats)
-        {
-            <a href="#" class="btn btn-outline-primary disabled">Reserve seat »</a>
-        }
-        else
-        {
-            <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = Model.SubscriptionId })" class="btn btn-outline-primary">Reserve seat »</a>
-        }
-
-        <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = Model.SubscriptionId })" class="btn btn-outline-primary">Setup »</a>
-    }
-    @if (Model.ManagementUrls != null)
-    {
-        foreach (var urlName in Model.ManagementUrls.Keys)
-        {
-            <a href="@Model.ManagementUrls[urlName]" class="btn btn-outline-primary" target="_blank">@urlName »</a>
-        }
-    }
-</div>
 
 <table class="table" style="margin-bottom: 20px">
     <tbody>
