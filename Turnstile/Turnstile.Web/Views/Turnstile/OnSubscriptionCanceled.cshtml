@@ -2,7 +2,7 @@
 @model SubscriptionMessageViewModel
 
 @{
-    ViewData["Title"] = "Subscription canceled | Turnstile";
+    ViewData["Title"] = $"Subscription canceled | {Model.SubscriptionName ?? Model.SubscriptionId} | Turnstile";
 }
 
 <h1>Subscription canceled</h1>
@@ -17,5 +17,5 @@ else
 }
 
 <div style="margin-top: 20px">
-<a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Back to turnstile »</a>
+<a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Back to turnstile</a>
 </div>

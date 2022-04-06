@@ -26,7 +26,7 @@ namespace Turnstile.Web.Controllers
 
         public static class ViewNames
         {
-            public const string PickSubscription = "PickSubscriptionView";
+            public const string PickSubscription = "PickSubscription";
         }
 
         private readonly ILogger logger;
@@ -79,7 +79,7 @@ namespace Turnstile.Web.Controllers
                 {
                     logger.LogWarning($"User [{user.TenantId}/{user.UserId}] has no available subscriptions.");
 
-                    return await NoSubscriptionsFound();
+                    return publisherConfig!.OnNoSubscriptionsFound();
                 }
                 else if (availableSubs.Count == 1)
                 {
@@ -122,19 +122,19 @@ namespace Turnstile.Web.Controllers
 
                 if (subscription == null)
                 {
-                    return await SubscriptionNotFound(subscriptionId);
+                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
                 else if (!User.CanUseSubscription(subscription))
                 {
-                    return await AccessDenied(subscriptionId);
+                    return publisherConfig!.OnAccessDenied(subscriptionId);
                 }
                 else if (subscription.State == SubscriptionStates.Canceled)
                 {
-                    return await SubscriptionCanceled(subscriptionId);
+                    return publisherConfig!.OnSubscriptionCanceled(subscriptionId);
                 }
                 else if (subscription.State == SubscriptionStates.Suspended)
                 {
-                    return await SubscriptionSuspended(subscriptionId);
+                    return publisherConfig!.OnSubscriptionSuspended(subscriptionId);
                 }
                 else
                 {
@@ -142,11 +142,11 @@ namespace Turnstile.Web.Controllers
 
                     if (seat == null)
                     {
-                        return await NoSeatsAvailable(subscriptionId);
+                        return publisherConfig!.OnNoSeatsAvailable(subscriptionId);
                     }
                     else
                     {
-                        return await AccessGranted(subscriptionId);
+                        return publisherConfig!.OnAccessGranted(subscriptionId);
                     }
                 }
             }
@@ -207,23 +207,6 @@ namespace Turnstile.Web.Controllers
             }
         }
 
-        private string MergeSubscriptionId(string intoString, string subscriptionId) =>
-            intoString.Replace("{subscription_id}", subscriptionId);
-
-        private async Task<IActionResult> NoSubscriptionsFound()
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnNoSubscriptionsFoundUrl))
-            {
-                return RedirectToRoute(RouteNames.OnNoSubscriptions);
-            }
-            else
-            {
-                return Redirect(pubConfig!.TurnstileConfiguration!.OnNoSubscriptionsFoundUrl!);
-            }
-        }
-
         [HttpGet]
         [Route("turnstile/on/no-subscriptions", Name = RouteNames.OnNoSubscriptions)]
         public async Task<IActionResult> OnNoSubscriptions()
@@ -242,24 +225,6 @@ namespace Turnstile.Web.Controllers
                 logger.LogError($"Exception @ [{nameof(OnNoSubscriptions)}]: [{ex.Message}]");
 
                 throw;
-            }
-        }
-
-        private async Task<IActionResult> SubscriptionCanceled(string subscriptionId)
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnSubscriptionCanceledUrl))
-            {
-                return RedirectToRoute(
-                    RouteNames.OnSubscriptionCanceled,
-                    new { subscriptionId = subscriptionId });
-            }
-            else
-            {
-                return Redirect(MergeSubscriptionId(
-                    pubConfig!.TurnstileConfiguration!.OnSubscriptionCanceledUrl,
-                    subscriptionId));
             }
         }
 
@@ -297,24 +262,6 @@ namespace Turnstile.Web.Controllers
             }
         }
 
-        private async Task<IActionResult> SubscriptionSuspended(string subscriptionId)
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnSubscriptionSuspendedUrl))
-            {
-                return RedirectToRoute(
-                    RouteNames.OnSubscriptionSuspended,
-                    new { subscriptionId = subscriptionId });
-            }
-            else
-            {
-                return Redirect(MergeSubscriptionId(
-                    pubConfig!.TurnstileConfiguration!.OnSubscriptionSuspendedUrl,
-                    subscriptionId));
-            }
-        }
-
         [HttpGet]
         [Route("turnstile/on/subscription-suspended/{subscriptionId}", Name = RouteNames.OnSubscriptionSuspended)]
         public async Task<IActionResult> OnSubscriptionSuspended(string subscriptionId)
@@ -349,24 +296,6 @@ namespace Turnstile.Web.Controllers
             }
         }
 
-        private async Task<IActionResult> SubscriptionNotFound(string subscriptionId)
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnSubscriptionNotFoundUrl))
-            {
-                return RedirectToRoute(
-                    RouteNames.OnSubscriptionNotFound,
-                    new { subscriptionId = subscriptionId });
-            }
-            else
-            {
-                return Redirect(MergeSubscriptionId(
-                    pubConfig!.TurnstileConfiguration!.OnSubscriptionNotFoundUrl!,
-                    subscriptionId));
-            }
-        }
-
         [HttpGet]
         [Route("turnstile/on/subscription-not-found/{subscriptionId}", Name = RouteNames.OnSubscriptionNotFound)]
         public async Task<IActionResult> OnSubscriptionNotFound(string subscriptionId)
@@ -387,22 +316,6 @@ namespace Turnstile.Web.Controllers
                 logger.LogError($"Exception @ [{nameof(OnSubscriptionNotFound)}]: [{ex.Message}]");
 
                 throw;
-            }
-        }
-
-        private async Task<IActionResult> AccessDenied(string subscriptionId)
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnAccessDeniedUrl))
-            {
-                return Forbid();
-            }
-            else
-            {
-                return Redirect(MergeSubscriptionId(
-                    pubConfig!.TurnstileConfiguration!.OnAccessDeniedUrl!,
-                    subscriptionId));
             }
         }
 
@@ -437,33 +350,6 @@ namespace Turnstile.Web.Controllers
 
                 throw;
             }
-        }
-
-        private async Task<IActionResult> NoSeatsAvailable(string subscriptionId)
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            if (string.IsNullOrEmpty(pubConfig?.TurnstileConfiguration?.OnNoSeatAvailableUrl))
-            {
-                return RedirectToRoute(
-                    RouteNames.OnAccessDenied,
-                    new { subscriptionId = subscriptionId });
-            }
-            else
-            {
-                return Redirect(MergeSubscriptionId(
-                    pubConfig!.TurnstileConfiguration!.OnNoSeatAvailableUrl!,
-                    subscriptionId));
-            }
-        }
-
-        private async Task<IActionResult> AccessGranted(string subscriptionId)
-        {
-            var pubConfig = await GetPublisherConfiguration();
-
-            return Redirect(MergeSubscriptionId(
-                pubConfig!.TurnstileConfiguration!.OnAccessGrantedUrl!,
-                subscriptionId));
         }
     }
 }

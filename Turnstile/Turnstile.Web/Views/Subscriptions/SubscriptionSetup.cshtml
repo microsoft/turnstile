@@ -1,7 +1,7 @@
 ﻿@using Turnstile.Core.Constants
 
 @{
-    ViewData["Title"] = "Subscription setup | Turnstile";
+    ViewData["Title"] = $"Subscription setup | {Model.SubscriptionConfiguration?.SubscriptionName ?? Model.SubscriptionId} | Turnstile";
 }
 
 @model SubscriptionSetupViewModel

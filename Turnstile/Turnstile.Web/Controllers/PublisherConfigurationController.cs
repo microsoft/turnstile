@@ -28,7 +28,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpGet]
         [Route("publisher/setup", Name = RouteNames.GetPublisherConfiguration)]
-        public async Task<IActionResult> GetPublisherConfig()
+        public async Task<IActionResult> PublisherSetup()
         {
             try
             {
@@ -54,7 +54,7 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ [{nameof(GetPublisherConfig)}: [{ex.Message}]");
+                logger.LogError($"Exception @ GET [{nameof(PublisherSetup)}: [{ex.Message}]");
 
                 throw;
             }
@@ -62,7 +62,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpPost]
         [Route("publisher/setup")]
-        public async Task<IActionResult> PostPublisherConfig([FromForm] PublisherConfigurationViewModel pubConfigModel)
+        public async Task<IActionResult> PublisherSetup([FromForm] PublisherConfigurationViewModel pubConfigModel)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace Turnstile.Web.Controllers
                         this.ApplyLayout(pubConfig, User!);
                     }
 
-                    return View(nameof(GetPublisherConfig), pubConfigModel);
+                    return View(nameof(PublisherSetup), pubConfigModel);
                 }
                 else
                 {
@@ -97,7 +97,7 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ [{nameof(PostPublisherConfig)}: [{ex.Message}]");
+                logger.LogError($"Exception @ POST [{nameof(PublisherSetup)}: [{ex.Message}]");
 
                 throw;
             }

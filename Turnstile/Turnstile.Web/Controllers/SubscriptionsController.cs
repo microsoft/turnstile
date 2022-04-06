@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Web.Extensions;
@@ -63,7 +62,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpGet]
         [Route("subscriptions", Name = RouteNames.GetSubscriptions)]
-        public async Task<IActionResult> GetSubscriptions(string? sort = null)
+        public async Task<IActionResult> Subscriptions(string? sort = null)
         {
             try
             {
@@ -99,7 +98,7 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ [{nameof(GetSubscriptions)}]: [{ex.Message}]");
+                logger.LogError($"Exception @ GET [{nameof(Subscriptions)}]: [{ex.Message}]");
 
                 throw;
             }
@@ -107,7 +106,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpGet]
         [Route("subscriptions/{subscriptionId}", Name = RouteNames.GetSubscription)]
-        public async Task<IActionResult> GetSubscription(string subscriptionId)
+        public async Task<IActionResult> Subscription(string subscriptionId)
         {
             try
             {
@@ -123,7 +122,7 @@ namespace Turnstile.Web.Controllers
 
                 if (subscription == null)
                 {
-                    return NotFound();
+                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
                 var isTurnstileAdmin = User.CanAdministerTurnstile(); // Publisher admin
@@ -147,7 +146,7 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ [{nameof(GetSubscription)}]: [{ex.Message}]");
+                logger.LogError($"Exception @ GET [{nameof(Subscription)}]: [{ex.Message}]");
 
                 throw;
             }
@@ -171,7 +170,7 @@ namespace Turnstile.Web.Controllers
 
                 if (subscription == null)
                 {
-                    return NotFound();
+                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
                 var isSubscriberAdmin = // Subscriber admin
@@ -215,7 +214,7 @@ namespace Turnstile.Web.Controllers
 
                 if (subscription == null)
                 {
-                    return NotFound();
+                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
                 var isSubscriberAdmin = // Subscriber admin
@@ -289,7 +288,7 @@ namespace Turnstile.Web.Controllers
 
                 if (subscription == null)
                 {
-                    return NotFound();
+                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
                 this.ApplyLayout(publisherConfig!, User!);
@@ -326,7 +325,7 @@ namespace Turnstile.Web.Controllers
 
                     if (subscription == null)
                     {
-                        return NotFound();
+                        return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                     }
 
                     var patch = setupModel.CreatePatch();

@@ -1,10 +1,10 @@
 ﻿@{
-    ViewData["Title"] = "Reserve a seat |  Turnstile";
+    ViewData["Title"] = $"Reserve seat | {Model.SubscriptionName} | Turnstile";
 }
 
 @model ReserveSeatViewModel
 
-<h1>Reserve a seat</h1>
+<h1>Reserve seat</h1>
 <hr />
 
 <form asp-action="ReserveSeat" method="post">

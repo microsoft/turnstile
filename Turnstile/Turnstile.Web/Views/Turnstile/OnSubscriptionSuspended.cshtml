@@ -2,7 +2,7 @@
 @model SubscriptionMessageViewModel
 
 @{
-    ViewData["Title"] = "Subscription suspended | Turnstile";
+    ViewData["Title"] = $"Subscription suspended | {Model.SubscriptionName ?? Model.SubscriptionId} | Turnstile";
 }
 
 <h1>Subscription suspended</h1>
