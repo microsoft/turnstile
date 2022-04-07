@@ -150,8 +150,16 @@
             </td>
         </tr>
         <tr>
+            <th scope="row">Offer</th>
+            <td>@Model.OfferId</td>
+        </tr>
+        <tr>
+            <th scope="row">Plan</th>
+            <td>@Model.PlanId</td>
+        </tr>
+        <tr>
             <th scope="row">Created</th>
-            <td>@Model.StateLastUpdatedDateTimeUtc!.Value.ToString("g") UTC</td>
+            <td>@Model.CreatedDateTimeUtc!.Value.ToString("g") UTC</td>
         </tr>
         <tr class="table-secondary">
             <th scope="row" colspan="2">Security Roles</th>

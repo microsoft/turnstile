@@ -16,6 +16,8 @@ namespace Turnstile.Web.Models
             TenantId = subscription.TenantId;
             TenantName = subscription.TenantName;
             State = subscription.State;
+            OfferId = subscription.OfferId;
+            PlanId = subscription.PlanId;
             AdminRoleName = subscription.AdminRoleName;
             UserRoleName = subscription.UserRoleName;
             AdminName = subscription.AdminName;
@@ -40,6 +42,8 @@ namespace Turnstile.Web.Models
         public string? TenantId { get; set; }
         public string? TenantName { get; set; }
         public string? State { get; set; }
+        public string? OfferId { get; set; }
+        public string? PlanId { get; set; }
         public string? AdminRoleName { get; set; }
         public string? UserRoleName { get; set; }
         public string? AdminName { get; set; }
