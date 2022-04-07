@@ -32,7 +32,7 @@ namespace Turnstile.Web.Extensions
         public static bool CanAdministerTurnstile(this ClaimsPrincipal principal)
         {
 #if DEBUG
-            return true; // TODO: Come back and think about the implications of this...
+            return true; // TODO: Take this out before going live.
 #endif
 
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));
@@ -80,10 +80,13 @@ namespace Turnstile.Web.Extensions
                 principal.IsInRole(subscription.AdminRoleName!);
         }
 
+        public static bool CanAdministerAllTenantSubscriptions(this ClaimsPrincipal principal) =>
+            CanAdministerAllTenantSubscriptions(principal, principal.GetHomeTenantId()!);
+
         public static bool CanAdministerAllTenantSubscriptions(this ClaimsPrincipal principal, string tenantId)
         {
 #if DEBUG
-            return true; // TODO: Come back and think about the implications of this...
+            return true; // TODO: Take this out before going live.
 #endif
 
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));

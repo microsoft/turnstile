@@ -4,11 +4,11 @@ using Turnstile.Web.Extensions;
 
 namespace Turnstile.Web.Models
 {
-    public class SubscriptionIdentityModel
+    public class SubscriptionIdentityViewModel
     {
-        public SubscriptionIdentityModel() { }
+        public SubscriptionIdentityViewModel() { }
 
-        public SubscriptionIdentityModel(Subscription subscription, ClaimsPrincipal forPrincipal)
+        public SubscriptionIdentityViewModel(Subscription subscription, ClaimsPrincipal forPrincipal)
         {
             ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
             ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));

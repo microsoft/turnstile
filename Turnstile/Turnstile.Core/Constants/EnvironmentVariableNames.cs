@@ -26,7 +26,6 @@
         {
             public const string BaseStorageUrl = "Turnstile_MonaBaseStorageUrl";
         }
-
         public static class Storage
         {
             public const string StorageConnectionString = "Turnstile_PublisherConfigStorageConnectionString";
@@ -44,3 +43,4 @@
         }
     }
 }
+

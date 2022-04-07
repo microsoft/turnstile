@@ -24,6 +24,8 @@ namespace Turnstile.Services.Clients
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
+                var actualError = await apiResponse.Content.ReadAsStringAsync();
+
                 apiResponse.EnsureSuccessStatusCode();
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();

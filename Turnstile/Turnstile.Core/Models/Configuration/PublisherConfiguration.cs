@@ -45,6 +45,14 @@ namespace Turnstile.Core.Models.Configuration
         [JsonPropertyName("mona_base_storage_url")]
         public string? MonaBaseStorageUrl { get; set; }
 
+        [JsonProperty("mona_subscription_state")]
+        [JsonPropertyName("mona_subscription_state")]
+        public string? DefaultMonaSubscriptionState { get; set; }
+
+        [JsonProperty("mona_subscription_is_being_configured")]
+        [JsonPropertyName("mona_subscription_is_being_configured")]
+        public bool MonaSubscriptionIsBeingConfigured { get; set; } = false;
+
         [JsonProperty("is_setup_complete")]
         [JsonPropertyName("is_setup_complete")]
         public bool IsSetupComplete { get; set; } = false;

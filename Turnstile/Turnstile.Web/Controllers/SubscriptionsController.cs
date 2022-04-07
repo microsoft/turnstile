@@ -83,7 +83,7 @@ namespace Turnstile.Web.Controllers
                 {
                     subscriptions.AddRange(await subsClient.GetSubscriptions());
                 }
-                else if (User.CanAdministerAllTenantSubscriptions(subUser.TenantId!))
+                else if (User.CanAdministerAllTenantSubscriptions())
                 {
                     subscriptions.AddRange(await subsClient.GetSubscriptions(subUser.TenantId!));
                 }

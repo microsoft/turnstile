@@ -22,7 +22,7 @@ else if (Model.HasValidationErrors)
     </div>
 }
 
-<form asp-action="PostPublisherConfig" method="post">
+<form method="post">
     <div class="row">
         <div class="col-3 sticky-top">
             <div id="scroll-spy-list" class="list-group sticky-top" style="padding-top: 20px">
@@ -174,6 +174,17 @@ else if (Model.HasValidationErrors)
                     <input asp-for="@Model.MonaIntegrationBaseStorageUrl" type="url" class="form-control" aria-describedBy="onMonaUrlHelp" />
                     <span asp-validation-for="@Model.MonaIntegrationBaseStorageUrl" class="text-danger"></span>
                     <div id="onMonaUrlHelp" class="form-text">The Mona base storage URL</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.DefaultMonaSubscriptionState" class="form-label"></label>
+                    <select asp-for="@Model.DefaultMonaSubscriptionState" asp-items="@Model.DefaultMonaSubscriptionStates" class="form-select" aria-describedBy="defaultMonaStateHelp"></select>
+                    <span asp-validation-for="@Model.DefaultMonaSubscriptionState" class="text-danger"></span>
+                    <div id="defaultMonaStateHelp" class="form-text">Specifies the state that a subscription forwarded from Mona should be created in by default.</div>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.MonaSubscriptionIsBeingConfigured" aria-described-by="monaSubscriptionIsBeingConfiguredHelp" />
+                    <label asp-for="@Model.MonaSubscriptionIsBeingConfigured" class="form-check-label"></label>
+                    <div id="monaSubscriptionIsBeingConfiguredHelp" class="form-text">Indicates whether or not a subscription forwarded from Mona is currently being configured.</div>
                 </div>
                 <div id="save-changes" style="margin-bottom: 20px">
                     <hr />

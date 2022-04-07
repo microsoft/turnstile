@@ -5,10 +5,10 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
@@ -37,8 +37,8 @@ namespace Turnstile.Api.Subscriptions
                 return new BadRequestObjectResult("Subscription is required.");
             }
 
-            var subscription = JsonSerializer.Deserialize<Subscription>(httpContent);
-            var publisherConfig = JsonSerializer.Deserialize<PublisherConfiguration>(publisherConfigJson);
+            var subscription = JsonConvert.DeserializeObject<Subscription>(httpContent);
+            var publisherConfig = JsonConvert.DeserializeObject<PublisherConfiguration>(publisherConfigJson);
 
             subscription.SubscriptionId = subscriptionId;
             subscription.CreatedDateTimeUtc = DateTime.UtcNow;

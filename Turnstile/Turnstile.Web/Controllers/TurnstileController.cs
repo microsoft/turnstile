@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using Turnstile.Core.Constants;
+using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
@@ -75,13 +76,13 @@ namespace Turnstile.Web.Controllers
                     .Where(s => s.IsActive() && s.IsSetupComplete == true && User.CanUseSubscription(s))
                     .ToList();
 
-                if (availableSubs.Count == 0)
+                if (availableSubs.None())
                 {
                     logger.LogWarning($"User [{user.TenantId}/{user.UserId}] has no available subscriptions.");
 
                     return publisherConfig!.OnNoSubscriptionsFound();
                 }
-                else if (availableSubs.Count == 1)
+                else if (availableSubs.OnlyOne())
                 {
                     return RedirectToRoute(
                         RouteNames.SpecificTurnstile,
@@ -91,7 +92,7 @@ namespace Turnstile.Web.Controllers
                 {
                     this.ApplyLayout(publisherConfig!, User!);
 
-                    return View(ViewNames.PickSubscription, new PickSubscriptionModel(availableSubs, User));
+                    return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(availableSubs, User));
                 }
 
             }
@@ -243,11 +244,7 @@ namespace Turnstile.Web.Controllers
                 }
 
                 var subUser = User.ToCoreModel();
-
-                var isTenantAdmin =
-                    User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
-                    User.CanAdministerSubscription(subscription);
-
+                var isTenantAdmin = User.CanAdministerAllTenantSubscriptions() || User.CanAdministerSubscription(subscription);
                 var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
 
                 this.ApplyLayout(pubConfig!, User!);
@@ -277,10 +274,7 @@ namespace Turnstile.Web.Controllers
                 }
 
                 var subUser = User.ToCoreModel();
-
-                var isTenantAdmin =
-                    User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
-                    User.CanAdministerSubscription(subscription);
+                var isTenantAdmin = User.CanAdministerAllTenantSubscriptions() || User.CanAdministerSubscription(subscription);
 
                 this.ApplyLayout(pubConfig!, User!);
 

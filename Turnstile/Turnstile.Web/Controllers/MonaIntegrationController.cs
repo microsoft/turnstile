@@ -89,11 +89,11 @@ namespace Turnstile.Web.Controllers
                     return Forbid();
                 }
 
-                var subscription = ToCoreSubscription(monaSubscription);
+                var subscription = ToCoreSubscription(monaSubscription, pubConfig);
 
                 await subsClient.CreateSubscription(subscription);
 
-                return RedirectToRoute("subscription_setup", new { subscriptionId = subscription.SubscriptionId });
+                return RedirectToRoute(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = subscription.SubscriptionId });
             }
             catch (Exception ex)
             {
@@ -103,7 +103,7 @@ namespace Turnstile.Web.Controllers
             }
         }
 
-        private Subscription ToCoreSubscription(Models.Mona.Subscription monaSubscription) =>
+        private Subscription ToCoreSubscription(Models.Mona.Subscription monaSubscription, PublisherConfiguration publisherConfig) =>
            new Subscription
            {
                CreatedDateTimeUtc = DateTime.UtcNow,
@@ -123,9 +123,12 @@ namespace Turnstile.Web.Controllers
                OfferId = monaSubscription.OfferId,
                PlanId = monaSubscription.PlanId,
                SourceSubscription = JObject.FromObject(monaSubscription),
-               State = ToCoreState(monaSubscription.Status),
+               State = (publisherConfig.DefaultMonaSubscriptionState ?? ToCoreState(monaSubscription.Status)),
+               IsBeingConfigured = publisherConfig.MonaSubscriptionIsBeingConfigured,
                SubscriptionId = monaSubscription.SubscriptionId,
                SubscriptionName = monaSubscription.SubscriptionName,
+               TenantId = monaSubscription.Beneficiary?.AadTenantId,
+               StateLastUpdatedDateTimeUtc = DateTime.UtcNow,
                TotalSeats = monaSubscription.SeatQuantity
            };
 
