@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System.Net;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
@@ -8,9 +9,13 @@ namespace Turnstile.Services.Clients
     public class SeatsClient : ISeatsClient
     {
         private readonly HttpClient httpClient;
+        private readonly ILogger logger;
 
-        public SeatsClient(IHttpClientFactory httpClientFactory) =>
-             httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+        public SeatsClient(IHttpClientFactory httpClientFactory, ILogger<SeatsClient> logger)
+        {
+            httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+            this.logger = logger;
+        }
 
         public async Task<Seat?> GetSeat(string subscriptionId, string seatId)
         {
@@ -27,13 +32,22 @@ namespace Turnstile.Services.Clients
                 {
                     return null; // Seat not found...
                 }
+                else if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
-                apiResponse.EnsureSuccessStatusCode();
+                    return seat;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
+                    logger.LogError(errorMessage);
 
-                return seat;
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
 
@@ -48,7 +62,15 @@ namespace Turnstile.Services.Clients
             {
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (!apiResponse.IsSuccessStatusCode)
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
                 var seats = JsonConvert.DeserializeObject<List<Seat>>(jsonString);
@@ -70,7 +92,15 @@ namespace Turnstile.Services.Clients
             {
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (!apiResponse.IsSuccessStatusCode)
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
                 var seats = JsonConvert.DeserializeObject<List<Seat>>(jsonString);
@@ -91,7 +121,15 @@ namespace Turnstile.Services.Clients
             {
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (!apiResponse.IsSuccessStatusCode)
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
 
                 var jsonString = await apiResponse.Content.ReadAsStringAsync();
                 var seats = JsonConvert.DeserializeObject<List<Seat>>(jsonString);
@@ -118,13 +156,22 @@ namespace Turnstile.Services.Clients
                 {
                     return null; // Seat not found...
                 }
+                else if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
-                apiResponse.EnsureSuccessStatusCode();
+                    return seat!;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
+                    logger.LogError(errorMessage);
 
-                return seat!;
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
 
@@ -139,7 +186,15 @@ namespace Turnstile.Services.Clients
             {
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (!apiResponse.IsSuccessStatusCode)
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API DELETE [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
 
@@ -162,13 +217,22 @@ namespace Turnstile.Services.Clients
                 {
                     return null; // Seat not found...
                 }
+                else if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
-                apiResponse.EnsureSuccessStatusCode();
+                    return seat!;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
+                    logger.LogError(errorMessage);
 
-                return seat!;
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
 
@@ -191,13 +255,22 @@ namespace Turnstile.Services.Clients
                 {
                     return null; // Seat not found...
                 }
+                else if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
 
-                apiResponse.EnsureSuccessStatusCode();
+                    return seat!;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var seat = JsonConvert.DeserializeObject<Seat>(jsonString);
+                    logger.LogError(errorMessage);
 
-                return seat!;
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
     }

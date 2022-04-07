@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System.Net;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
@@ -8,9 +9,13 @@ namespace Turnstile.Services.Clients
     public class SubscriptionsClient : ISubscriptionsClient
     {
         private readonly HttpClient httpClient;
+        private readonly ILogger logger;
 
-        public SubscriptionsClient(IHttpClientFactory httpClientFactory) =>
+        public SubscriptionsClient(IHttpClientFactory httpClientFactory, ILogger<SubscriptionsClient> logger)
+        {
             httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+            this.logger = logger;
+        }
 
         public async Task<Subscription?> CreateSubscription(Subscription subscription)
         {
@@ -24,13 +29,21 @@ namespace Turnstile.Services.Clients
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                var actualError = await apiResponse.Content.ReadAsStringAsync();
+                if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                apiResponse.EnsureSuccessStatusCode();
+                    return JsonConvert.DeserializeObject<Subscription>(jsonString);
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    logger.LogError(errorMessage);
 
-                return JsonConvert.DeserializeObject<Subscription>(jsonString);
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
 
@@ -48,13 +61,20 @@ namespace Turnstile.Services.Clients
                 {
                     return null;
                 }
-                else
+                else if (apiResponse.IsSuccessStatusCode)
                 {
-                    apiResponse.EnsureSuccessStatusCode();
-
                     var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
                     return JsonConvert.DeserializeObject<Subscription>(jsonString);
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
                 }
             }
         }
@@ -72,11 +92,21 @@ namespace Turnstile.Services.Clients
             {
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<List<Subscription>>(jsonString)!;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                return JsonConvert.DeserializeObject<List<Subscription>>(jsonString)!;
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
 
@@ -92,11 +122,21 @@ namespace Turnstile.Services.Clients
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    return JsonConvert.DeserializeObject<Subscription>(jsonString);
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API PATCH [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                return JsonConvert.DeserializeObject<Subscription>(jsonString);
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
     }

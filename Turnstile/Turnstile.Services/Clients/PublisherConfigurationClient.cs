@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System.Net;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
@@ -11,9 +12,13 @@ namespace Turnstile.Services.Clients
         private const string url = "api/saas/publisher/configuration";
 
         private readonly HttpClient httpClient;
+        private readonly ILogger logger;
 
-        public PublisherConfigurationClient(IHttpClientFactory httpClientFactory) =>
+        public PublisherConfigurationClient(IHttpClientFactory httpClientFactory, ILogger<PublisherConfigurationClient> logger)
+        {
             httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+            this.logger = logger;
+        }        
 
         public async Task<PublisherConfiguration?> GetConfiguration()
         {
@@ -25,13 +30,22 @@ namespace Turnstile.Services.Clients
                 {
                     return null; // Configuration not found...
                 }
+                else if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    var publisherConfig = JsonConvert.DeserializeObject<PublisherConfiguration>(jsonString);
 
-                apiResponse.EnsureSuccessStatusCode();
+                    return publisherConfig;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-                var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                var publisherConfig = JsonConvert.DeserializeObject<PublisherConfiguration>(jsonString);
+                    logger.LogError(errorMessage);
 
-                return publisherConfig;
+                    throw new HttpRequestException(errorMessage);
+                }  
             }
         }
 
@@ -52,7 +66,15 @@ namespace Turnstile.Services.Clients
 
                 var apiResponse = await httpClient.SendAsync(apiRequest);
 
-                apiResponse.EnsureSuccessStatusCode();
+                if (!apiResponse.IsSuccessStatusCode)
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
             }
         }
     }
