@@ -5,7 +5,7 @@
             {
                 var footerModel = ViewData[nameof(LayoutViewModel)] as LayoutViewModel;
 
-                if (!string.IsNullOrEmpty(footerModel.PublisherName))
+                if (!string.IsNullOrEmpty(footerModel!.PublisherName))
                 {
                     if (string.IsNullOrEmpty(footerModel.HomePageUrl))
                     {

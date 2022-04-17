@@ -21,10 +21,18 @@ namespace Turnstile.Web.Models
                 new SubscriberInfo() :
                 subscription.SubscriberInfo.ToObject<SubscriberInfo>();
 
-            TenantName = subscription.TenantName;
-            TenantCountry = subscriberInfo!.TenantCountry ?? CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-            AdminName = subscription.AdminName;
-            AdminEmail = subscription.AdminEmail;
+            var thisCountry = 
+                forPrincipal.FindFirstValue(ClaimTypes.Country) ?? 
+                RegionInfo.CurrentRegion.TwoLetterISORegionName;
+
+            TenantName = 
+                subscription.TenantName ?? 
+                forPrincipal.FindFirstValue("companyName") ??
+                subscription.SubscriptionName;
+
+            TenantCountry = subscriberInfo!.TenantCountry ?? thisCountry;
+            AdminName = subscription.AdminName ?? forPrincipal.FindFirstValue(ClaimTypes.Name);
+            AdminEmail = subscription.AdminEmail ?? forPrincipal.FindFirstValue(ClaimTypes.Email);
         }
 
         public Subscription ApplyTo(Subscription subscription)
@@ -52,7 +60,7 @@ namespace Turnstile.Web.Models
 
         [Display(Name = "Tenant country")]
         [Required(ErrorMessage = "Tenant country is required.")]
-        public string? TenantCountry { get; set; } = "US";
+        public string? TenantCountry { get; set; }
 
         [Display(Name = "Administrator name")]
         public string? AdminName { get; set; }

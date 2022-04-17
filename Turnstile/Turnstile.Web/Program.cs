@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -11,9 +10,21 @@ var builder = WebApplication.CreateBuilder(args);
 var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
 // Add services to the container.
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
+    .AddMicrosoftIdentityWebApp(o =>
+    {
+        o.Instance = "https://login.microsoftonline.com";
+        o.ClientId = builder.Configuration["Turnstile_AadClientId"];
+        o.ClientSecret = builder.Configuration["Turnstile_AadClientSecret"];
+        o.TenantId = "common"; // For multi-tenant AAD apps...
+        o.CallbackPath = "/signin-oidc";
+        o.SignedOutCallbackPath = "/signout-callback-oidc";
+    })
         .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
-            .AddMicrosoftGraph(builder.Configuration.GetSection("MicrosoftGraph"))
+            .AddMicrosoftGraph(o =>
+            {
+                o.Scopes = "user.read email profile";
+                o.BaseUrl = "https://graph.microsoft.com/v1.0";
+            })
             .AddInMemoryTokenCaches();
 
 builder.Services.AddAuthorization(options =>
