@@ -206,7 +206,28 @@ web_app_base_url=$(az deployment group show \
     --query properties.outputs.webAppBaseUrl.value \
     --output tsv);
 
-echo "🔐   Adding you to this turnstile's administrator roles..."
+storage_account_name=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.storageAccountName.value \
+    --output tsv);
+
+storage_account_key=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.storageAccountKey.value \
+    --output tsv);
+
+echo "⚙️   Applying default publisher configuration..."
+
+az storage blob upload \
+    --account-name "$storage_account_name" \
+    --account-key "$storage_account_key" \
+    --container-name "configuration" \
+    --file "default_publisher_config.json" \
+    --name "publisher_config.json"
+
+echo "🔐   Adding you to this turnstile's administrative roles..."
 
 # App roles are managed (conveniently) through Microsoft Graph so we first need to get an access token...
 
@@ -287,7 +308,7 @@ rm -rf ./api_topublish.zip >/dev/null
 rm -rf ./web_topublish >/dev/null
 rm -rf ./web_topublish.zip >/dev/null
 
-echo "✔   Turnstile deployment complete. It took [$SECONDS] seconds."
+echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
 echo
 echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
 

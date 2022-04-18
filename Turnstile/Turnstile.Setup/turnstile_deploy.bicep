@@ -275,4 +275,6 @@ output deploymentName string = deploymentName
 output apiAppName string = apiAppName
 output webAppName string = webApp.name
 output webAppBaseUrl string = 'https://${webApp.properties.defaultHostName}'
+output storageAccountName string = storageAccount.name
+output storageAccountKey string = storageAccount.listKeys().keys[0].value
 
