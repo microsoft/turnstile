@@ -1,22 +1,21 @@
-@minLength(3)
+@minLength(5)
 @maxLength(13)
 @description('''
 Deployment name __must__:
 - be globally unique;
 - contain only alphanumeric characters (a-z, 0-9);
-- be at least 3 characters long;
+- be at least 5 characters long;
 - be less than 13 characters long
 ''')
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
-@description('The name of the role (by default, Azure Active Directory role) that publisher turnstile administrators must belong to')
 param publisherAdminRoleName string = 'turnstile_admins'
-
-@description('The name of the role (by default, Azure Active Directory role) that subscriber tenant admins must belong to')
 param subscriberTenantAdminRoleName string = 'subscriber_tenant_admins'
+param webAppAadClientId string
+param webAppAadTenantId string
 
-@description('The publisher\'s Azure Active Directory tenant ID')
-param publisherTenantId string
+@secure()
+param webAppAadClientSecret string
 
 param location string = resourceGroup().location
 
@@ -222,7 +221,7 @@ resource waitForApiApp 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   properties: {
     azPowerShellVersion: '6.4'
     timeout: 'PT1H'
-    scriptContent: 'start-sleep -Seconds 120'
+    scriptContent: 'start-sleep -Seconds 30'
     cleanupPreference: 'Always'
     retentionInterval: 'PT1H'
   }
@@ -252,8 +251,16 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = {
           value: publisherAdminRoleName
         }
         {
+          name: 'Turnstile_AadClientId'
+          value: webAppAadClientId
+        }
+        {
+          name: 'Turnstile_AadClientSecret'
+          value: webAppAadClientSecret
+        }
+        {
           name: 'Turnstile_PublisherTenantId'
-          value: publisherTenantId
+          value: webAppAadTenantId
         }
         {
           name: 'Turnstile_SubscriberTenantAdminRoleName'
@@ -263,4 +270,9 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = {
     }
   }
 }
+
+output deploymentName string = deploymentName
+output apiAppName string = apiAppName
+output webAppName string = webApp.name
+output webAppBaseUrl string = 'https://${webApp.properties.defaultHostName}.azurewebsites.net'
 
