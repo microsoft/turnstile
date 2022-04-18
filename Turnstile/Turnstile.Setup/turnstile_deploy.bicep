@@ -136,7 +136,7 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
       appSettings: [
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
-          value: '~3'
+          value: '~4'
         }
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
