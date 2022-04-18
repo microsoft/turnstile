@@ -176,9 +176,9 @@ subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
-echo "🏗️    Deploying Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
+echo "🦾   Deploying Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
 
-az group deployment create \
+az deployment group create \
     --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --template-file "./turnstile_deploy.bicep" \
@@ -241,6 +241,7 @@ curl -X POST \
     -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$ta_role_id\" }" \
     "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
 
+echo
 echo "🛡️   Completing Azure Active Directory (AAD) app [$aad_app_name] registration..."
 
 az ad app update \
