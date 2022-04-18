@@ -251,7 +251,7 @@ az ad app update \
 
 echo "⚡   Building API function app [$api_app_name]..."
 
-dotnet publish -c Release -o ./api_topublish ../Turnstile.Api.csproj
+dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
 
 cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
@@ -259,7 +259,7 @@ cd ..
 
 echo "🌐   Building web app [$web_app_name]..."
 
-dotnet publish -c Release -o ./web_topublish ../Turnstile.Web.csproj
+dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
 
 cd ./web_topublish
 zip -r ../web_topublish.zip . >/dev/null
