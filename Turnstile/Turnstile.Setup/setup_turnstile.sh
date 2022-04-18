@@ -16,13 +16,13 @@ check_az() {
 }
 
 check_dotnet() {
-    dotnet --version >/dev/null
+    dotnet_version=$(dotnet --version)
 
-    if [[ $? -ne 0 ]]; then
+    if [[ $dotnet_version == 6.* ]]; then # Needs to be .NET 6
+        echo "✔   .NET installed."
+    else
         echo "❌   Please install .NET before continuing. See [https://dotnet.microsoft.com/download] for more information."
         return 1
-    else
-        echo "✔   .NET installed."
     fi
 }
 
