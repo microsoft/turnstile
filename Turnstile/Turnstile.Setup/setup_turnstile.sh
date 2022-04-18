@@ -120,7 +120,11 @@ else
     return 1
 fi
 
-display_name = p_display_name || "Turnstile $p_deployment_name"
+if [[ -z $p_display_name ]]; then
+    display_name="Turnstile $p_deployment_name"
+else
+    display_name=p_display_name
+fi
 
 # Create our resource group if it doesn't already exist...
 
@@ -149,7 +153,7 @@ echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] regist
 aad_app_id=$(az ad app create \
     --display-name "$aad_app_name" \
     --available-to-other-tenants true \
-    --end-date "2299-12-31" \ # Hopefully this won't ever be a problem. Surely it won't ever be my problem. :D
+    --end-date "2299-12-31" \
     --password "$aad_app_secret" \
     --optional-claims @./aad/manifest.optional_claims.json \
     --required-resource-accesses @./aad/manifest.resource_access.json \
