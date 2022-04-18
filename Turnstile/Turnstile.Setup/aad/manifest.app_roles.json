@@ -3,8 +3,8 @@
         "allowedMemberTypes": [
             "User"
         ],
-        "description": "Subscriber Tenant Administrators",
-        "displayName": "Subscriber (customer) users that can administer tenant subscriptions",
+        "displayName": "Tenant Administrators",
+        "description": "Users that can administer this Azure Active Directory tenant's turnstile subscriptions",
         "isEnabled": true,
         "value": "subscriber_tenant_admins"
     },
@@ -12,8 +12,8 @@
         "allowedMemberTypes": [
             "User"
         ],
-        "description": "Turnstile Administrators",
-        "displayName": "Publisher (ISV) users that can administer the turnstile",
+        "displayName": "Turnstile Administrators",
+        "description": "Users that can administer this turnstile",
         "isEnabled": true,
         "value": "turnstile_admins"
     }
