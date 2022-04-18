@@ -216,12 +216,12 @@ graph_token=$(az account get-access-token \
     --output tsv);
 
 tsa_role_id=$(az ad sp show \
-    --id "$aad_sp_id"
+    --id "$aad_sp_id" \
     --query "appRoles[0].id" \
     --output tsv);
 
 ta_role_id=$(az ad sp show \
-    --id "aad_sp_id"
+    --id "$aad_sp_id" \
     --query "appRoles[1].id" \
     --output tsv);
 
@@ -251,19 +251,19 @@ az ad app update \
 
 echo "⚡   Building API function app [$api_app_name]..."
 
-dotnet publish -c Release -o ./api/topublish ../Turnstile.Api.csproj
+dotnet publish -c Release -o ./api_topublish ../Turnstile.Api.csproj
 
-cd ./api/topublish
-zip -r ../../api_topublish.zip . >/dev/null
-cd ../..
+cd ./api_topublish
+zip -r ../api_topublish.zip . >/dev/null
+cd ..
 
 echo "🌐   Building web app [$web_app_name]..."
 
-dotnet publish -c Release -o ./web/topublish ../Turnstile.Web.csproj
+dotnet publish -c Release -o ./web_topublish ../Turnstile.Web.csproj
 
-cd ./web/topublish
-zip -r ../../web_topublish.zip . >/dev/null
-cd ../..
+cd ./web_topublish
+zip -r ../web_topublish.zip . >/dev/null
+cd ..
 
 echo "☁️    Publishing API function app [$api_app_name]..."
 
@@ -281,9 +281,9 @@ az webapp deployment source config-zip \
 
 echo "🧹   Cleaning up..."
 
-rm -rf ./api/topublish >/dev/null
+rm -rf ./api_topublish >/dev/null
 rm -rf ./api_topublish.zip >/dev/null
-rm -rf ./web/topublish >/dev/null
+rm -rf ./web_topublish >/dev/null
 rm -rf ./web_topublish.zip >/dev/null
 
 echo "✔   Turnstile deployment complete. It took [$SECONDS] seconds."
