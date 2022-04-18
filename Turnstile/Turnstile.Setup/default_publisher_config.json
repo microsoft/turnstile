@@ -1,3 +1,6 @@
 {
-    "is_setup_complete": false
+    "is_setup_complete": false,
+    "default_seating_config": {
+        
+    }
 }

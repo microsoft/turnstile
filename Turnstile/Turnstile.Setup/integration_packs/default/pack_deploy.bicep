@@ -6,9 +6,6 @@ param eventGridTopicResourceName string
 @maxLength(13)
 param packName string
 
-param packLocation string = resourceGroup().location // Should alaways be the same as [eventGridTopicLocation]
-param packResourceGroup string = eventGridTopicResourceGroup
-
 param aadClientId string
 param aadTenantId string
 

@@ -4,7 +4,7 @@ SECONDS=0 # Let's time it...
 
 turnstile_version="0.1-experimental"
 
-usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name]"; }
+usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack]"; }
 
 check_az() {
     az version >/dev/null
@@ -98,6 +98,9 @@ while getopts "c:d:n:r:" opt; do
         d)
             p_display_name=$OPTARG
         ;;
+        i)
+            p_integration_pack=$OPTARG
+        ;;
         n)
             p_deployment_name=$OPTARG
         ;;
@@ -166,7 +169,7 @@ aad_app_id=$(az ad app create \
     --query appId \
     --output tsv);
 
-echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] service principal..."
+echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
 
 sleep 30 # Give AAD a chance to catch up...
 
@@ -176,6 +179,15 @@ if [[ -z $aad_sp_id ]]; then
     echo "$lp ❌   Unable to create service principal for AAD app [$aad_app_name ($aad_app_id)]. See above output for details. Setup failed."
     exit 1
 fi
+
+echo "🔐   Granting AAD app [$aad_app_name] service principal [$aad_sp_id] contributor access to resource group [$resource_group_name]..."
+
+sleep 30 # Give AAD a chance to catch up...
+
+az role assignment create \
+    --role "Contributor" \
+    --assignee "$aad_sp_id" \
+    --resource-group "$resource_group_name"
 
 subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
@@ -221,6 +233,12 @@ storage_account_key=$(az deployment group show \
     --resource-group="$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.storageAccountKey.value \
+    --output tsv);
+
+topic_name=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.topicName.value \
     --output tsv);
 
 echo "⚙️   Applying default publisher configuration..."
@@ -274,11 +292,41 @@ curl -X POST \
     "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
 
 echo
-echo "🛡️   Completing Azure Active Directory (AAD) app [$aad_app_name] registration..."
+echo "🛡️   Completing AAD app [$aad_app_name] registration..."
 
 az ad app update \
     --id "$aad_app_id" \
     --reply-urls "$web_app_base_url/signin-oidc";
+
+if [[ -z $p_integration_pack ]]; then
+    integration_pack="default"
+else
+    integration_pack="$p_integration_pack"
+fi
+
+echo "🧩   Installing [$integration_pack] integration pack..."
+
+current_path=$(pwd)
+pack_path="./integration_packs/$integration_pack"
+
+cd "$pack_path"
+
+if [[ $? == 0 && -f "./setup_pack.sh" ]]; then
+    chmod +x ./setup_pack.sh
+
+    ./setup_pack.sh \
+        -r "$p_deployment_region" \
+        -g "$resource_group_name" \
+        -n "$topic_name" \
+        -d "$p_deployment_name" \
+        -c "$aad_app_id" \
+        -t "$current_user_tid" \
+        -s "$aad_app_secret"
+else
+    echo "⚠️   [$integration_pack] integration pack not found at [$pack_path]. This integration pack will not be installed."
+fi
+
+cd "$current_path"
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
