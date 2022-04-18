@@ -19,9 +19,9 @@ check_dotnet() {
     dotnet_version=$(dotnet --version)
 
     if [[ $dotnet_version == 6.* ]]; then # Needs to be .NET 6
-        echo "✔   .NET installed."
+        echo "✔   .NET [$dotnet_version] installed."
     else
-        echo "❌   Please install .NET before continuing. See [https://dotnet.microsoft.com/download] for more information."
+        echo "❌   Please install .NET 6.* before continuing. See [https://dotnet.microsoft.com/download] for more information."
         return 1
     fi
 }
