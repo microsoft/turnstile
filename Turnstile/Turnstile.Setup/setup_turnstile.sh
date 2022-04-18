@@ -2,7 +2,9 @@
 
 SECONDS=0 # Let's time it...
 
-usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-d display_name]"; }
+turnstile_version="0.1-experimental"
+
+usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name]"; }
 
 check_az() {
     az version >/dev/null
@@ -88,8 +90,11 @@ done
 
 # Get our parameters...
 
-while getopts "d:n:r:" opt; do
+while getopts "c:d:n:r:" opt; do
     case $opt in
+        c)
+            p_publisher_config_path=$OPTARG
+        ;;
         d)
             p_display_name=$OPTARG
         ;;
@@ -176,7 +181,7 @@ subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
-echo "🦾   Deploying Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
+echo "🦾   Deploying Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
 
 az deployment group create \
     --resource-group "$resource_group_name" \
@@ -220,11 +225,17 @@ storage_account_key=$(az deployment group show \
 
 echo "⚙️   Applying default publisher configuration..."
 
+if [[ -z $p_publisher_config_path ]]; then
+    publisher_config_path="default_publisher_config.json"
+else # The user can provide a custom publisher configuraiton file via the -c switch...
+    publisher_config_path=$p_publisher_config_path
+fi
+
 az storage blob upload \
     --account-name "$storage_account_name" \
     --account-key "$storage_account_key" \
     --container-name "configuration" \
-    --file "default_publisher_config.json" \
+    --file "$publisher_config_path" \
     --name "publisher_config.json"
 
 echo "🔐   Adding you to this turnstile's administrative roles..."
