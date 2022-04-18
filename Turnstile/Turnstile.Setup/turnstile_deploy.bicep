@@ -274,5 +274,5 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = {
 output deploymentName string = deploymentName
 output apiAppName string = apiAppName
 output webAppName string = webApp.name
-output webAppBaseUrl string = 'https://${webApp.properties.defaultHostName}.azurewebsites.net'
+output webAppBaseUrl string = 'https://${webApp.properties.defaultHostName}'
 
