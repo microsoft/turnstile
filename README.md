@@ -1,14 +1,18 @@
-# Project
+# Turnstile
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+Turnstile simplifies the process of building SaaS apps on Azure by automating subscription and seat (or license) management. It's deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
 
-As the maintainer of this project, please make a few updates:
+## Subscriptions and seats
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+Before we dive deeper into how Turnstile works, let's first establish a common vocabulary.
+
+__Customers__ purchase __subscriptions__ to your SaaS app through a variety of possible sales channels including AppSource and the Azure Marketplace. A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating the management of __subscriptions__ and the provisioning of __seats__. 
+
+## How Turnstile works
+
+When a user authenticates to your SaaS app, your SaaS app calls a simple API endpoint that Turnstile exposes to determine whether or not the user already has a seat. If the user does not already have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
+
+
 
 ## Contributing
 
