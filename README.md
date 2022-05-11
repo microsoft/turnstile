@@ -27,7 +27,9 @@ When a user authenticates to your SaaS app, your SaaS app calls a simple API end
     style I fill: darkred  
 ```
 
-The diagram below illustrates the workflow that Turnstile uses when a seat is requested in a subscription.
+## How Turnstile assigns seats to your users
+
+If a user to more than one subscription, they're presented with a list of subscriptions to choose from. The diagram below illustrates the workflow that Turnstile uses when a seat is requested in a subscription.
 
 ```mermaid
   graph TD
