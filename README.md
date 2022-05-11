@@ -40,7 +40,7 @@ When a user tries to access your SaaS app, your SaaS app calls a simple API endp
 
 If the user's tenant has more than one subscription, the user is first prompted to choose which subscription they're trying to access. Once the user has selected a subscription, Turnstile runs the workflow below to try and get that user a seat.
 
-> If the tenant only has one subscription (likely the most common use case), this workflow is run immediately on that subscription for the user. Usually, the user trying to get a seat from Turnstile will see no Turnstile user interface at all; Turnstile simply tries to get the user a seat then redirects them based on the result of this workflow.
+> If the tenant only has one subscription, this workflow is run immediately on that subscription for the user. Usually, the user trying to get a seat from Turnstile will see no Turnstile user interface at all; Turnstile simply tries to get the user a seat then redirects them based on the result of this workflow.
 
 ```mermaid
   graph TD
