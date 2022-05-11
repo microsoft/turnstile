@@ -12,7 +12,20 @@ __Customers__ purchase __subscriptions__ to your SaaS app through a variety of p
 
 When a user authenticates to your SaaS app, your SaaS app calls a simple API endpoint that Turnstile exposes to determine whether or not the user already has a seat. If the user does not already have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
 
-
+```mermaid
+  graph TD
+    A(User tries to<br />access SaaS app) --> B(SaaS app asks<br />Turnstile for a seat<br />for the user)
+    B --> C{Does the user<br />already<br />have a seat?}
+    C -- Yes --> D(User accesses<br />SaaS app)
+    C -- No --> E(User is redirected<br />to Turnstile to try<br />to get a seat)
+    E --> F{Is a seat<br />available?}
+    F -- Yes -->G(Turnstile assigns a<br />seat to the user)
+    G --> H(Turnstile redirects<br />user to SaaS app)
+    H --> B
+    F -- No -->I(User informed that no<br />seats are available)
+    style D fill: darkgreen
+    style I fill: darkred  
+```
 
 ## Contributing
 
