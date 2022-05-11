@@ -136,9 +136,9 @@ Once the script is finished, note the information provided in the `Turnstile Dep
 Locate the setup URL at the _very bottom_ of the script output. It will look similiar to this —
 
 ```shell
-https://turn-web-turnstile01.azurewebsites.net/setup
+https://turn-web-example01.azurewebsites.net/setup
 
-# Where "turnstile01" is the Mona deployment name.
+# Where "example01" is the Turnstile deployment name.
 ```
 
 Click the URL (it's automatically linked within the cloud shell) to navigate to that site and complete the Turnstile setup wizard.
