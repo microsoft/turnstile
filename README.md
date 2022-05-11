@@ -2,11 +2,19 @@
 
 Turnstile simplifies the process of building SaaS apps on Azure by automating subscription and seat (or license) management. It's deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
 
+## Contents
+
+* [How we talk about SaaS](#how-we-talk-about-saas)
+* [How Turnstile works](#how-turnstile-works)
+  * [How Turnstile assigns seats to your users](#how-turnstile-assigns-seats-to-your-users)
+* [Contributing](#contributing)
+* [Trademarks](#trademarks)
+
 ## How we talk about SaaS
 
 Before we dive deeper into how Turnstile works, let's first establish a common vocabulary.
 
-__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app. A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating and externalizing the management of __subscriptions__ and the provisioning of __seats__. 
+__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app. A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating and externalizing the management of __subscriptions__ and the provisioning of __seats__.
 
 ## How Turnstile works
 
