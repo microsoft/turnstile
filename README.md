@@ -16,13 +16,13 @@ When a user tries to access your SaaS app, your SaaS app calls a simple API endp
   graph TD
     A(User tries to<br />access SaaS app) --> B(SaaS app asks<br />Turnstile for a seat<br />for the user)
     B --> C{Does the user<br />already<br />have a seat?}
-    C -- Yes --> D(User accesses<br />SaaS app)
+    C -- Yes --> D((User accesses<br />SaaS app))
     C -- No --> E(User is redirected<br />to Turnstile to try<br />to get a seat)
     E --> F{Is a seat<br />available?}
     F -- Yes -->G(Turnstile assigns a<br />seat to the user)
     G --> H(Turnstile redirects<br />user to SaaS app)
     H --> B
-    F -- No -->I(User informed that no<br />seats are available)
+    F -- No -->I((User informed<br />that no seats<br />are available))
     style D fill: darkgreen
     style I fill: darkred  
 ```
