@@ -27,6 +27,39 @@ When a user authenticates to your SaaS app, your SaaS app calls a simple API end
     style I fill: darkred  
 ```
 
+The diagram below illustrates the workflow that Turnstile uses when a seat is requested in a subscription.
+
+```mermaid
+  graph TD
+    A{Does Turnstile<br />know about<br />this subscription?}
+    A -- No --> B((Subscription<br />not found))
+    A -- Yes --> C{Does the user<br />have access to<br />this subscription?}
+    C -- No --> D((Access denied))
+    C -- Yes --> E{Has this subscription<br />been canceled?}
+    E -- Yes --> F((Subscription<br />canceled))
+    E -- No --> G{Is this subscription<br />suspended?}
+    G -- Yes --> H((Subscription<br />suspended))
+    G -- No --> I{Does this user<br />already have a seat?}
+    I -- Yes --> J((Redirect to<br />SaaS app))
+    I -- No --> K{Is a seat<br />reserved for<br />this user?}
+    K -- Yes --> L(Assign seat<br />to user)
+    L --> J
+    K -- No --> M{Are there any<br />more seats<br />available in this<br />subscription?}
+    M -- Yes --> L
+    M -- No --> N{Is limited<br />seating enabled?}
+    N -- Yes --> O(Assign limited<br />seat to user)
+    O --> J
+    N -- No --> P((No seats<br />available))
+    style B fill: darkred
+    style D fill: darkred
+    style F fill: darkred
+    style H fill: darkred
+    style P fill: darkred
+    style J fill: darkgreen
+```
+
+
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
