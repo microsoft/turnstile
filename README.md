@@ -2,11 +2,11 @@
 
 Turnstile simplifies the process of building SaaS apps on Azure by automating subscription and seat (or license) management. It's deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
 
-## Subscriptions and seats
+## How we talk about SaaS
 
 Before we dive deeper into how Turnstile works, let's first establish a common vocabulary.
 
-__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app through a variety of possible sales channels including [the Microsoft commercial marketplace](https://azure.microsoft.com/publish-your-app/#why-commercial-marketplace). A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating and externalizing the management of __subscriptions__ and the provisioning of __seats__. 
+__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app. A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating and externalizing the management of __subscriptions__ and the provisioning of __seats__. 
 
 ## How Turnstile works
 
@@ -27,9 +27,11 @@ When a user tries to access your SaaS app, your SaaS app calls a simple API endp
     style I fill:darkred,color:white
 ```
 
-## How Turnstile assigns seats to your users
+### How Turnstile assigns seats to your users
 
-If a user's tenant has more than one subscription, the user is presented with a list of subscriptions to choose from. The diagram below illustrates the workflow that Turnstile uses when a seat is requested in a subscription.
+If the user's tenant has more than one subscription, the user is first prompted to choose which subscription they're trying to access. Once the user has selected a subscription, Turnstile runs the workflow below to try and get that user a seat.
+
+> If the tenant only has one subscription (likely the most common use case), this workflow is run immediately on that subscription for the user. Usually, the user trying to get a seat from Turnstile will see no Turnstile user interface at all; Turnstile simply tries to get the user a seat then redirects them based on the result of this workflow.
 
 ```mermaid
   graph TD
