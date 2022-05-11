@@ -6,11 +6,11 @@ Turnstile simplifies the process of building SaaS apps on Azure by automating su
 
 Before we dive deeper into how Turnstile works, let's first establish a common vocabulary.
 
-__Customers__ purchase __subscriptions__ to your SaaS app through a variety of possible sales channels including AppSource and the Azure Marketplace. A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating the management of __subscriptions__ and the provisioning of __seats__. 
+__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app through a variety of possible sales channels including [the Microsoft commercial marketplace](https://azure.microsoft.com/publish-your-app/#why-commercial-marketplace). A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating and externalizing the management of __subscriptions__ and the provisioning of __seats__. 
 
 ## How Turnstile works
 
-When a user authenticates to your SaaS app, your SaaS app calls a simple API endpoint that Turnstile exposes to determine whether or not the user already has a seat. If the user does not already have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
+When a user tries to access your SaaS app, your SaaS app calls a simple API endpoint that Turnstile exposes to determine whether or not the user already has a seat. If the user does not already have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
 
 ```mermaid
   graph TD
@@ -29,7 +29,7 @@ When a user authenticates to your SaaS app, your SaaS app calls a simple API end
 
 ## How Turnstile assigns seats to your users
 
-If a user's tenant has more than one subscription, they're presented with a list of subscriptions to choose from. The diagram below illustrates the workflow that Turnstile uses when a seat is requested in a subscription.
+If a user's tenant has more than one subscription, the user is presented with a list of subscriptions to choose from. The diagram below illustrates the workflow that Turnstile uses when a seat is requested in a subscription.
 
 ```mermaid
   graph TD
