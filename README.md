@@ -23,8 +23,8 @@ When a user tries to access your SaaS app, your SaaS app calls a simple API endp
     G --> H(Turnstile redirects<br />user to SaaS app)
     H --> B
     F -- No -->I((User informed<br />that no seats<br />are available))
-    style D fill: darkgreen
-    style I fill: darkred  
+    style D fill:darkgreen,color:white
+    style I fill:darkred,color:white
 ```
 
 ## How Turnstile assigns seats to your users
@@ -52,12 +52,12 @@ If a user's tenant has more than one subscription, the user is presented with a 
     N -- Yes --> O(Assign limited<br />seat to user)
     O --> J
     N -- No --> P((No seats<br />available))
-    style B fill: darkred
-    style D fill: darkred
-    style F fill: darkred
-    style H fill: darkred
-    style P fill: darkred
-    style J fill: darkgreen
+    style B fill:darkred,color:white
+    style D fill:darkred,color:white
+    style F fill:darkred,color:white
+    style H fill:darkred,color:white
+    style P fill:darkred,color:white
+    style J fill:darkgreen,color:white
 ```
 
 
