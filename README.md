@@ -7,6 +7,7 @@ Turnstile simplifies the process of building SaaS apps on Azure by automating su
 * [How we talk about SaaS](#how-we-talk-about-saas)
 * [How Turnstile works](#how-turnstile-works)
   * [How Turnstile assigns seats to your users](#how-turnstile-assigns-seats-to-your-users)
+* [Deploying Turnstile](#deploying-turnstile)
 * [Contributing](#contributing)
 * [Trademarks](#trademarks)
 
@@ -70,7 +71,9 @@ If the user's tenant has more than one subscription, the user is first prompted 
     style J fill:darkgreen,color:white
 ```
 
+## Deploying Turnstile
 
+> ✋🏼 **Wait!** Will you be [selling your SaaS app through the Microsoft commercial marketplace](https://azure.microsoft.com/publish-your-app/) (either Azure Marketplace or AppSource)? [Mona ([**M**]arketplace [**On**]boarding [**Accelerator**])](https://github.com/microsoft/mona-saas) is another Microsoft-hosted open source project that makes it easy to integrate your SaaS app with the Microsoft commercial marketplace. Mona and Turnstile are designed to work together to provide a complete SaaS onboarding solution for transactability and seat/subscription management. The Mona repository has an installer that automatically deploys both Mona and Turnstile into your Azure environment and configures the two to work together. Specifically, Mona is configured to forward new subscription purchases and [Marketplace webhook notifications](https://docs.microsoft.com/azure/marketplace/partner-center-portal/pc-saas-fulfillment-webhook) to Turnstile.
 
 ## Contributing
 
