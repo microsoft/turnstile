@@ -136,7 +136,7 @@ Once the script is finished, note the information provided in the `Turnstile Dep
 Locate the setup URL at the _very bottom_ of the script output. It will look similiar to this —
 
 ```shell
-https://turn-web-example01.azurewebsites.net/setup
+https://turn-web-example01.azurewebsites.net/publisher/setup
 
 # Where "example01" is the Turnstile deployment name.
 ```
