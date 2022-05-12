@@ -1,6 +1,6 @@
 # Turnstile
 
-Turnstile simplifies the process of building SaaS apps on Azure by automating subscription and seat (or license) management. It's deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
+Turnstile simplifies the building of SaaS apps on Azure by automating subscription and seat (or license) management. Turnstile is deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
 
 ## Contents
 
@@ -15,11 +15,11 @@ Turnstile simplifies the process of building SaaS apps on Azure by automating su
 
 Before we dive deeper into how Turnstile works, let's first establish a common vocabulary.
 
-__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app. A __subscription__ may or may not include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app. Turnstile simplifies this process by automating and externalizing the management of __subscriptions__ and the provisioning of __seats__.
+__Customers__ (represented in your SaaS app as __tenants__) purchase __subscriptions__ to your SaaS app. A __subscription__ may include a predefined number of __seats__ (or licenses) that __users__ can obtain to access your SaaS app.
 
 ## How Turnstile works
 
-When a user tries to access your SaaS app, your SaaS app calls a simple API endpoint that Turnstile exposes to determine whether or not the user already has a seat. If the user does not already have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
+When a user tries to access your SaaS app, your app first calls an API endpoint that Turnstile exposes to check if the user already has a seat. If the user does not  have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
 
 ```mermaid
   graph TD
@@ -38,9 +38,10 @@ When a user tries to access your SaaS app, your SaaS app calls a simple API endp
 
 ### How Turnstile assigns seats to your users
 
-If the user's tenant has more than one subscription, the user is first prompted to choose which subscription they're trying to access. Once the user has selected a subscription, Turnstile runs the workflow below to try and get that user a seat.
+Turnstile exposes two endpoints to users trying to access a subscription —
 
-> If the tenant only has one subscription, this workflow is run immediately on that subscription for the user. Usually, the user trying to get a seat from Turnstile will see no Turnstile user interface at all; Turnstile simply tries to get the user a seat then redirects them based on the result of this workflow.
+* __The default turnstile.__ This endpoint is located at the root of the Turnstile web app. Turnstile first checks to see which active subscriptions the user has access to. If the user has access to more than one subscription, Turnstile displays a list of subscriptions for the user to choose from. When a user chooses a subscription, they're redirected to that subscription's __specific turnstile__. If the user only has access to one subscription, the user is automatically redirected to that subscription's __specfic turnstile__.
+* __The specific turnstile.__ This endpoint is located at `/turnstile/{subscription_id}` where `{subscription_id}` is the ID of the subscription the user is trying to access. This endpoint executes the workflow illustrated below on behalf of the user to try and obtain them a seat.
 
 ```mermaid
   graph TD
