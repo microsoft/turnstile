@@ -40,7 +40,7 @@ When a user tries to access your SaaS app, your app first calls an API endpoint 
 
 Turnstile exposes two endpoints to users trying to access a subscription —
 
-* __The default turnstile.__ This endpoint is located at the root of the Turnstile web app. Turnstile first checks to see which active subscriptions the user has access to. If the user has access to more than one subscription, Turnstile displays a list of subscriptions for the user to choose from. When a user chooses a subscription, they're redirected to that subscription's __specific turnstile__. If the user only has access to one subscription, the user is automatically redirected to that subscription's __specfic turnstile__.
+* __The default turnstile.__ This endpoint is located at the root of the Turnstile web app. Turnstile first checks to see which active subscriptions the user has access to. If the user has access to more than one subscription, Turnstile displays a list of subscriptions for the user to choose from. When a user chooses a subscription, they're redirected to that subscription's __specific turnstile__. If the user only has access to one subscription, the user is automatically redirected to that subscription's __specific turnstile__.
 * __The specific turnstile.__ This endpoint is located at `/turnstile/{subscription_id}` where `{subscription_id}` is the ID of the subscription the user is trying to access. This endpoint executes the workflow illustrated below on behalf of the user to try and obtain them a seat.
 
 ```mermaid
