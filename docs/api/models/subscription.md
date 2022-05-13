@@ -36,3 +36,12 @@ Represents a Turnstile-managed subscription.
   }
 }
 ```
+
+### Properties
+
+| Name | Required? | Description |
+| --- | --- | --- |
+| `subscription_id` | Yes | This subscription's unique identifier |
+| `subscription_name` | No | This subscription's display name |
+| `tenant_id` | Yes | The unique identifier of the customer tenant that this subscription belongs to |
+| `tenant_name` | No | The display name of the customer tenant that this subscription belongs to |
