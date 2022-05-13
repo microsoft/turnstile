@@ -29,13 +29,10 @@ Represents a Turnstile-managed subscription.
   "created_utc": "2022-01-01T00:00:00Z",
   "state_last_updated_utc": "2022-02-02T00:00:00Z",
   "seating_config": {
-    ...
   },
   "subscriber_info": {
-    ...
   },
   "source_subscription": {
-    ...
   }
 }
 ```
