@@ -23,8 +23,29 @@ check_dotnet() {
     if [[ $dotnet_version == 6.* ]]; then # Needs to be .NET 6
         echo "✔   .NET [$dotnet_version] installed."
     else
-        echo "❌   Please install .NET 6.* before continuing. See [https://dotnet.microsoft.com/download] for more information."
-        return 1
+        read -p "⚠️  .NET 6 is required to run this script but is not installed. Would you like to install it now? [Y/n]" install_dotnet
+
+        case "$install_dotnet" in
+            [yY1]   )
+                wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh
+                chmod +x ./dotnet-install.sh
+                ./dotnet-install.sh 
+
+                if [[ $? == 0 ]]; then
+                    export PATH="$HOME/.dotnet:$PATH"
+                    dotnet_version=$(dotnet --version)
+                    echo "✔   .NET [$dotnet_version] installed."
+                    return 0
+                else
+                    echo "❌   .NET 6 installation failed. See [https://docs.microsoft.com/cli/azure/install-azure-cli] for more information."
+                    return 1
+                fi
+            ;;
+            *       )
+                echo "❌   Please install .NET 6 before continuing. See [https://docs.microsoft.com/cli/azure/install-azure-cli] for more information."
+                return 1
+            ;;
+        esac
     fi
 }
 
@@ -297,36 +318,6 @@ echo "🛡️   Completing AAD app [$aad_app_name] registration..."
 az ad app update \
     --id "$aad_app_id" \
     --reply-urls "$web_app_base_url/signin-oidc";
-
-if [[ -z $p_integration_pack ]]; then
-    integration_pack="default"
-else
-    integration_pack="$p_integration_pack"
-fi
-
-echo "🧩   Installing [$integration_pack] integration pack..."
-
-current_path=$(pwd)
-pack_path="./integration_packs/$integration_pack"
-
-cd "$pack_path"
-
-if [[ $? == 0 && -f "./setup_pack.sh" ]]; then
-    chmod +x ./setup_pack.sh
-
-    ./setup_pack.sh \
-        -r "$p_deployment_region" \
-        -g "$resource_group_name" \
-        -n "$topic_name" \
-        -d "$p_deployment_name" \
-        -c "$aad_app_id" \
-        -t "$current_user_tid" \
-        -s "$aad_app_secret"
-else
-    echo "⚠️   [$integration_pack] integration pack not found at [$pack_path]. This integration pack will not be installed."
-fi
-
-cd "$current_path"
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
