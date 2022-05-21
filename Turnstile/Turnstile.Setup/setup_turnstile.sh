@@ -344,7 +344,7 @@ az functionapp deployment source config-zip \
     --name "$api_app_name" \
     --src "./api_topublish.zip"
 
-echo "☁️    Publishing web app [$api_app_name]..."
+echo "☁️    Publishing web app [$web_app_name]..."
 
 az webapp deployment source config-zip \
     --resource-group "$resource_group_name" \
