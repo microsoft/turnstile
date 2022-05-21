@@ -1,6 +1,8 @@
 ﻿@using Turnstile.Core.Constants
 @using Turnstile.Web.Controllers
 
+@model SubscriptionViewModel
+
 @{
     ViewData["Title"] = $"Subscription | {Model.SubscriptionName} | Turnstile";
 
@@ -54,8 +56,6 @@
         };
     }
 }
-
-@model SubscriptionDetailViewModel
 
 <h4 class="text-muted">Subscription</h4>
 <h1>
