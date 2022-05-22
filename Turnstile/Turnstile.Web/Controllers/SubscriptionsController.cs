@@ -137,7 +137,10 @@ namespace Turnstile.Web.Controllers
 
                     var seats = await seatsClient.GetSeats(subscriptionId);
 
-                    return View(new SubscriptionViewModel(subscription, seats, isTurnstileAdmin, isSubscriberAdmin));
+                    SubscriptionViewModel modelView = new SubscriptionViewModel(subscription, seats, publisherConfig!, User!, 
+                            isTurnstileAdmin, isSubscriberAdmin);
+
+                    return View(modelView);
                 }
                 else
                 {

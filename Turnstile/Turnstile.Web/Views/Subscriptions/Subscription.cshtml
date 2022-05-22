@@ -5,56 +5,6 @@
 
 @{
     ViewData["Title"] = $"Subscription | {Model.SubscriptionName} | Turnstile";
-
-    string ChooseStateRowClass()
-    {
-        return Model.State switch
-        {
-            SubscriptionStates.Active => "table-primary",
-            SubscriptionStates.Canceled => "table-danger",
-            SubscriptionStates.Suspended => "table-warning",
-            SubscriptionStates.Purchased => "table-success",
-            _ => string.Empty
-        };
-    }
-
-    string ChooseSeatingMeterClass()
-    {
-        if (Model.Seating!.HasNoMoreSeats)
-        {
-            return "progress-bar progress-bar-striped bg-danger";
-        }
-        else if (Model.Seating!.HasReachedLowSeatLevel)
-        {
-            return "progress-bar progress-bar-striped bg-warning";
-        }
-        else
-        {
-            return "progress-bar progress-bar-striped bg-success";
-        }
-    }
-
-    string DescribeState()
-    {
-        return Model.State switch
-        {
-            SubscriptionStates.Active => "Active",
-            SubscriptionStates.Canceled => "Canceled",
-            SubscriptionStates.Suspended => "Suspended",
-            SubscriptionStates.Purchased => "Provisioning",
-            _ => throw new InvalidOperationException($"Subscription state [{Model.State}] not supported.")
-        };
-    }
-
-    string DescribeSeatingStrategy()
-    {
-        return Model.Seating!.SeatingStrategyName switch
-        {
-            SeatingStrategies.FirstComeFirstServed => "First come, first served",
-            SeatingStrategies.MonthlyActiveUser => "Monthly active user",
-            _ => throw new InvalidOperationException($"Subscription seating strategy [{Model.Seating!.SeatingStrategyName}] not supported.")
-        };
-    }
 }
 
 <h4 class="text-muted">Subscription</h4>
@@ -71,42 +21,45 @@
 </h1>
 
 <nav class="nav">
-    @if (Model.UserIsSubscriberAdmin)
-    {
-        if (Model.Seating!.HasNoMoreSeats)
+    @{
+        if (Model.UserIsSubscriberAdmin)
         {
-            <a href="#" class="nav-link disabled">Reserve seat</a>
-        }
-        else
-        {
-            <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Reserve seat</a>
+            if (Model.Seating!.HasNoMoreSeats)
+            {
+                <a href="#" class="nav-link disabled">Reserve seat</a>
+            }
+            else
+            {
+                <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Reserve seat</a>
+            }
+
+            <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Setup subscription</a>
         }
 
-        <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Setup subscription</a>
-    }
-
-    @if (Model.ManagementUrls != null)
-    {
-        foreach (var urlName in Model.ManagementUrls.Keys)
+        if (Model.ManagementUrls != null)
         {
-            <a href="@Model.ManagementUrls[urlName]" class="nav-link" target="_blank">@urlName</a>
+            foreach (var urlName in Model.ManagementUrls.Keys)
+            {
+                <a href="@Model.ManagementUrls[urlName]" class="nav-link" target="_blank">@urlName</a>
+            }
         }
     }
 </nav>
 
 <hr />
 
-@if (Model.IsBeingConfigured)
-{
-    <div class="alert alert-warning d-flex align-items-center" style="margin-top: 10px; margin-bottom: 20px">
-        <div>
-            This subscription is being configured and is temporarily unavailable.
+@{
+    if (Model.IsBeingConfigured)
+    {
+        <div class="alert alert-warning d-flex align-items-center" style="margin-top: 10px; margin-bottom: 20px">
+            <div>
+                This subscription is being configured and is temporarily unavailable.
+            </div>
         </div>
-    </div>
-}
+    }
 
-@if (Model.Seating!.HasReachedLowSeatLevel)
-{
+    if (Model.Seating!.HasReachedLowSeatLevel)
+    {
     <div class="alert alert-warning d-flex align-items-center" role="alert" style="margin-top: 20px; margin-bottom: 20px">
         <div>
             This subscription has less than 25% available seating. @if (!Model.UserIsTurnstileAdmin)
@@ -115,110 +68,171 @@
             }
         </div>
     </div>
-}
+    }
 
-@if (Model.Seating!.HasNoMoreSeats)
-{
-    <div class="alert alert-danger d-flex align-items-center" style="margin-top: 20px; margin-bottom: 20px">
-        <div>
-            This subscription has no available seats. @if (!Model.UserIsTurnstileAdmin)
-            {
-                <a href="#" class="alert-link" target="_blank">Buy more »</a>
-            }
-        </div>
-    </div>
-}
 
-<table class="table" style="margin-bottom: 20px">
-    <tbody>
-        <tr style="width: 25%">
-            <th scope="row">ID</th>
-            <td>@Model.SubscriptionId</td>
-        </tr>
-        <tr>
-            <th scope="row">Tenant</th>
-            <td>
-                @(Model.TenantName ?? Model.TenantId) <br />
-                <small class="text-muted">@Model.TenantId</small>
-            </td>
-        </tr>
-        <tr class="@ChooseStateRowClass()">
-            <th scope="row">State</th>
-            <td>
-                @DescribeState()
-                <small class="text-muted">as of @Model.StateLastUpdatedDateTimeUtc!.Value.ToString("g") UTC</small>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">Offer</th>
-            <td>@Model.OfferId</td>
-        </tr>
-        <tr>
-            <th scope="row">Plan</th>
-            <td>@Model.PlanId</td>
-        </tr>
-        <tr>
-            <th scope="row">Created</th>
-            <td>@Model.CreatedDateTimeUtc!.Value.ToString("g") UTC</td>
-        </tr>
-        <tr class="table-secondary">
-            <th scope="row" colspan="2">Security Roles</th>
-        </tr>
-        <tr>
-            <th scope="row">Administrators</th>
-            <td>@Model.AdminRoleName</td>
-        </tr>
-        <tr>
-            <th scope="row">Users</th>
-            <td>@Model.UserRoleName</td>
-        </tr>
-        <tr class="table-secondary">
-            <th scope="row" colspan="2">Administrator</th>
-        </tr>
-        <tr>
-            <th scope="row">Name</th>
-            <td>@Model.AdminName</td>
-        </tr>
-        <tr>
-            <th scope="row">Email</th>
-            <td>@Model.AdminEmail</td>
-        </tr>
-    </tbody>
-</table>
-
-<h2>Seating</h2>
-<hr />
-
-<table class="table" style="margin-bottom: 20px">
-    <thead>
-        <tr>
-            <th>Seating strategy</th>
-            <th>Default seat expiry</th>
-            <th>Seat reservation expiry</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>
-                @DescribeSeatingStrategy()
-                @if (Model.Seating!.IsLimitedOverflowSeatingEnabled)
+    if (Model.Seating!.HasNoMoreSeats)
+    {
+        <div class="alert alert-danger d-flex align-items-center" style="margin-top: 20px; margin-bottom: 20px">
+            <div>
+                This subscription has no available seats. @if (!Model.UserIsTurnstileAdmin)
                 {
-                    <br />
-                    <small class="text-muted">Limited overflow seating enabled</small>
+                    <a href="#" class="alert-link" target="_blank">Buy more »</a>
                 }
-            </td>
-            <td>@($"{Model.Seating!.SeatExpiryInDays} day(s)")</td>
-            <td>@($"{Model.Seating!.SeatReservationExpiryInDays} day(s)")</td>
-        </tr>
-    </tbody>
-</table>
+            </div>
+        </div>
+    }
+}
+
+
+<form method="post">
+    <input type="hidden" asp-for="@Model.SubscriptionId" />
+
+    <table class="table" style="margin-bottom: 20px">
+        <tbody>
+            <tr style="width: 25%">
+                <th scope="row">ID</th>
+                <td>@Model.SubscriptionId</td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label asp-for="@Model.SubscriptionConfiguration!.SubscriptionName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                </th>
+                <td>
+                    <input asp-for="@Model.SubscriptionConfiguration!.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
+                    <span asp-validation-for="@Model.SubscriptionConfiguration!.SubscriptionName" class="text-danger"></span>
+                    <div id="subNameHelp" class="form-text">The name of this subscription as it will appear in the UI.</div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label asp-for="@Model.SubscriberInfo!.TenantName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                </th>
+                <td>
+                    <input asp-for="@Model.SubscriberInfo!.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
+                    <span asp-validation-for="@Model.SubscriberInfo!.TenantName" class="text-danger"></span>
+                    <div id="tenantNameHelp" class="form-text">The name of the subscriber (typically, your organization's name) as it will appear in the UI.</div>
+
+                    <small class="text-muted">@Model.TenantId</small>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label asp-for="@Model.SubscriberInfo!.TenantCountry" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                </th>
+                <td>
+                    <select asp-for="@Model.SubscriberInfo!.TenantCountry" asp-items="@Model.SubscriberInfo!.Countries" class="form-select" aria-describedBy="tenantCountryHelp"></select>
+                    <span asp-validation-for="@Model.SubscriberInfo!.TenantCountry" class="text-danger"></span>
+                    <div id="tenantCountryHelp" class="form-text">The country in which the subscriber (typically, your organization) is based.</div>
+                </td>
+            </tr>
+            <tr class="@Model.ChooseStateRowClass()">
+                <th scope="row">State</th>
+                <td>
+                    @Model.DescribeState()
+                    <small class="text-muted">as of @Model.StateLastUpdatedDateTimeUtc!.Value.ToString("g") UTC</small>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Offer</th>
+                <td>@Model.OfferId</td>
+            </tr>
+            <tr>
+                <th scope="row">Plan</th>
+                <td>@Model.PlanId</td>
+            </tr>
+            <tr>
+                <th scope="row">Created</th>
+                <td>@Model.CreatedDateTimeUtc!.Value.ToString("g") UTC</td>
+            </tr>
+            <tr class="table-secondary">
+                <th scope="row" colspan="2">Security Roles</th>
+            </tr>
+            <tr>
+                <th scope="row">Administrators</th>
+                <td>@Model.AdminRoleName</td>
+            </tr>
+            <tr>
+                <th scope="row">Users</th>
+                <td>@Model.UserRoleName</td>
+            </tr>
+            <tr class="table-secondary">
+                <th scope="row" colspan="2">Administrator</th>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label asp-for="@Model.SubscriberInfo!.AdminName" class="form-label"></label>
+                </th>
+                <td>
+                    <input asp-for="@Model.SubscriberInfo!.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
+                    <span asp-validation-for="@Model.SubscriberInfo!.AdminName" class="text-danger"></span>
+                    <div id="adminNameHelp" class="form-text">The name of this subscription's administrator.</div>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <label asp-for="@Model.SubscriberInfo!.AdminEmail" class="form-label"></label>
+                </th>
+                <td>
+                    <input asp-for="@Model.SubscriberInfo!.AdminEmail" class="form-control" type="email" aria-describedBy="adminEmailHelp" />
+                    <span asp-validation-for="@Model.SubscriberInfo!.AdminEmail" class="text-danger"></span>
+                    <div id="adminEmailHelp" class="form-text">The email of this subscription's administrator.</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Seating</h2>
+    <hr />
+
+    <table class="table" style="margin-bottom: 20px">
+        <thead>
+            <tr>
+                <th>Seating strategy</th>
+                <th>Default seat expiry</th>
+                <th>Seat reservation expiry</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <label asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+                    <select asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" asp-items="@Model.SubscriptionConfiguration!.AvailableSeatingStrategies" class="form-select" aria-describedBy="seatStrategyHelp"></select>
+                    <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="text-danger"></span>
+                    <div id="seatStrategyHelp" class="form-text">The strategy to be applied when providing seats in this subscription.</div>
+                    @if (Model.Seating!.IsLimitedOverflowSeatingEnabled)
+                    {
+                        <br />
+                        <small class="text-muted">Limited overflow seating enabled</small>
+                    }
+                </td>
+                <td>
+                    <label asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-label"></label>
+                    <input asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-control" type="number" aria-describedBy="seatExpiryHelp" />
+                    <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="text-danger"></span>
+                    <div id="seatExpiryHelp" class="form-text">The number of days (by default) that a seat will remain occupied.</div>
+                </td>
+                <td>
+                    <label asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-label"></label>
+                    <input asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-control" type="number" aria-describedBy="reservationExpiryHelp" />
+                    <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="text-danger"></span>
+                    <div id="tenantNameHelp" class="form-text">The number of days (by default) that a seat can remain occupied.</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr />
+    <button type="submit" class="btn btn-primary" style="margin-top: 20px; margin-bottom: 20px">Complete setup</button>
+
+</form>
 
 @if (Model.Seating!.ShowSeatingMeter)
 {
     <div style="margin-top: 20px; margin-bottom: 20px">
         <h3> @Model.Seating!.TotalUsedSeats <span> / </span> @Model.Seating!.TotalSeats <small class="text-muted">seats consumed</small></h3>
         <div class="progress">
-            <div class="@ChooseSeatingMeterClass()" role="progressbar" style="@($"width: {Model.Seating!.ConsumedSeatsPct}%")" aria-valuenow="@Model.Seating!.ConsumedSeatsPct" aria-valuemin="0" aria-valuemax="100">
+            <div class="@Model.ChooseSeatingMeterClass()" role="progressbar" style="@($"width: {Model.Seating!.ConsumedSeatsPct}%")" aria-valuenow="@Model.Seating!.ConsumedSeatsPct" aria-valuemin="0" aria-valuemax="100">
             </div>
         </div>
     </div>
@@ -278,3 +292,80 @@
         }
     </tbody>
 </table>
+
+BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN 
+BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN 
+BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN BOHDAN 
+
+
+<h1>Subscription setup</h1>
+<hr />
+
+<form method="post">
+    <input type="hidden" asp-for="@Model.SubscriptionId" />
+    <div class="mb-3">
+        ############
+        <label asp-for="@Model.SubscriptionConfiguration!.SubscriptionName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+        <input asp-for="@Model.SubscriptionConfiguration!.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
+        <span asp-validation-for="@Model.SubscriptionConfiguration!.SubscriptionName" class="text-danger"></span>
+        <div id="subNameHelp" class="form-text">The name of this subscription as it will appear in the UI.</div>
+    </div>
+    <div class="mb-3">
+        ################
+        <label asp-for="@Model.SubscriberInfo!.TenantName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+        <input asp-for="@Model.SubscriberInfo!.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
+        <span asp-validation-for="@Model.SubscriberInfo!.TenantName" class="text-danger"></span>
+        <div id="tenantNameHelp" class="form-text">The name of the subscriber (typically, your organization's name) as it will appear in the UI.</div>
+    </div>
+    <div class="mb-3">
+        ################
+        <label asp-for="@Model.SubscriberInfo!.TenantCountry" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+        <select asp-for="@Model.SubscriberInfo!.TenantCountry" asp-items="@Model.SubscriberInfo!.Countries" class="form-select" aria-describedBy="tenantCountryHelp"></select>
+        <span asp-validation-for="@Model.SubscriberInfo!.TenantCountry" class="text-danger"></span>
+        <div id="tenantCountryHelp" class="form-text">The country in which the subscriber (typically, your organization) is based.</div>
+    </div>
+    <div class="mb-3">
+        ##############
+        <label asp-for="@Model.SubscriberInfo!.AdminName" class="form-label"></label>
+        <input asp-for="@Model.SubscriberInfo!.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
+        <span asp-validation-for="@Model.SubscriberInfo!.AdminName" class="text-danger"></span>
+        <div id="adminNameHelp" class="form-text">The name of this subscription's administrator.</div>
+    </div>
+    <div class="mb-3">
+        ############
+        <label asp-for="@Model.SubscriberInfo!.AdminEmail" class="form-label"></label>
+        <input asp-for="@Model.SubscriberInfo!.AdminEmail" class="form-control" type="email" aria-describedBy="adminEmailHelp" />
+        <span asp-validation-for="@Model.SubscriberInfo!.AdminEmail" class="text-danger"></span>
+        <div id="adminEmailHelp" class="form-text">The email of this subscription's administrator.</div>
+    </div>
+    <div class="mb-3">
+        ############
+        <label asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
+        <select asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" asp-items="@Model.SubscriptionConfiguration!.AvailableSeatingStrategies" class="form-select" aria-describedBy="seatStrategyHelp"></select>
+        <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="text-danger"></span>
+        <div id="seatStrategyHelp" class="form-text">The strategy to be applied when providing seats in this subscription.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-label"></label>
+        <input asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-control" type="number" aria-describedBy="seatExpiryHelp" />
+        <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="text-danger"></span>
+        <div id="seatExpiryHelp" class="form-text">The number of days (by default) that a seat will remain occupied.</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-label"></label>
+        <input asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-control" type="number" aria-describedBy="reservationExpiryHelp" />
+        <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="text-danger"></span>
+        <div id="tenantNameHelp" class="form-text">The number of days (by default) that a seat can remain occupied.</div>
+    </div>
+    <hr />
+    <button type="submit" class="btn btn-primary" style="margin-top: 20px; margin-bottom: 20px">Complete setup</button>
+
+    @section Scripts {
+    @{
+    await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    }
+
+</form>
+
+
