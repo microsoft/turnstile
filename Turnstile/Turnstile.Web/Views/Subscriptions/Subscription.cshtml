@@ -187,15 +187,14 @@
     <table class="table" style="margin-bottom: 20px">
         <thead>
             <tr>
-                <th>Seating strategy</th>
-                <th>Default seat expiry</th>
-                <th>Seat reservation expiry</th>
+                <th><label asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="form-label"></label>&nbsp;<span class="text-danger">*</span></th>
+                <th><label asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-label"></label></th>
+                <th><label asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-label"></label></th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>
-                    <label asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                     <select asp-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" asp-items="@Model.SubscriptionConfiguration!.AvailableSeatingStrategies" class="form-select" aria-describedBy="seatStrategyHelp"></select>
                     <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatingStrategyName" class="text-danger"></span>
                     <div id="seatStrategyHelp" class="form-text">The strategy to be applied when providing seats in this subscription.</div>
@@ -206,13 +205,11 @@
                     }
                 </td>
                 <td>
-                    <label asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-label"></label>
                     <input asp-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="form-control" type="number" aria-describedBy="seatExpiryHelp" />
                     <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatExpiryInDays" class="text-danger"></span>
                     <div id="seatExpiryHelp" class="form-text">The number of days (by default) that a seat will remain occupied.</div>
                 </td>
                 <td>
-                    <label asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-label"></label>
                     <input asp-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="form-control" type="number" aria-describedBy="reservationExpiryHelp" />
                     <span asp-validation-for="@Model.SubscriptionConfiguration!.SeatReservationExpiryInDays" class="text-danger"></span>
                     <div id="tenantNameHelp" class="form-text">The number of days (by default) that a seat can remain occupied.</div>
