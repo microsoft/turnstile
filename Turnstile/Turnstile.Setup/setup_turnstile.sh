@@ -188,6 +188,7 @@ tenant_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
 turnstile_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
 create_app_json=$(cat ./aad/manifest.json)
 create_app_json="${create_app_json/__aad_app_name__/${aad_app_name}}"
+create_app_json="${create_app_json/__deployment_name__/${p_deployment_name}}"
 create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
 create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
 
@@ -209,7 +210,7 @@ add_password_response=$(curl \
     -d "$add_password_json" \
     "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
 
-aad_app_secret=$(echo $aad_app_credentials_res | jq -r ".secretText")
+aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
 
 echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
 
@@ -315,13 +316,6 @@ curl -X POST \
     -H "Authorization: Bearer $graph_token" \
     -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
     "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
-
-echo
-echo "🛡️   Completing AAD app [$aad_app_name] registration..."
-
-az ad app update \
-    --id "$aad_app_id" \
-    --reply-urls "$web_app_base_url/signin-oidc";
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
