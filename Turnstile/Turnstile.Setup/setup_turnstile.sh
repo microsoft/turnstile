@@ -179,16 +179,37 @@ aad_app_secret=$(openssl rand -base64 64)
 
 echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
 
-aad_app_id=$(az ad app create \
-    --display-name "$aad_app_name" \
-    --available-to-other-tenants true \
-    --end-date "2299-12-31" \
-    --password "$aad_app_secret" \
-    --optional-claims @./aad/manifest.optional_claims.json \
-    --required-resource-accesses @./aad/manifest.resource_access.json \
-    --app-roles @./aad/manifest.app_roles.json \
-    --query appId \
+graph_token=$(az account get-access-token \
+    --resource-type ms-graph \
+    --query accessToken \
     --output tsv);
+
+tenant_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
+turnstile_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
+create_app_json=$(cat ./aad/manifest.json)
+create_app_json="${create_app_json/__aad_app_name__/${aad_app_name}}"
+create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
+create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
+
+create_app_response=$(curl \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $graph_token" \
+    -d "$create_app_json" \
+    "https://graph.microsoft.com/v1.0/applications")
+
+aad_object_id=$(echo "$create_app_response" | jq -r ".id")
+aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
+add_password_json=$(cat ./aad/add_password.json)
+
+add_password_response=$(curl \
+    -X POST \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $graph_token" \
+    -d "$add_password_json" \
+    "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
+
+aad_app_secret=$(echo $aad_app_credentials_res | jq -r ".secretText")
 
 echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
 
@@ -279,29 +300,12 @@ az storage blob upload \
 
 echo "🔐   Adding you to this turnstile's administrative roles..."
 
-# App roles are managed (conveniently) through Microsoft Graph so we first need to get an access token...
-
-graph_token=$(az account get-access-token \
-    --resource-type ms-graph \
-    --query accessToken \
-    --output tsv);
-
-tsa_role_id=$(az ad sp show \
-    --id "$aad_sp_id" \
-    --query "appRoles[0].id" \
-    --output tsv);
-
-ta_role_id=$(az ad sp show \
-    --id "$aad_sp_id" \
-    --query "appRoles[1].id" \
-    --output tsv);
-
 # Add the current user to the subscriber tenant administrator's AAD role...
 
 curl -X POST \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $graph_token" \
-    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tsa_role_id\" }" \
+    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
     "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
 
 # Add the current user to the turnstile administrator's AAD role...
@@ -309,7 +313,7 @@ curl -X POST \
 curl -X POST \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $graph_token" \
-    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$ta_role_id\" }" \
+    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
     "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
 
 echo
