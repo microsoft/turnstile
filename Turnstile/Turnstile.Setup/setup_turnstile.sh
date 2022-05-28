@@ -149,10 +149,12 @@ else
     return 1
 fi
 
+p_deployment_name=$(echo "$p_deployment_name" | tr '[:upper:]' '[:lower:]') # Lower the deployment name...
+
 if [[ -z $p_display_name ]]; then
     display_name="Turnstile $p_deployment_name"
 else
-    display_name=p_display_name
+    display_name="$p_display_name"
 fi
 
 # Create our resource group if it doesn't already exist...
