@@ -15,7 +15,7 @@ namespace Turnstile.Api.Configuration
         [FunctionName("GetPublisherConfiguration")]
         public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/publisher/configuration")] HttpRequest req,
-            [Blob("configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,
+            [Blob("turn-configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,
             ILogger log) =>
             new OkObjectResult(JsonSerializer.Deserialize<PublisherConfiguration>(publisherConfigJson));
     }

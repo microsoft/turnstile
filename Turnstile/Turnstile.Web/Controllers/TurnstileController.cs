@@ -124,10 +124,6 @@ namespace Turnstile.Web.Controllers
                 {
                     return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
-                else if (!User.CanUseSubscription(subscription))
-                {
-                    return publisherConfig!.OnAccessDenied(subscriptionId);
-                }
                 else if (subscription.State == SubscriptionStates.Canceled)
                 {
                     return publisherConfig!.OnSubscriptionCanceled(subscriptionId);
@@ -135,6 +131,10 @@ namespace Turnstile.Web.Controllers
                 else if (subscription.State == SubscriptionStates.Suspended)
                 {
                     return publisherConfig!.OnSubscriptionSuspended(subscriptionId);
+                }
+                else if (!User.CanUseSubscription(subscription))
+                {
+                    return publisherConfig!.OnAccessDenied(subscriptionId);
                 }
                 else
                 {

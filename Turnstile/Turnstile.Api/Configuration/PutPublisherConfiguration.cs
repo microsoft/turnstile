@@ -18,7 +18,7 @@ namespace Turnstile.Api.Configuration
         [FunctionName("PutPublisherConfiguration")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "saas/publisher/configuration")] HttpRequest req,
-            [Blob("configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream,
+            [Blob("turn-configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream,
             ILogger log)
         {
             var httpContent =  await new StreamReader(req.Body).ReadToEndAsync();
