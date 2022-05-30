@@ -13,10 +13,6 @@ namespace Turnstile.Core.Models.Configuration
         [JsonProperty("seating_strategy_name")]
         public string? SeatingStrategyName { get; set; }
 
-        [JsonPropertyName("low_seat_warning_level_pct")]
-        [JsonProperty("low_seat_warning_level_pct")]
-        public double? LowSeatWarningLevelPercent { get; set; }
-
         [JsonPropertyName("limited_overflow_seating_enabled")]
         [JsonProperty("limited_overflow_seating_enabled")]
         public bool? LimitedOverflowSeatingEnabled { get; set; }
@@ -35,11 +31,6 @@ namespace Turnstile.Core.Models.Configuration
                 !SeatingStrategies.ValidStrategies.Contains(SeatingStrategyName!.ToLower()))
             {
                 yield return $"Seating configuration [seating_strategy_name] is required and must be {SeatingStrategies.ValidStrategies.ToOrList()}.";
-            }
-
-            if (LowSeatWarningLevelPercent != null && (LowSeatWarningLevelPercent < 0 || LowSeatWarningLevelPercent > 1))
-            {
-                yield return "if provided, seating configuration [low_seat_warning_level_pct] must be > 0 (0%) and < 1 (100%).";
             }
 
             if (SeatReservationExpiryInDays.GetValueOrDefault() < 1)

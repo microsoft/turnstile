@@ -102,10 +102,6 @@ namespace SMM.API.Subscriptions
                     patchSeatConfig?.LimitedOverflowSeatingEnabled ?? 
                     existSeatConfig!.LimitedOverflowSeatingEnabled;
 
-                existSeatConfig.LowSeatWarningLevelPercent =
-                    patchSeatConfig?.LowSeatWarningLevelPercent ?? 
-                    existSeatConfig!.LowSeatWarningLevelPercent;
-
                 existSeatConfig.SeatingStrategyName =
                     patchSeatConfig?.SeatingStrategyName ?? 
                     existSeatConfig!.SeatingStrategyName;

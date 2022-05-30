@@ -100,11 +100,6 @@ else if (Model.HasValidationErrors)
                     <div id="seatingStrategyHelp" class="form-text">Specifies the strategy that should be applied when a new subscription seat is provided to your customer.</div>
                 </div>
                 <div class="mb-3 form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.SeatingConfiguration.LowSeatWarningEnabled" aria-described-by="lowSeatWarningHelp" />
-                    <label asp-for="@Model.SeatingConfiguration.LowSeatWarningEnabled" class="form-check-label"></label>
-                    <div id="lowSeatWarningHelp" class="form-text">Indicates whether or not an event (<code>@EventTypes.SeatingWarningLeavelReached</code>) will be published when available seats drop below 25% of total subscription seats.</div>
-                </div>
-                <div class="mb-3 form-check form-switch">
                     <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.SeatingConfiguration.LimitedOverflowSeatingEnabled" aria-described-by="limitedSeatHelp" />
                     <label asp-for="@Model.SeatingConfiguration.LimitedOverflowSeatingEnabled" class="form-check-label"></label>
                     <div id="limitedSeatHelp" class="form-text">Indicates whether or not limited seats should be provided when there are no more standard seats available.</div>

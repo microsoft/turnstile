@@ -74,7 +74,6 @@ namespace Turnstile.Api.Subscriptions
             seatingConfig.SeatingStrategyName ??= defaultSeatConfig.SeatingStrategyName;
             seatingConfig.DefaultSeatExpiryInDays ??= defaultSeatConfig.DefaultSeatExpiryInDays;
             seatingConfig.LimitedOverflowSeatingEnabled ??= defaultSeatConfig.LimitedOverflowSeatingEnabled;
-            seatingConfig.LowSeatWarningLevelPercent ??= defaultSeatConfig.LowSeatWarningLevelPercent;
             seatingConfig.SeatReservationExpiryInDays ??= defaultSeatConfig.SeatReservationExpiryInDays;
 
             return seatingConfig;
