@@ -74,13 +74,11 @@ check_deployment_name() {
 }
 
 splash() {
-    echo "Turnstile | 0.1-experimental"
+    echo "Turnstile | $turnstile_version"
     echo "https://github.com/microsoft/turnstile"
     echo
     echo "Copyright (c) Microsoft Corporation. All rights reserved."
     echo "Licensed under the MIT License. See LICENSE in project root for more information."
-    echo
-    echo "🧪   ⚠️   Experimental; don't use in production (yet.)"
     echo
 }
 
@@ -111,7 +109,9 @@ done
 
 # Get our parameters...
 
-while getopts "c:d:n:r:" opt; do
+p_integration_pack="default"
+
+while getopts "c:d:n:r:i:" opt; do
     case $opt in
         c)
             p_publisher_config_path=$OPTARG
@@ -285,6 +285,36 @@ topic_name=$(az deployment group show \
     --name "$az_deployment_name" \
     --query properties.outputs.topicName.value \
     --output tsv);
+
+# Deploy integration pack.
+
+integration_pack="${p_integration_pack#/}" # Trim leading...
+integration_pack="${p_integration_pack%/}" # and trailing slashes.
+
+pack_absolute_path="$p_integration_pack/deploy_pack.bicep" # Absolute...
+pack_relative_path="./integration_packs/$p_integration_pack/deploy_pack.bicep" # and relative pack paths.
+
+if [[ -f "$pack_absolute_path" ]]; then # Check the absolute path first...
+    pack_path="$pack_absolute_path"
+elif [[ -f "$pack_relative_path" ]]; then # then check the relative path.
+    pack_path="$pack_relative_path"
+fi
+
+if [[ -z "$pack_path" ]]; then
+    echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
+else
+    echo "Deploying [$p_integration_pack ($pack_path)] integration pack..."
+
+    az deployment group create \
+        --resource-group "$resource_group_name" \
+        --name "turn-pack-deploy-$p_deployment_name" \
+        --template-file "$pack_path" \
+        --parameters \
+            deploymentName="$p_deployment_name"
+
+    [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
+    [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+fi
 
 echo "⚙️   Applying default publisher configuration..."
 
