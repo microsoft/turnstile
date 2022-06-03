@@ -29,8 +29,27 @@ var configStorageBlobName = 'publisher_config.json'
 var appInsightsName = 'turn-insights-${cleanDeploymentName}'
 var appServicePlanName = 'turn-plan-${cleanDeploymentName}'
 var eventGridTopicName = 'turn-events-${cleanDeploymentName}'
+var eventGridConnectionName = 'turn-events-connection-${cleanDeploymentName}'
+var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
+
+resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
+  name: eventGridConnectionName
+  location: location
+  properties: {
+    displayName: eventGridConnectionDisplayName
+    parameterValues: {
+      'token:clientId': webAppAadClientId
+      'token:clientSecret': webAppAadClientSecret
+      'token:TenantId': webAppAadTenantId
+      'token:grantType': 'client_credentials'
+    }
+    api: {
+      id: '${subscription().id}/providers/Microsoft.Web/locations/${eventGridTopic.location}/managedApis/azureeventgrid'
+    }
+  }
+}
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName

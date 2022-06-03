@@ -177,7 +177,6 @@ fi
 # Create the app registration in AAD...
 
 aad_app_name="$display_name"
-aad_app_secret=$(openssl rand -base64 64)
 
 echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
 
@@ -200,6 +199,8 @@ create_app_response=$(curl \
     -H "Authorization: Bearer $graph_token" \
     -d "$create_app_json" \
     "https://graph.microsoft.com/v1.0/applications")
+
+sleep 15 # Give AAD a chance to catch up...
 
 aad_object_id=$(echo "$create_app_response" | jq -r ".id")
 aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
