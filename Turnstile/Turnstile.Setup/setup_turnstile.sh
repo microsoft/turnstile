@@ -339,7 +339,9 @@ curl -X POST \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $graph_token" \
     -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
-    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
+    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
+
+tenant_admin_role_pid=$!
 
 # Add the current user to the turnstile administrator's AAD role...
 
@@ -347,39 +349,63 @@ curl -X POST \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $graph_token" \
     -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
-    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments"
+    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
+
+turnstile_admin_role_pid=$!
+
+wait $tenant_admin_role_pid
+wait $turnstile_admin_role_pid
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
-echo "⚡   Building API function app [$api_app_name]..."
+echo "🏗️   Building Turnstile API and web apps..."
 
-dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
+# Save a little time and run the API and web app builds in parallel...
+
+dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj &
+
+build_api_pid=$!
+
+dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj &
+
+build_web_pid=$!
+
+# Once the builds are finished, pack them up for deployment.
+
+wait $build_api_pid
 
 cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
-echo "🌐   Building web app [$web_app_name]..."
-
-dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+wait $build_web_pid
 
 cd ./web_topublish
 zip -r ../web_topublish.zip . >/dev/null
 cd ..
 
-echo "☁️    Publishing API function app [$api_app_name]..."
+echo "☁️    Publishing Turnstile API and web apps..."
+
+# We can also run the deployments in parallel...
 
 az functionapp deployment source config-zip \
     --resource-group "$resource_group_name" \
     --name "$api_app_name" \
-    --src "./api_topublish.zip"
+    --src "./api_topublish.zip" &
 
-echo "☁️    Publishing web app [$web_app_name]..."
+deploy_api_pid=$!
 
 az webapp deployment source config-zip \
     --resource-group "$resource_group_name" \
     --name "$web_app_name" \
-    --src "./web_topublish.zip"
+    --src "./web_topublish.zip" &
+
+deploy_web_pid=$!
+
+# Wait for both deployments to finish...
+
+wait $deploy_api_pid
+wait $deploy_web_pid
 
 echo "🧹   Cleaning up..."
 
@@ -389,8 +415,8 @@ rm -rf ./web_topublish >/dev/null
 rm -rf ./web_topublish.zip >/dev/null
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
-echo
 echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+echo
 
 
 
