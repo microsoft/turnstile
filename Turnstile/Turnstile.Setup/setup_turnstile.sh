@@ -105,7 +105,7 @@ fi
 # Log in the user if they aren't already...
 
 while [[ -z $current_user_oid ]]; do
-    current_user_oid=$(az ad signed-in-user show --query objectId --output tsv 2>/dev/null);
+    current_user_oid=$(az ad signed-in-user show --query id --output tsv 2>/dev/null);
     if [[ -z $current_user_oid ]]; then az login; fi;
 done
 
@@ -344,7 +344,7 @@ az functionapp deployment source config-zip \
     --name "$api_app_name" \
     --src "./api_topublish.zip"
 
-echo "☁️    Publishing web app [$api_app_name]..."
+echo "☁️    Publishing web app [$web_app_name]..."
 
 az webapp deployment source config-zip \
     --resource-group "$resource_group_name" \
