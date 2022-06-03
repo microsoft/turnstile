@@ -1,5 +1,14 @@
-﻿@using Turnstile.Core.Constants
+﻿@using Newtonsoft.Json
+@using Turnstile.Core.Constants
 @using Turnstile.Web.Controllers
+
+<script src="knockout" type="text/javascript"></script>
+
+<script type="text/javascript">
+    var model = @Html.Raw(JsonConvert.SerializeObject(Model));
+
+    ko.applyBindings(model);
+</script>
 
 @{
     ViewData["Title"] = $"Subscription | {Model.SubscriptionName} | Turnstile";
@@ -56,6 +65,12 @@
 }
 
 @model SubscriptionDetailViewModel
+
+<script src="./js/knockout/knockout-latest.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+    ko.applyBindings({ });
+</script>
 
 <h4 class="text-muted">Subscription</h4>
 <h1>

@@ -45,7 +45,7 @@ namespace Turnstile.Web.Controllers
                 {
                     logger.LogWarning("Publisher setup is incomplete.");
 
-                    return User!.CanAdministerTurnstile() ? RedirectToRoute("publisher_setup") : this.ServiceUnavailable();
+                    return User!.CanAdministerTurnstile() ? RedirectToRoute("get_publisher_config") : this.ServiceUnavailable();
                 }
 
                 if (string.IsNullOrEmpty(pubConfig!.MonaBaseStorageUrl))
