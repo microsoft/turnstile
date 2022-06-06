@@ -37,6 +37,8 @@ post_status_code=$(curl -s \
     "$url")
 
 if [[ $post_status_code == "200" ]]; then
+    echo "GETting subscription [$subscription_id]..."
+
     get_response=$(curl \
         -X GET \
         -H "Content-Type: application/json" \
@@ -49,9 +51,9 @@ if [[ $post_status_code == "200" ]]; then
     expected_subscription=$(echo "$subscription_json" | jq "$projector")
 
     if [[ "$actual_subscription" == "$expected_subscription" ]]; then
-        echo "✔️   Can create subscription test passed."
+        echo "✔️   Can patch subscription; test passed."
     else
-        echo "❌   Can create subscription test failed."
+        echo "❌   Can't patch subscription; test failed."
         echo
         echo "Expected subscription is..."
         echo $(echo "$expected_subscription" | jq ".")

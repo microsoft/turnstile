@@ -29,6 +29,18 @@ run_can_create_subscription() {
     fi
 }
 
+run_can_patch_subscription() {
+    api_url=$1
+    api_key=$2
+
+    chmod +x ./can_patch_subscription/run_test.sh
+    ./can_patch_subscription/run_test.sh "$api_url" "$api_key"
+
+    if [[ $? != 0 ]]; then 
+        all_passed=1 # This test run has failed.
+    fi
+}
+
 usage() { echo "Usage: $0 <azure_region>"; }
 
 check_az() {
@@ -239,6 +251,7 @@ echo "🧪   Running tests..."
 api_url="https://$api_app_name.azurewebsites.net"
 
 run_can_create_subscription "$api_url" "$api_key"
+run_can_patch_subscription  "$api_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 

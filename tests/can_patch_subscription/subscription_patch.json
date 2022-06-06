@@ -1,20 +1,24 @@
 {
     "subscription_id": "6df9270c-2624-4de0-b908-09e87a97ad69",
-    "subscription_name": "can_patch_subscription",
-    "tenant_id": "19c2ab29-3b53-46b8-94a2-767d2643b3d2",
-    "tenant_name": "can_patch_subscription Tenant",
-    "offer_id": "can_patch_subscription Offer 1",
-    "plan_id": "can_patch_subscription Plan 1",
-    "state": "active",
-    "admin_role_name": "can_patch_subscription Admins",
-    "user_role_name": "can_patch_subscription Users",
-    "admin_name": "cawatson",
-    "admin_email": "cawatson@microsoft.com",
-    "total_seats": 30,
-    "is_being_configured": true,
-    "is_free_trial": true,
-    "is_setup_complete": true,
-    "is_test_subscription": true,
-    "created_utc": "2022-06-06",
-    "state_last_updated_utc": "2022-06-07"
+    "subscription_name": "Patched can_patch_subscription",
+    "plan_id": "Patched can_patch_subscription Plan 1",
+    "state": "suspended",
+    "admin_role_name": "Patched can_patch_subscription Admins",
+    "user_role_name": "Patched can_patch_subscription Users",
+    "admin_name": "Patched cawatson",
+    "admin_email": "Patched cawatson@microsoft.com",
+    "total_seats": 50,
+    "is_being_configured": false,
+    "source_subscription": {
+        "id": "some other ID"
+    },
+    "subscriber_info": {
+        "country": "US"
+    },
+    "seating_config": {
+        "seating_strategy_name": "monthly_active_user",
+        "limited_overflow_seating_enabled": false,
+        "seat_reservation_expiry_in_days": 30,
+        "default_seat_expiry_in_days": 30
+    }
 }
