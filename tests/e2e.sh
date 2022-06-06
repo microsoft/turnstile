@@ -219,6 +219,9 @@ echo "🧹   Cleaning up..."
 
 az group delete --yes -g "$resource_group_name"
 
+rm -rf ./api_topublish
+rm -rf ./api_topublish.zip
+
 echo "Testing took [$SECONDS] seconds."
 echo
 
