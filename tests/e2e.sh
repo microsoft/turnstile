@@ -247,8 +247,6 @@ api_key=$(az functionapp keys list \
     --query "functionKeys.default" \
     --output "tsv")
 
-sleep 30 # Give me a second to pull up the logs
-
 echo "🧪   Running tests..."
 
 api_url="https://$api_app_name.azurewebsites.net"
