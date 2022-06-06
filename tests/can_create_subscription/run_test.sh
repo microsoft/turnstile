@@ -7,11 +7,13 @@ passed=0 # Anything other than 0 indicates that this test did not pass.
 api_url=$1
 api_key=$2
 
-script_path=$(cd "$(dirname "$(readlink -f "$0")")" >/dev/null 2>&1 && pwd)
+# All of the resources that this test needs to run are located in this folder. When called from ../e2e.sh,
+# this script inherits ../e2e.sh's pwd so we can't really use "./" to refer to this folder's path. Instead,
+# we use this super-helpful bit of shell to get this folder's path.
 
-echo "Looking for template subscription @ [$script_path/subscription.json]."
+here=$(cd "$(dirname "$(readlink -f "$0")")" >/dev/null 2>&1 && pwd)
 
-subscription_json=$(cat "./subscription.json")
+subscription_json=$(cat "$here/subscription.json")
 subscription_id=$(echo "$subscription_json" | jq -r ".subscription_id")
 
 echo
