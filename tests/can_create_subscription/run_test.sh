@@ -20,7 +20,7 @@ echo
 echo "🧪   Running [can create subscription] test..."
 echo "--------------------------------------------------------------------------------------"
 echo "This test verifies that a subscription can be created using the Turnstile API and that"
-echo "same subscription can be accurately read back if needed."
+echo "that same subscription can be accurately read back when needed."
 echo
 
 url="$api_url/api/saas/subscriptions/$subscription_id"
@@ -43,7 +43,7 @@ if [[ $post_status_code == "200" ]]; then
         -H "x-functions-key: $api_key" \
         "$url")
 
-    projector="{subscription_id, subscription_name, tenant_id, tenant_name, offer_id, plan_id, state, admin_role_name, user_role_name, admin_name, admin_email, total_seats, is_being_configred, is_free_trial, is_setup_complete, is_test_subscription, created_utc, state_last_updated_utc}"
+    projector="{subscription_id, subscription_name, tenant_id, tenant_name, offer_id, plan_id, state, admin_role_name, user_role_name, admin_name, admin_email, total_seats, is_being_configred, is_free_trial, is_setup_complete, is_test_subscription}"
 
     actual_subscription=$(echo "$get_response" | jq "$projector")
     expected_subscription=$(echo "$subscription_json" | jq "$projector")
