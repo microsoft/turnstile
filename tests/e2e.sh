@@ -121,7 +121,7 @@ resource_group_name="turn-e2e-test-$test_run_id"
 if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
     echo "Creating resource group [$resource_group_name]..."
 
-    az group create --location "$p_deployment_region" --name "$resource_group_name"
+    az group create --location "$test_location" --name "$resource_group_name"
 
     if [[ $? -eq 0 ]]; then
         echo "✔   Resource group [$resource_group_name] created."
