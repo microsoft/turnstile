@@ -200,6 +200,15 @@ cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
+echo "⚙️   Applying test Turnstile publisher configuration..."
+
+az storage blob upload \
+    --account-name "$storage_account_name" \
+    --account-key "$storage_account_key" \
+    --container-name "turn-configuration" \
+    --file "./test_publisher_config.json" \
+    --name "publisher_config.json"
+
 echo "☁️    Publishing Turnstile API app..."
 
 az functionapp deployment source config-zip \

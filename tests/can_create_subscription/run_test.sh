@@ -61,7 +61,7 @@ if [[ $post_status_code == "200" ]]; then
         passed=1
     fi
 else
-    echo "❌   POST subscription [$subscription_id] to [$post_url] failed with status code: [$post_status_code]."
+    echo "❌   POST subscription [$subscription_id] to [$url] failed with status code: [$post_status_code]."
     passed=1
 fi
 
