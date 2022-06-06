@@ -232,6 +232,8 @@ api_key=$(az functionapp keys list \
     --query "functionKeys.default" \
     --output "tsv")
 
+sleep 30 # Give me a second to pull up the logs
+
 echo "🧪   Running tests..."
 
 api_url="https://$api_app_name.azurewebsites.net"
@@ -240,7 +242,7 @@ run_can_create_subscription "$api_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 
-az group delete --yes -g "$resource_group_name"
+# az group delete --yes -g "$resource_group_name" Just for now so I can try to debug this stuff.
 
 rm -rf ./api_topublish
 rm -rf ./api_topublish.zip
