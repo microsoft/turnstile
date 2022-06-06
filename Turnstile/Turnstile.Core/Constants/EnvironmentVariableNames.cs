@@ -31,6 +31,11 @@
             public const string StorageConnectionString = "Turnstile_PublisherConfigStorageConnectionString";
         }
 
+        public static class Testing
+        {
+            public const string EventStorageConnectionString = "Turnstile_EventStorageConnectioString";
+        }
+
         public static class Publisher
         {
             public const string TenantId = "Turnstile_PublisherTenantId";
