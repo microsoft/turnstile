@@ -24,10 +24,8 @@ run_can_create_subscription() {
 
     chmod +x ./can_create_subscription/run_test.sh
     ./can_create_subscription/run_test.sh "$api_url" "$api_key"
-    
-    if [[ $? != 0 ]]; then 
-        ((tests_failed++)) # This test run has failed.
-    fi
+
+    [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
 }
 
 run_can_patch_subscription() {
@@ -37,9 +35,7 @@ run_can_patch_subscription() {
     chmod +x ./can_patch_subscription/run_test.sh
     ./can_patch_subscription/run_test.sh "$api_url" "$api_key"
 
-    if [[ $? != 0 ]]; then 
-        ((tests_failed++)) # This test run has failed.
-    fi
+    [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
 }
 
 run_can_get_subscriptions_by_tenant() {
@@ -49,9 +45,7 @@ run_can_get_subscriptions_by_tenant() {
     chmod +x ./can_get_subscriptions_by_tenant/run_test.sh
     ./can_get_subscriptions_by_tenant/run_test.sh "$api_url" "$api_key"
 
-    if [[ $? != 0 ]]; then 
-        ((tests_failed++)) # This test run has failed.
-    fi
+    [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
 }
 
 # #####
