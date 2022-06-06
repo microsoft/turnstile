@@ -55,7 +55,10 @@ check_deployment_region() {
     region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
 
     if [[ -z $region_display_name ]]; then
-        echo "❌   [$region] is not a valid Azure region. For a full list of Azure regions, run 'az account list-locations -o table'."
+        echo "❌   [$region] is not a valid Azure region, but these are..."
+        echo
+        az account list-locations --output table --query "[].name"
+        echo
         return 1
     else
         echo "✔   [$region] is a valid Azure region ($region_display_name)."
@@ -193,47 +196,104 @@ create_app_json="${create_app_json/__deployment_name__/${p_deployment_name}}"
 create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
 create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
 
-create_app_response=$(curl \
-    -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $graph_token" \
-    -d "$create_app_json" \
-    "https://graph.microsoft.com/v1.0/applications")
+# We occasionally run into some consistency issues with these Azure AD calls
+# so we wrap each one in a transient fault handling block. This is an implementation of
+# the retry pattern which you can learn about at https://docs.microsoft.com/en-us/azure/architecture/patterns/retry.
 
-sleep 15 # Give AAD a chance to catch up...
+for i1 in {1..5}; do
+    create_app_response=$(curl \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $graph_token" \
+        -d "$create_app_json" \
+        "https://graph.microsoft.com/v1.0/applications")
 
-aad_object_id=$(echo "$create_app_response" | jq -r ".id")
-aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
+    aad_object_id=$(echo "$create_app_response" | jq -r ".id")
+    aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
+
+    if [[ -z $aad_object_id || -z $aad_app_id ]]; then
+        if [[ $i1 == 5 ]]; then
+            # We tried five times and it's still not working. Time to give up, unfortunately.
+            echo "❌   Failed to create Turnstile AAD app. Setup failed."
+            exit 1
+        else
+            sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
+            echo "⚠️   Trying to create app again in [$sleep_for] seconds."
+            sleep $sleep_for
+        fi
+    else
+        break
+    fi
+done
+
+echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
+
 add_password_json=$(cat ./aad/add_password.json)
 
-add_password_response=$(curl \
-    -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $graph_token" \
-    -d "$add_password_json" \
-    "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
+for i2 in {1..5}; do
+    add_password_response=$(curl \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $graph_token" \
+        -d "$add_password_json" \
+        "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
 
-aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
+    aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
+
+    if [[ -z $aad_app_secret ]]; then
+        if [[ $i2 == 5 ]]; then
+            echo "❌   Failed to create Turnstile AAD app client credentials. Setup failed."
+            exit 1
+        else
+            sleep_for=$((2**i2))
+            echo "⚠️   Trying to create app client credentials again in [$sleep_for] seconds."
+            sleep $sleep_for
+        fi
+    else
+        break
+    fi
+done
 
 echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
 
-sleep 30 # Give AAD a chance to catch up...
+for i3 in {1..5}; do
+    aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
 
-aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv);
-
-if [[ -z $aad_sp_id ]]; then
-    echo "$lp ❌   Unable to create service principal for AAD app [$aad_app_name ($aad_app_id)]. See above output for details. Setup failed."
-    exit 1
-fi
+    if [[ -z $aad_sp_id ]]; then
+        if [[ $i3 == 5 ]]; then
+            echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+            exit 1
+        else
+            sleep_for=$((2**i2))
+            echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+            sleep $sleep_for
+        fi     
+    else
+        break
+    fi
+done
 
 echo "🔐   Granting AAD app [$aad_app_name] service principal [$aad_sp_id] contributor access to resource group [$resource_group_name]..."
 
-sleep 30 # Give AAD a chance to catch up...
+for i4 in {1..5}; do
+    az role assignment create \
+        --role "Contributor" \
+        --assignee "$aad_sp_id" \
+        --resource-group "$resource_group_name"
 
-az role assignment create \
-    --role "Contributor" \
-    --assignee "$aad_sp_id" \
-    --resource-group "$resource_group_name"
+    if [[ $? == 0 ]]; then
+        if [[ $i4 == 5 ]]; then
+            echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+            exit 1     
+        else
+            sleep_for=$((2**i4))
+            echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+            sleep $sleep_for
+        fi
+    else
+        break
+    fi
+done
 
 subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
@@ -289,6 +349,15 @@ topic_name=$(az deployment group show \
 
 # Deploy integration pack.
 
+# When a user provides the integration pack parameter (-i), we check two places for it.
+# First, we check to see if the user provided an absolute path, likely outside of this repo,
+# to an integration pack. If we can't find the integration pack at the absolute path, we then
+# check our local integration_packs folder (./integration_packs) for one with the same name
+# provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
+# resolve an integration pack, we don't deploy any at all (not even default) because the assumption
+# is that something was entered wrong and we don't want the user to have to go back and clean up
+# the default integration pack if that isn't what they intended to deploy.
+
 integration_pack="${p_integration_pack#/}" # Trim leading...
 integration_pack="${p_integration_pack%/}" # and trailing slashes.
 
@@ -321,7 +390,7 @@ echo "⚙️   Applying default publisher configuration..."
 
 if [[ -z $p_publisher_config_path ]]; then
     publisher_config_path="default_publisher_config.json"
-else # The user can provide a custom publisher configuraiton file via the -c switch...
+else # The user can provide a custom publisher configuration file via the -c switch...
     publisher_config_path=$p_publisher_config_path
 fi
 
@@ -361,25 +430,14 @@ wait $turnstile_admin_role_pid
 
 echo "🏗️   Building Turnstile API and web apps..."
 
-# Save a little time and run the API and web app builds in parallel...
-
-dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj &
-
-build_api_pid=$!
-
-dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj &
-
-build_web_pid=$!
+dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
+dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
 
 # Once the builds are finished, pack them up for deployment.
-
-wait $build_api_pid
 
 cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
-
-wait $build_web_pid
 
 cd ./web_topublish
 zip -r ../web_topublish.zip . >/dev/null
@@ -387,7 +445,7 @@ cd ..
 
 echo "☁️    Publishing Turnstile API and web apps..."
 
-# We can also run the deployments in parallel...
+# We can deploy both apps in parallel and hopefully save a little time...
 
 az functionapp deployment source config-zip \
     --resource-group "$resource_group_name" \

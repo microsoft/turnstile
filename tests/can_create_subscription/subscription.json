@@ -1,0 +1,20 @@
+{
+    "subscription_id": "31ff283c-1d96-4987-ba56-33511da5eb3a",
+    "subscription_name": "can_create_subscription",
+    "tenant_id": "c03538b6-5ae0-4599-8360-c2014f146b90",
+    "tenant_name": "can_create_subscription Tenant",
+    "offer_id": "can_create_subscription Offer 1",
+    "plan_id": "can_create_subscription Plan 1",
+    "state": "active",
+    "admin_role_name": "can_create_subscription Admins",
+    "user_role_name": "can_create_subscription Users",
+    "admin_name": "cawatson",
+    "admin_email": "cawatson@microsoft.com",
+    "total_seats": 30,
+    "is_being_configured": true,
+    "is_free_trial": true,
+    "is_setup_complete": true,
+    "is_test_subscription": true,
+    "created_utc": "2022-06-06",
+    "state_last_updated_utc": "2022-06-07"
+}
