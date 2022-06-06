@@ -15,6 +15,20 @@ test_location=$1 # For simplicity, this script only takes one parameter - the Az
 test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an identifier for the resources that we 
                         # stand up in Azure to run these tests a little later.
 
+# Individual test runner functions go here...
+
+run_can_create_subscription() {
+    api_url=$1
+    api_key=$2
+
+    chmod +x ./can_create_subscription/run_test.sh
+    ./can_create_subscription/run_test.sh "$api_url" "$api_key"
+    
+    if [[ $? != 0 ]]; then 
+        all_passed=1 # This test run has failed.
+    fi
+}
+
 usage() { echo "Usage: $0 <azure_region>"; }
 
 check_az() {
@@ -224,17 +238,3 @@ rm -rf ./api_topublish.zip
 
 echo "Testing took [$SECONDS] seconds."
 echo
-
-# Each test is implemented as a method down here...
-
-run_can_create_subscription() {
-    api_url=$1
-    api_key=$2
-
-    chmod +x ./can_create_subscription/run_test.sh
-    ./can_create_subscription/run_test.sh "$api_url" "$api_key"
-    
-    if [[ $? != 0 ]]; then 
-        all_passed=1 # This test run has failed.
-    fi
-}
