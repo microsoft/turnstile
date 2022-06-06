@@ -33,7 +33,7 @@
 
         public static class Testing
         {
-            public const string EventStorageConnectionString = "Turnstile_EventStorageConnectioString";
+            public const string EventStorageConnectionString = "Turnstile_EventStorageConnectionString";
         }
 
         public static class Publisher
