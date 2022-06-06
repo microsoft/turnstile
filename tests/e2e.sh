@@ -2,9 +2,9 @@
 
 SECONDS=0 # Let's time it
 
-all_passed=0 # We use this variable to roll up all the test results. If we get done running this script
-             # and this value is still 0, all of our tests passed. If it's anything else, at least one of
-             # the tests has failed.
+tests_failed=0 # We use this variable to roll up all the test results. If we get done running this script
+               # and this value is still 0, all of our tests passed. If it's anything else, at least one of
+               # the tests has failed.
 
 turnstile_version="0.1-prerelease" # TODO: Add code to auotomatically roll this forward on PR.
 
@@ -15,7 +15,8 @@ test_location=$1 # For simplicity, this script only takes one parameter - the Az
 test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an identifier for the resources that we 
                         # stand up in Azure to run these tests a little later.
 
-# Individual test runner functions go here...
+# Test runner functions go here...
+# #####
 
 run_can_create_subscription() {
     api_url=$1
@@ -25,7 +26,7 @@ run_can_create_subscription() {
     ./can_create_subscription/run_test.sh "$api_url" "$api_key"
     
     if [[ $? != 0 ]]; then 
-        all_passed=1 # This test run has failed.
+        ((tests_failed++)) # This test run has failed.
     fi
 }
 
@@ -37,9 +38,11 @@ run_can_patch_subscription() {
     ./can_patch_subscription/run_test.sh "$api_url" "$api_key"
 
     if [[ $? != 0 ]]; then 
-        all_passed=1 # This test run has failed.
+        ((tests_failed++)) # This test run has failed.
     fi
 }
+
+# #####
 
 usage() { echo "Usage: $0 <azure_region>"; }
 
@@ -255,7 +258,7 @@ run_can_patch_subscription  "$api_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 
-# az group delete --yes -g "$resource_group_name" Just for now so I can try to debug this stuff.
+az group delete --yes -g "$resource_group_name"
 
 rm -rf ./api_topublish
 rm -rf ./api_topublish.zip
