@@ -140,7 +140,7 @@ az deployment group create \
     --name "$az_deployment_name" \
     --template-file "./test_environment.bicep" \
     --parameters \
-        deploymentName="$deployment_name"
+        deploymentName="$test_run_id"
 
 # We're going to need these variables here in a bit...
 
@@ -176,7 +176,7 @@ topic_id=$(az deployment group show \
 
 echo "🏗️   Building Turnstile API app..."
 
-dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
+dotnet publish -c Release -o ./api_topublish ../Turnstile/Turnstile.Api/Turnstile.Api.csproj
 
 cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
