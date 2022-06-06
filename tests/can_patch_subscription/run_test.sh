@@ -59,7 +59,7 @@ if [[ $post_status_code == "200" ]]; then
             -H "x-functions-key: $api_key" \
             "$url")
 
-        projector="{subscription_id, subscription_name, tenant_id, tenant_name, offer_id, plan_id, state, admin_role_name, user_role_name, admin_name, admin_email, total_seats, is_being_configred, is_free_trial, is_setup_complete, is_test_subscription, subscriber_country: .subscriber_info.country, source_subscription_id: .source_subscription.id, seating_strategy_name: .seating_config.seating_strategy_name, limited_overflow_seating: .seating_config.limited_overflow_seating_enabled, reservation_expiry: .seating_config.seat_reservation_expiry_in_days, seat_expiry: .seating_config.default_seat_expiry_in_days}"
+        projector="{subscription_id, subscription_name, plan_id, state, admin_role_name, user_role_name, admin_name, admin_email, total_seats, subscriber_country: .subscriber_info.country, source_subscription_id: .source_subscription.id, seating_strategy_name: .seating_config.seating_strategy_name, limited_overflow_seating: .seating_config.limited_overflow_seating_enabled, reservation_expiry: .seating_config.seat_reservation_expiry_in_days, seat_expiry: .seating_config.default_seat_expiry_in_days}"
 
         actual_subscription=$(echo "$get_response" | jq "$projector")
         expected_subscription=$(echo "$patch_json" | jq "$projector")
