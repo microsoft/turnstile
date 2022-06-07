@@ -58,6 +58,16 @@ run_can_reserve_seat() {
     [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
 }
 
+run_can_redeem_reserved_seat() {
+    api_url=$1
+    api_key=$2
+
+    chmod +x ./can_redeem_reserved_seat/run_test.she
+    ./can_redeem_reserved_seat/run_test.sh "$api_url" "$api_key"
+
+    [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
+}
+
 # #####
 
 usage() { echo "Usage: $0 <azure_region>"; }
@@ -271,6 +281,7 @@ run_can_create_subscription         "$api_url" "$api_key"
 run_can_patch_subscription          "$api_url" "$api_key"
 run_can_get_subscriptions_by_tenant "$api_url" "$api_key"
 run_can_reserve_seat                "$api_url" "$api_key"
+run_can_redeem_reserved_seat        "$api_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 
