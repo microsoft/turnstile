@@ -62,7 +62,7 @@ run_can_redeem_reserved_seat() {
     api_url=$1
     api_key=$2
 
-    chmod +x ./can_redeem_reserved_seat/run_test.she
+    chmod +x ./can_redeem_reserved_seat/run_test.sh
     ./can_redeem_reserved_seat/run_test.sh "$api_url" "$api_key"
 
     [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
