@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Consider this a "private script" - it's designed to be run only by ../e2e.sh
-
 api_url=$1
 api_key=$2
 
@@ -19,11 +17,7 @@ subscription2_id=$(echo "$subscription2_json" | jq -r ".subscription_id")
 
 tenant_id=$(echo "$subscription1_json" | jq -r ".tenant_id")
 
-echo
-echo "🧪   Running [can get all subscriptions by tenant] test..."
-echo "----------------------------------------------------------------------------------"
-echo "This test verifies that API consumers can retrieve all subscriptions by tenant ID."
-echo
+echo "Running [can get all subscriptions by tenant] test..."
 
 post1_url="$api_url/api/saas/subscriptions/$subscription1_id"
 

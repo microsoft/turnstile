@@ -48,6 +48,16 @@ run_can_get_subscriptions_by_tenant() {
     [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
 }
 
+run_can_reserve_seat() {
+    api_url=$1
+    api_key=$2
+
+    chmod +x ./can_reserve_seat/run_test.sh
+    ./can_reserve_seat/run_test.sh "$api_url" "$api_key"
+
+    [[ $? == 0 ]] || ((tests_failed++)) # Test run has failed.
+}
+
 # #####
 
 usage() { echo "Usage: $0 <azure_region>"; }
@@ -260,6 +270,7 @@ api_url="https://$api_app_name.azurewebsites.net"
 run_can_create_subscription         "$api_url" "$api_key"
 run_can_patch_subscription          "$api_url" "$api_key"
 run_can_get_subscriptions_by_tenant "$api_url" "$api_key"
+run_can_reserve_seat                "$api_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 

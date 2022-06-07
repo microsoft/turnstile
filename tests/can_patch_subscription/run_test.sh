@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Consider this a "private script" - it's designed to be run only by ../e2e.sh
-
-passed=0 # Anything other than 0 indicates that this test did not pass.
-
 api_url=$1
 api_key=$2
 
@@ -16,12 +12,7 @@ here=$(cd "$(dirname "$(readlink -f "$0")")" >/dev/null 2>&1 && pwd)
 subscription_json=$(cat "$here/subscription.json")
 subscription_id=$(echo "$subscription_json" | jq -r ".subscription_id")
 
-echo
-echo "🧪   Running [can patch subscription] test..."
-echo "---------------------------------------------------------------------------------------"
-echo "This test verifies that a subscription can be patched using the Turnstile API and that"
-echo "that same subscription can be accurately read back when needed."
-echo
+echo "Running [can patch subscription] test..."
 
 url="$api_url/api/saas/subscriptions/$subscription_id"
 
@@ -74,15 +65,13 @@ if [[ $post_status_code == "200" ]]; then
             echo
             echo "Actual subscription is..."
             echo $(echo "$actual_subscription" | jq ".")
-            passed=1
+            exit 1 # Test failed
         fi
     else
         echo "❌   PATCH subscription [$subscription_id] @ [$url] failed with status code: [$patch_status_code]."
-        passed=1
+        exit 1 # Test failed
     fi
 else
     echo "❌   POST subscription [$subscription_id] @ [$url] failed with status code: [$post_status_code]."
-    passed=1
+    exit 1 # Test failed
 fi
-
-exit $passed
