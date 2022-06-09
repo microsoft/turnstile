@@ -348,10 +348,95 @@ check_deployment_region "$test_location"
 
 [[ $? == 0 ]] || exit 1 # The region is invalid and an error message has already been displayed. We're done here.
 
-resource_group_name="turn-e2e-test-1654733706"
-api_app_name="turn-services-1654733706"
+resource_group_name="turn-e2e-test-$test_run_id"
 
-# This is where all the other stuff goes.
+if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
+    echo "Creating resource group [$resource_group_name]..."
+
+    az group create --location "$test_location" --name "$resource_group_name"
+
+    if [[ $? -eq 0 ]]; then
+        echo "✔   Resource group [$resource_group_name] created."
+    else
+        echo "❌   Unable to create resource group [$resource_group_name]."
+        exit 1
+    fi
+fi
+
+az_deployment_name="turn-e2e-test-$test_run_id-deploy"
+
+echo "🦾   Deploying test enviroment into resource group [$resource_group_name]..."
+
+az deployment group create \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --template-file "./test_environment.bicep" \
+    --parameters \
+        deploymentName="$test_run_id"
+
+# We're going to need these variables here in a bit...
+
+api_app_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.apiAppId.value \
+    --output tsv);
+
+api_app_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.apiAppName.value \
+    --output tsv);
+
+storage_account_name=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.storageAccountName.value \
+    --output tsv);
+
+storage_account_key=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.storageAccountKey.value \
+    --output tsv);
+
+topic_id=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.topicId.value \
+    --output tsv);
+
+echo "🏗️   Building Turnstile API app..."
+
+dotnet publish -c Release -o ./api_topublish ../Turnstile/Turnstile.Api/Turnstile.Api.csproj
+
+cd ./api_topublish
+zip -r ../api_topublish.zip . >/dev/null
+cd ..
+
+echo "⚙️   Applying test Turnstile publisher configuration..."
+
+az storage blob upload \
+    --account-name "$storage_account_name" \
+    --account-key "$storage_account_key" \
+    --container-name "turn-configuration" \
+    --file "./test_publisher_config.json" \
+    --name "publisher_config.json"
+
+echo "☁️    Publishing Turnstile API app..."
+
+az functionapp deployment source config-zip \
+    --resource-group "$resource_group_name" \
+    --name "$api_app_name" \
+    --src "./api_topublish.zip"
+
+echo "🔌   Connecting Turnstile API event store function (PostEventToStore) to event grid..."
+
+az eventgrid event-subscription create \
+    --name "event-store-connection" \
+    --source-resource-id "$topic_id" \
+    --endpoint "$api_app_id/functions/PostEventToStore" \
+    --endpoint-type azurefunction
 
 echo "🔑   Getting Turnstile API function key..."
 
