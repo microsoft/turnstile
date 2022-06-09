@@ -454,7 +454,7 @@ run_tests "$api_base_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 
-# az group delete --yes -g "$resource_group_name"
+az group delete --yes -g "$resource_group_name"
 
 rm -rf ./api_topublish
 rm -rf ./api_topublish.zip
