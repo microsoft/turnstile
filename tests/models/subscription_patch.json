@@ -1,13 +1,13 @@
 {
-    "subscription_id": "6df9270c-2624-4de0-b908-09e87a97ad69",
-    "subscription_name": "Patched can_patch_subscription",
-    "plan_id": "Patched can_patch_subscription Plan 1",
-    "state": "suspended",
-    "admin_role_name": "Patched can_patch_subscription Admins",
-    "user_role_name": "Patched can_patch_subscription Users",
+    "subscription_id": "31ff283c-1d96-4987-ba56-33511da5eb3a",
+    "subscription_name": "Patched Subscription",
+    "plan_id": "Patched Test Plan 1",
+    "state": "active",
+    "admin_role_name": "Patched Test Admins",
+    "user_role_name": "Patched Tests Users",
     "admin_name": "Patched cawatson",
     "admin_email": "Patched cawatson@microsoft.com",
-    "total_seats": 50,
+    "total_seats": 5,
     "is_being_configured": false,
     "source_subscription": {
         "id": "some other ID"
