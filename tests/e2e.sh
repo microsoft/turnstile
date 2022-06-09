@@ -44,7 +44,7 @@ run_tests() {
         patch_subscription_url="$api_base_url/saas/subscriptions/$subscription_id"
 
         patch_subscription_response=$(curl \
-            -X PATCH \ # Note that we're using the PATCH HTTP verb here...
+            -X PATCH \
             -H "Content-Type: application/json" \
             -H "x-functions-key: $api_key" \
             -d "$subscription_patch_json" \
@@ -57,7 +57,7 @@ run_tests() {
         actual_subscription=$(echo "$patch_subscription_response" | jq "$subscription_projector")
         expected_subscription=$(echo "$subscription_patch_json" | jq "$subscription_projector")
 
-        if [[ "$actual_subscription" == "$expected_subscription" ]]
+        if [[ "$actual_subscription" == "$expected_subscription" ]]; then
             echo "✔️   Subscription [$subscription_id] successfully patched."
 
             # 🧪 Test #3 - Reserve a seat in the subscription
