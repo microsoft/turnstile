@@ -17,7 +17,7 @@
     },
     "seating_config": {
         "seating_strategy_name": "monthly_active_user",
-        "limited_overflow_seating_enabled": false,
+        "limited_overflow_seating_enabled": true,
         "seat_reservation_expiry_in_days": 30,
         "default_seat_expiry_in_days": 30
     }

@@ -27,8 +27,6 @@ run_tests() {
     create_subscription_status_code=$(curl -s \
         -X POST \
         -H "Content-Type: application/json" \
-        # Although you can provide the function API key using a query string parameter, 
-        # it's cleaner and safer to provide it in a request header like we do here.
         -H "x-functions-key: $api_key" \
         -d "$subscription_json" \
         -o /dev/null \
@@ -85,7 +83,7 @@ run_tests() {
 
                 redeem_seat_id="$reserve_seat_id"
                 redeem_json=$(cat ./models/redeem_seat.json)
-                redeem_user_id=$(echo "$redeem_json" | jr -q ".user_id")
+                redeem_user_id=$(echo "$redeem_json" | jq -r ".user_id")
                 redeem_url="$api_base_url/saas/subscriptions/$subscription_id/seats/$redeem_seat_id/redeem"
 
                 redeem_seat_response=$(curl \
@@ -113,7 +111,7 @@ run_tests() {
                         request_seat_id=$(cat /proc/sys/kernel/random/uuid) # Generate a random seat ID
                         request_seat_json=$(cat "./models/request_seat_$i.json")
                         request_seat_user_id=$(echo "$request_seat_json" | jq -r ".user_id")
-                        request_seat_url="$api_base_url/saas/subscriptions/$subscription_id/seats/$seat_id/request"
+                        request_seat_url="$api_base_url/saas/subscriptions/$subscription_id/seats/$request_seat_id/request"
 
                         request_seat_response=$(curl \
                             -X POST \
@@ -146,7 +144,7 @@ run_tests() {
                     request_seat_id=$(cat /proc/sys/kernel/random/uuid) # Generate a random seat ID
                     request_seat_json=$(cat ./models/request_limited_seat.json)
                     request_seat_user_id=$(echo "$request_seat_json" | jq -r ".user_id")
-                    request_seat_url="$api_base_url/saas/subscriptions/$subscription_id/seats/$seat_id/request"
+                    request_seat_url="$api_base_url/saas/subscriptions/$subscription_id/seats/$request_seat_id/request"
 
                     request_seat_response=$(curl \
                         -X POST \
@@ -181,7 +179,7 @@ run_tests() {
                         seat_id=$(echo "$get_seat_response" | jq -r ".seat_id")
                         seat_subscription_id=$(echo "$get_seat_response" | jq -r ".subscription_id")
                         seat_tenant_id=$(echo "$get_seat_response" | jq -r ".occupant.tenant_id")
-                        seat_user_id=$(echo "$get_seat_response" | jq -r ".occupant_user_id")
+                        seat_user_id=$(echo "$get_seat_response" | jq -r ".occupant.user_id")
 
                         if [[ "$subscription_id" == "$seat_subscription_id" && "$tenant_id" == "$seat_tenant_id" && "$request_seat_user_id" == "$seat_user_id" ]]; then
                             echo "✔️   User [$seat_user_id] is currently occupying seat [$seat_id]."
@@ -193,7 +191,7 @@ run_tests() {
 
                             release_seat_url="$api_base_url/saas/subscriptions/$subscription_id/seats/$seat_id"
 
-                            relase_seat_status_code=$(curl -s \
+                            release_seat_status_code=$(curl -s \
                                 -X DELETE \
                                 -H "Content-Type: application/json" \
                                 -H "x-functions-key: $api_key" \
@@ -350,95 +348,10 @@ check_deployment_region "$test_location"
 
 [[ $? == 0 ]] || exit 1 # The region is invalid and an error message has already been displayed. We're done here.
 
-resource_group_name="turn-e2e-test-$test_run_id"
+resource_group_name="turn-e2e-test-1654733706"
+api_app_name="turn-services-1654733706"
 
-if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
-    echo "Creating resource group [$resource_group_name]..."
-
-    az group create --location "$test_location" --name "$resource_group_name"
-
-    if [[ $? -eq 0 ]]; then
-        echo "✔   Resource group [$resource_group_name] created."
-    else
-        echo "❌   Unable to create resource group [$resource_group_name]."
-        exit 1
-    fi
-fi
-
-az_deployment_name="turn-e2e-test-$test_run_id-deploy"
-
-echo "🦾   Deploying test enviroment into resource group [$resource_group_name]..."
-
-az deployment group create \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --template-file "./test_environment.bicep" \
-    --parameters \
-        deploymentName="$test_run_id"
-
-# We're going to need these variables here in a bit...
-
-api_app_id=$(az deployment group show \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.apiAppId.value \
-    --output tsv);
-
-api_app_name=$(az deployment group show \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.apiAppName.value \
-    --output tsv);
-
-storage_account_name=$(az deployment group show \
-    --resource-group="$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.storageAccountName.value \
-    --output tsv);
-
-storage_account_key=$(az deployment group show \
-    --resource-group="$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.storageAccountKey.value \
-    --output tsv);
-
-topic_id=$(az deployment group show \
-    --resource-group="$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.topicId.value \
-    --output tsv);
-
-echo "🏗️   Building Turnstile API app..."
-
-dotnet publish -c Release -o ./api_topublish ../Turnstile/Turnstile.Api/Turnstile.Api.csproj
-
-cd ./api_topublish
-zip -r ../api_topublish.zip . >/dev/null
-cd ..
-
-echo "⚙️   Applying test Turnstile publisher configuration..."
-
-az storage blob upload \
-    --account-name "$storage_account_name" \
-    --account-key "$storage_account_key" \
-    --container-name "turn-configuration" \
-    --file "./test_publisher_config.json" \
-    --name "publisher_config.json"
-
-echo "☁️    Publishing Turnstile API app..."
-
-az functionapp deployment source config-zip \
-    --resource-group "$resource_group_name" \
-    --name "$api_app_name" \
-    --src "./api_topublish.zip"
-
-echo "🔌   Connecting Turnstile API event store function (PostEventToStore) to event grid..."
-
-az eventgrid event-subscription create \
-    --name "event-store-connection" \
-    --source-resource-id "$topic_id" \
-    --endpoint "$api_app_id/functions/PostEventToStore" \
-    --endpoint-type azurefunction
+# This is where all the other stuff goes.
 
 echo "🔑   Getting Turnstile API function key..."
 
