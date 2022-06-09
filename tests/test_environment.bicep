@@ -7,6 +7,7 @@ var cosmosContainerName = 'turnstilecontainer'
 var storageAccountName = take('turnstor${deploymentName}', 24)
 var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
+var eventStoreContainerName = 'event-store'
 var appInsightsName = 'turn-insights-${deploymentName}'
 var appServicePlanName = 'turn-plan-${deploymentName}'
 var eventGridTopicName = 'turn-events-${deploymentName}'
@@ -82,6 +83,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
 
 resource configStorageContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
   name: '${storageAccount.name}/default/${configStorageContainerName}'
+}
+
+resource eventStoreContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
+  name: '${storageAccount.name}/default/${eventStoreContainerName}'
 }
 
 resource eventGridTopic 'Microsoft.EventGrid/topics@2021-12-01' = {
