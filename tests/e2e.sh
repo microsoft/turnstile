@@ -262,26 +262,26 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/subscription_created" \
         | jq ". | length")
 
-    if [[ subscription_created_count == 1 ]]; then
+    if [[ $subscription_created_count == 1 ]]; then
         echo "✔️   1 subscription_created event published."
     else
         echo "❌   [$subscription_created_count] subscription_created event(s) published; expected 1."
         verify_failed=1
     fi
 
-    # The subscription_patched event is published when the subscription is patched in test #2.
+    # The subscription_updated event is published when the subscription is patched in test #2.
 
-    subscription_patched_count=$(az storage blob list \
+    subscription_updated_count=$(az storage blob list \
         --container-name "$container_name" \
         --account-key "$storage_account_key" \
         --account-name "$storage_account_name" \
-        --prefix "saas/subscriptions/$subscription_id/subscription_patched" \
+        --prefix "saas/subscriptions/$subscription_id/subscription_updated" \
         | jq ". | length")
 
-    if [[ subscription_patched_count == 1 ]]; then
-        echo "✔️   1 subscription_patched event published."
+    if [[ $subscription_updated_count == 1 ]]; then
+        echo "✔️   1 subscription_updated event published."
     else
-        echo "❌   [$subscription_patched_count] subscription_patched event(s) published; expected 1."
+        echo "❌   [$subscription_updated_count] subscription_updated event(s) published; expected 1."
         verify_failed=1
     fi
 
@@ -294,7 +294,7 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/seat_reserved" \
         | jq ". | length")
 
-    if [[ seat_reserved_count == 1 ]]; then
+    if [[ $seat_reserved_count == 1 ]]; then
         echo "✔️   1 seat_reserved event published."
     else
         echo "❌   [$seat_reserved_count] seat_reserved event(s) published; expected 1."
@@ -310,7 +310,7 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/seat_redeemed" \
         | jq ". | length")
 
-    if [[ seat_redeemed_count == 1 ]]; then
+    if [[ $seat_redeemed_count == 1 ]]; then
         echo "✔️   1 seat_redeemed event published."
     else
         echo "❌   [$seat_redeemed_count] seat_redeemed event(s) published; expected 1."
@@ -327,7 +327,7 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/seat_provided" \
         | jq ". | length")
 
-    if [[ seat_provided_count == 5 ]]; then
+    if [[ $seat_provided_count == 5 ]]; then
         echo "✔️   5 seat_provided events published."
     else
         echo "❌   [$seat_provided_count] seat_provided event(s) published; expected 5."
@@ -344,7 +344,7 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/seat_warning_level_reached" \
         | jq ". | length")
 
-    if [[ low_seat_warning_count == 1 ]]; then
+    if [[ $low_seat_warning_count == 1 ]]; then
         echo "✔️   1 seat_warning_level_reached event published."
     else
         echo "❌   [$low_seat_warning_count] seat_warning_level_reached event(s) published; expected 1."
@@ -361,7 +361,7 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/no_seats_available" \
         | jq ". | length")
 
-    if [[ no_seats_count == 2 ]]; then
+    if [[ $no_seats_count == 2 ]]; then
         echo "✔️   2 no_seats_available events published."
     else
         echo "❌   [$no_seats_count] no_seats_available event(s) published; expected 2."
@@ -378,12 +378,14 @@ verify_events() {
         --prefix "saas/subscriptions/$subscription_id/seat_released" \
         | jq ". | length")
 
-    if [[ seat_released_count == 1 ]]; then
+    if [[ $seat_released_count == 1 ]]; then
         echo "✔️   1 seat_released event published."
     else
         echo "❌   [$seat_released_count] seat_released event(s) published; expected 1."
         verify_failed=1
     fi
+
+    [[ -n $verify_failed ]] && exit 1;
 }
 
 check_az() {
