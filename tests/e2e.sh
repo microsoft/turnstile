@@ -11,7 +11,7 @@ test_location=$1 # For simplicity, this script only takes one parameter - the Az
 test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an identifier for the resources that we 
                         # stand up in Azure to run these tests a little later.
 
-usage() { echo "Usage: $0 <azure_region>"; }
+usage() { echo "Usage: $0 <azure_region> [-k (flag: keep test environment)]"; }
 
 run_tests() {
     api_base_url=$1
@@ -245,6 +245,147 @@ run_tests() {
     fi  
 }
 
+verify_events() {
+    storage_account_name=$1
+    storage_account_key=$2
+    container_name="event-store"
+
+    subscription_json=$(cat ./models/subscription.json)
+    subscription_id=$(echo "$subscription_json" | jq -r ".subscription_id") # Events are stored in blob storage by subscription ID to make these tests easier.
+
+    # The subscription_created event is published when the subscription is created in test #1.
+
+    subscription_created_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/subscription_created" \
+        | jq ". | length")
+
+    if [[ subscription_created_count == 1 ]]; then
+        echo "✔️   1 subscription_created event published."
+    else
+        echo "❌   [$subscription_created_count] subscription_created event(s) published; expected 1."
+        verify_failed=1
+    fi
+
+    # The subscription_patched event is published when the subscription is patched in test #2.
+
+    subscription_patched_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/subscription_patched" \
+        | jq ". | length")
+
+    if [[ subscription_patched_count == 1 ]]; then
+        echo "✔️   1 subscription_patched event published."
+    else
+        echo "❌   [$subscription_patched_count] subscription_patched event(s) published; expected 1."
+        verify_failed=1
+    fi
+
+    # The subscription_reserved event is published when a seat is reserved in test #3.
+
+    seat_reserved_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/seat_reserved" \
+        | jq ". | length")
+
+    if [[ seat_reserved_count == 1 ]]; then
+        echo "✔️   1 seat_reserved event published."
+    else
+        echo "❌   [$seat_reserved_count] seat_reserved event(s) published; expected 1."
+        verify_failed=1
+    fi
+
+    # The subscription_redeemed event is published when a reserved seat is redeemed in test #4.
+
+    seat_redeemed_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/seat_redeemed" \
+        | jq ". | length")
+
+    if [[ seat_redeemed_count == 1 ]]; then
+        echo "✔️   1 seat_redeemed event published."
+    else
+        echo "❌   [$seat_redeemed_count] seat_redeemed event(s) published; expected 1."
+        verify_failed=1
+    fi
+
+    # The seat_provided event is published when a "walk-up" user is provided a seat in tests #5 (where we create 4 standard seats)
+    # and #6 (where we create a single limited seat).
+
+    seat_provided_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/seat_provided" \
+        | jq ". | length")
+
+    if [[ seat_provided_count == 5 ]]; then
+        echo "✔️   5 seat_provided events published."
+    else
+        echo "❌   [$seat_provided_count] seat_provided event(s) published; expected 5."
+        verify_failed=1
+    fi
+
+    # The seat_warning_level_reached event is published when a subscription's available seats falls below 25% of total_seats.
+    # This level is reached during test #5.
+
+    low_seat_warning_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/seat_warning_level_reached" \
+        | jq ". | length")
+
+    if [[ low_seat_warning_count == 1 ]]; then
+        echo "✔️   1 seat_warning_level_reached event published."
+    else
+        echo "❌   [$low_seat_warning_count] seat_warning_level_reached event(s) published; expected 1."
+        verify_failed=1
+    fi
+
+    # The no_seats_available event is published in test #5 when the last standard seat is provided. It is published
+    # again in step #6 as, technically, there are still no standard seats available.
+
+    no_seats_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/no_seats_available" \
+        | jq ". | length")
+
+    if [[ no_seats_count == 2 ]]; then
+        echo "✔️   2 no_seats_available events published."
+    else
+        echo "❌   [$no_seats_count] no_seats_available event(s) published; expected 2."
+        verify_failed=1
+    fi
+
+    # The seat_released event is published when a seat is manually released through the API. When a seat expires, however,
+    # no seat_released event is currently published.
+
+    seat_released_count=$(az storage blob list \
+        --container-name "$container_name" \
+        --account-key "$storage_account_key" \
+        --account-name "$storage_account_name" \
+        --prefix "saas/subscriptions/$subscription_id/seat_released" \
+        | jq ". | length")
+
+    if [[ seat_released_count == 1 ]]; then
+        echo "✔️   1 seat_released event published."
+    else
+        echo "❌   [$seat_released_count] seat_released event(s) published; expected 1."
+        verify_failed=1
+    fi
+}
+
 check_az() {
     az version >/dev/null
 
@@ -320,6 +461,18 @@ splash() {
 splash
 
 # Make sure all pre-reqs are installed...
+
+while getopts "k" opt; do
+    case $opt in
+        k)
+            keep=1 # To keep the reource group around for further analysis after tests are run.
+        ;;
+        \?)
+            usage
+            exit 1
+        ;;
+    esac
+done
 
 echo "Checking prerequisites..."
 
@@ -451,13 +604,24 @@ echo "🧪   Running tests..."
 api_base_url="https://$api_app_name.azurewebsites.net/api"
 
 run_tests "$api_base_url" "$api_key"
+tests_failed=$?
+verify_events "$storage_account_name" "$storage_account_key"
+event_verification_failed=$?
 
 echo "🧹   Cleaning up..."
 
-az group delete --yes -g "$resource_group_name"
+if [[ -z "$keep" ]]; then
+    az group delete --yes -g "$resource_group_name"
+fi
 
 rm -rf ./api_topublish
 rm -rf ./api_topublish.zip
 
 echo "Testing took [$SECONDS] seconds."
 echo
+
+if [[ tests_failed == 0 && event_verification_failed == 0 ]]; then
+    exit 0 # All of our tests passed.
+else
+    exit 1 # Some of our tests failed.
+fi
