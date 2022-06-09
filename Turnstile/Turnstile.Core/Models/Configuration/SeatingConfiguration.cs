@@ -1,4 +1,7 @@
-﻿using Newtonsoft.Json;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;

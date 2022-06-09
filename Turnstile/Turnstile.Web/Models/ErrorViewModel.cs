@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 namespace Turnstile.Web.Models
 {
     public class ErrorViewModel

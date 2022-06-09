@@ -1,4 +1,7 @@
-﻿using Turnstile.Core.Extensions;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Turnstile.Core.Extensions;
 
 namespace Turnstile.Core.Constants
 {

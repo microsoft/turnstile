@@ -1,4 +1,7 @@
-﻿namespace Turnstile.Core.Constants
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+namespace Turnstile.Core.Constants
 {
     public static class EventTypes
     {

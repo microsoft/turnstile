@@ -1,4 +1,7 @@
-﻿using Microsoft.Identity.Web;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Microsoft.Identity.Web;
 using System.Security.Claims;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Models;

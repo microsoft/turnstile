@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
 SECONDS=0 # Let's time it...
 
 turnstile_version="0.1-experimental"

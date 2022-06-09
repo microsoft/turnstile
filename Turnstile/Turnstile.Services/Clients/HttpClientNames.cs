@@ -1,4 +1,7 @@
-﻿namespace Turnstile.Services.Clients
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+namespace Turnstile.Services.Clients
 {
     public static class HttpClientNames
     {

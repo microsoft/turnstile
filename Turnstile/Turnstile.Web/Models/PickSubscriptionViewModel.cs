@@ -1,4 +1,7 @@
-﻿using System.Security.Claims;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using System.Security.Claims;
 using Turnstile.Core.Models;
 
 namespace Turnstile.Web.Models

@@ -1,4 +1,7 @@
-﻿using Microsoft.Net.Http.Headers;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Microsoft.Net.Http.Headers;
 using Polly;
 using Turnstile.Core.Interfaces;
 using Turnstile.Services.Clients;

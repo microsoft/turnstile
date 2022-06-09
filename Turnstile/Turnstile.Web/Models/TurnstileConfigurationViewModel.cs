@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using System.ComponentModel.DataAnnotations;
 using Turnstile.Core.Models.Configuration;
 
 namespace Turnstile.Web.Models

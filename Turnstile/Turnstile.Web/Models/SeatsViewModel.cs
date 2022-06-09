@@ -1,4 +1,7 @@
-﻿using Turnstile.Core.Constants;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Turnstile.Core.Constants;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
 

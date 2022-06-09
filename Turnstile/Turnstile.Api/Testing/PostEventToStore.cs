@@ -1,5 +1,6 @@
-// Default URL for triggering event grid function in the local environment.
-// http://localhost:7071/runtime/webhooks/EventGrid?functionName={functionname}
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using Azure.Messaging.EventGrid;
 using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;

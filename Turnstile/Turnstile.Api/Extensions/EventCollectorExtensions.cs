@@ -1,4 +1,7 @@
-﻿using Azure.Messaging.EventGrid;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Azure.Messaging.EventGrid;
 using Microsoft.Azure.WebJobs;
 using System;
 using System.Threading.Tasks;

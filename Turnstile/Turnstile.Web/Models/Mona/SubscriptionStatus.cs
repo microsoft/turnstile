@@ -1,4 +1,7 @@
-﻿namespace Turnstile.Web.Models.Mona
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+namespace Turnstile.Web.Models.Mona
 {
     public enum SubscriptionStatus
     {

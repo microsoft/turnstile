@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Microsoft.AspNetCore.Mvc;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Web.Extensions;

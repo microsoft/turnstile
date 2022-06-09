@@ -1,4 +1,7 @@
-﻿using Turnstile.Core.Models;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
 
 namespace Turnstile.Web.Models

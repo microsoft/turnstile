@@ -1,4 +1,7 @@
-﻿namespace Turnstile.Core.Extensions
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+namespace Turnstile.Core.Extensions
 {
     public static class StringExtensions
     {

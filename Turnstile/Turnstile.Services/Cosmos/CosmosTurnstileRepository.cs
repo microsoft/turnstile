@@ -1,4 +1,7 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using System.Net;
 using Turnstile.Core.Constants;
