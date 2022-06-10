@@ -61,7 +61,8 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                if (!Uri.TryCreate(returnTo, UriKind.Absolute, out _))
+                if (!string.IsNullOrEmpty(returnTo) && 
+                    !Uri.TryCreate(returnTo, UriKind.Absolute, out _))
                 {
                     // I don't know what you're trying to do here but, nice try, bad actor.
 
@@ -127,7 +128,8 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                if (!Uri.TryCreate(returnTo, UriKind.Absolute, out _))
+                if (!string.IsNullOrEmpty(returnTo) && 
+                    !Uri.TryCreate(returnTo, UriKind.Absolute, out _))
                 {
                     // I don't know what you're trying to do here but, nice try, bad actor.
 
