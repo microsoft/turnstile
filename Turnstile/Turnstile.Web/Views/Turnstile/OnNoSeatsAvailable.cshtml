@@ -7,7 +7,7 @@
 
 <h1>No seats available</h1>
 
-@if (Model.IsTenantSubscriptionAdministrator)
+@if (Model.IsSubscriptionAdministrator)
 {
     <lead>No more seats available. To purchase additional seats, @Html.Raw(Model.SalesContactHtml).</lead>
 }

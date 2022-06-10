@@ -7,7 +7,7 @@
 
 <h1>Subscription suspended</h1>
 
-@if (Model.IsTenantSubscriptionAdministrator)
+@if (Model.IsSubscriptionAdministrator)
 {
     <lead>This subscription has been suspended. For assistance, @Html.Raw(Model.SupportContactHtml).</lead>
 }

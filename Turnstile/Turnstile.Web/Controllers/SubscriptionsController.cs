@@ -86,13 +86,10 @@ namespace Turnstile.Web.Controllers
                 {
                     subscriptions.AddRange(await subsClient.GetSubscriptions());
                 }
-                else if (User.CanAdministerAllTenantSubscriptions())
-                {
-                    subscriptions.AddRange(await subsClient.GetSubscriptions(subUser.TenantId!));
-                }
                 else
                 {
-                    return Forbid();
+                    var tenantSubs = await subsClient.GetSubscriptions(subUser.TenantId!);
+                    subscriptions.AddRange(tenantSubs.Where(s => User.CanAdministerSubscription(s)));
                 }
 
                 sort ??= SortableFields.SubscriptionName;
@@ -128,11 +125,8 @@ namespace Turnstile.Web.Controllers
                     return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
-                var isTurnstileAdmin = User.CanAdministerTurnstile(); // Publisher admin
-
-                var isSubscriberAdmin = // Subscriber admin
-                    User.CanAdministerAllTenantSubscriptions(subscription.TenantId!) ||
-                    User.CanAdministerSubscription(subscription);
+                var isTurnstileAdmin = User.CanAdministerTurnstile();
+                var isSubscriberAdmin = User.CanAdministerSubscription(subscription);
 
                 if (isTurnstileAdmin || isSubscriberAdmin)
                 {
@@ -176,11 +170,7 @@ namespace Turnstile.Web.Controllers
                     return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
-                var isSubscriberAdmin = // Subscriber admin
-                    User.CanAdministerAllTenantSubscriptions(subscription.TenantId!) ||
-                    User.CanAdministerSubscription(subscription);
-
-                if (isSubscriberAdmin)
+                if (User.CanAdministerSubscription(subscription))
                 {
                     this.ApplyLayout(publisherConfig!, User!);
 
@@ -220,11 +210,7 @@ namespace Turnstile.Web.Controllers
                     return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                 }
 
-                var isSubscriberAdmin = // Subscriber admin
-                    User.CanAdministerAllTenantSubscriptions(subscription.TenantId!) ||
-                    User.CanAdministerSubscription(subscription);
-
-                if (isSubscriberAdmin)
+                if (User.CanAdministerSubscription(subscription))
                 {
                     if (!string.IsNullOrEmpty(model.ForEmail))
                     {
@@ -236,7 +222,13 @@ namespace Turnstile.Web.Controllers
                         }
                         else
                         {
-                            var seat = await seatsClient.ReserveSeat(subscriptionId, new Reservation { Email = model.ForEmail! });
+
+
+                            var seat = await seatsClient.ReserveSeat(subscriptionId, new Reservation 
+                            { 
+                                Email = model.ForEmail!,
+                                InvitationUrl = CreateInvitationLink(subscriptionId, model.ForEmail!)
+                            });
 
                             if (seat == null)
                             {
@@ -258,7 +250,7 @@ namespace Turnstile.Web.Controllers
                 }
                 else
                 {
-                    // Only the customer -- the subscriber admin -- is allowed to reserve seats.
+                    // Only the customer -- the subscription admin -- is allowed to reserve seats.
                     // Not even the turnstile admin can reserve seats.
 
                     return Forbid();
@@ -353,5 +345,8 @@ namespace Turnstile.Web.Controllers
                 throw;
             }
         }
+
+        private string CreateInvitationLink(string subscriptionId, string email) =>
+           $"https://{HttpContext.Request.Host}/turnstile/{subscriptionId}?login_hint={email}";
     }
 }

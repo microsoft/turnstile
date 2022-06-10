@@ -275,8 +275,7 @@ namespace Turnstile.Web.Controllers
                 }
 
                 var subUser = User.ToCoreModel();
-                var isTenantAdmin = User.CanAdministerAllTenantSubscriptions() || User.CanAdministerSubscription(subscription);
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
 
                 this.ApplyLayout(pubConfig!, User!);
 
@@ -305,11 +304,10 @@ namespace Turnstile.Web.Controllers
                 }
 
                 var subUser = User.ToCoreModel();
-                var isTenantAdmin = User.CanAdministerAllTenantSubscriptions() || User.CanAdministerSubscription(subscription);
 
                 this.ApplyLayout(pubConfig!, User!);
 
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
 
                 return View(messageModel);
             }
@@ -329,8 +327,8 @@ namespace Turnstile.Web.Controllers
             { 
                 var pubConfig = await GetPublisherConfiguration();
                 var subUser = User.ToCoreModel();
-                var isTenantAdmin = User.CanAdministerAllTenantSubscriptions(subUser.TenantId!);
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, isTenantAdmin);
+
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, false);
 
                 this.ApplyLayout(pubConfig!, User!);
 
@@ -358,12 +356,7 @@ namespace Turnstile.Web.Controllers
                 }
 
                 var subUser = User.ToCoreModel();
-
-                var isTenantAdmin =
-                    User.CanAdministerAllTenantSubscriptions(subUser.TenantId!) ||
-                    User.CanAdministerSubscription(subscription);
-
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, isTenantAdmin);
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
 
                 this.ApplyLayout(pubConfig!, User!);
 

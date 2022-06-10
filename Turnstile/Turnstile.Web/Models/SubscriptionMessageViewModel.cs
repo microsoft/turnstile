@@ -10,21 +10,19 @@ namespace Turnstile.Web.Models
     {
         public SubscriptionMessageViewModel() { }
 
-        public SubscriptionMessageViewModel(PublisherConfiguration publisherConfig, Subscription subscription, bool isTenantAdmin = false)
-            : this(publisherConfig, isTenantAdmin)
-        {
-            
+        public SubscriptionMessageViewModel(PublisherConfiguration publisherConfig, Subscription subscription, bool isSubscriptionAdmin = false)
+            : this(publisherConfig, isSubscriptionAdmin)
+        {   
             ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
 
-            Apply(subscription);
-            
+            Apply(subscription);         
         }
 
-        public SubscriptionMessageViewModel(PublisherConfiguration publisherConfig, bool isTenantAdmin = false)
+        public SubscriptionMessageViewModel(PublisherConfiguration publisherConfig, bool isSubscriptionAdmin = false)
         {
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
 
-            IsTenantSubscriptionAdministrator = isTenantAdmin;
+            IsSubscriptionAdministrator = isSubscriptionAdmin;
 
             Apply(publisherConfig);
         }
@@ -78,7 +76,7 @@ namespace Turnstile.Web.Models
             }
         }
 
-        public bool IsTenantSubscriptionAdministrator { get; set; } = false;
+        public bool IsSubscriptionAdministrator { get; set; } = false;
 
         public string? SubscriptionId { get; set; }
         public string? SubscriptionName { get; set; }

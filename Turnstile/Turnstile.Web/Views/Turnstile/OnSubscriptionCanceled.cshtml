@@ -7,7 +7,7 @@
 
 <h1>Subscription canceled</h1>
 
-@if (Model.IsTenantSubscriptionAdministrator)
+@if (Model.IsSubscriptionAdministrator)
 {
     <lead>To purchase a new subscription, @Html.Raw(Model.SalesContactHtml).</lead>
 }

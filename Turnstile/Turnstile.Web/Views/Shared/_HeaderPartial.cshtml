@@ -33,12 +33,9 @@
                             <a class="nav-link" href="@headerModel!.ContactSupportUrl">Support</a>
                         </li>
                     }
-                    @if (User.CanAdministerTurnstile() || User.CanAdministerAllTenantSubscriptions(User.GetHomeTenantId()!))
-                    {
-                        <li class="nav-item">
-                            <a class="nav-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions)">Manage subscriptions</a>
-                        </li>
-                    }
+                    <li class="nav-item">
+                        <a class="nav-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions)">Manage subscriptions</a>
+                    </li>
                     @if (User.CanAdministerTurnstile())
                     {
                         <li class="nav-item">

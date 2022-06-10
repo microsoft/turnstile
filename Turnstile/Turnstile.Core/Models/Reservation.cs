@@ -21,6 +21,10 @@ namespace Turnstile.Core.Models
         [JsonProperty("email")]
         public string? Email { get; set; }
 
+        [JsonPropertyName("invite_url")]
+        [JsonProperty("invite_url")]
+        public string? InvitationUrl { get; set; }
+
         public IEnumerable<string> Validate(Subscription inSubscription)
         {
             ArgumentNullException.ThrowIfNull(inSubscription, nameof(inSubscription));

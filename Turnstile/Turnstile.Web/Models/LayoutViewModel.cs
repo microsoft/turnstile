@@ -25,7 +25,6 @@ namespace Turnstile.Web.Models
             ContactSalesUrl = publisherConfig.ContactSalesUrl;
             ContactSupportUrl = publisherConfig.ContactSupportUrl;
             IsTurnstileAdmin = forPrincipal.CanAdministerTurnstile();
-            IsTenantSubscriptionAdmin = forPrincipal.CanAdministerAllTenantSubscriptions(forPrincipal.GetHomeTenantId()!);
         }
 
         public string? TurnstileName { get; set; }
@@ -37,6 +36,5 @@ namespace Turnstile.Web.Models
         public string? PrivacyNoticePageUrl { get; set; }
 
         public bool IsTurnstileAdmin { get; set; } = false;
-        public bool IsTenantSubscriptionAdmin { get; set; } = false;
     }
 }
