@@ -52,7 +52,7 @@ namespace Turnstile.Web.Models
             }
             else
             {
-                SalesContactHtml = "contact support";
+                SupportContactHtml = "contact support";
             }
         }
 

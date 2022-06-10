@@ -120,10 +120,10 @@ else if (Model.HasValidationErrors)
                 <lead>Depending on the outcome of a user trying to obtain a seat in a subscription, the turnstile will redirect them to an appropriate endpoint. These settings allow you to configure what those endpoints are.</lead>
                 <hr />
                 <div class="mb-3">
-                    <label class="form-label">On <b>seat provided</b> URL</label>&nbsp;<span class="text-danger">*</span>
+                    <label class="form-label">SaaS app user entry point URL</label>&nbsp;<span class="text-danger">*</span>
                     <input asp-for="@Model.TurnstileConfiguration.OnAccessGrantedUrl" type="url" class="form-control" aria-describedBy="onAccessGrantedHelp" />
                     <span asp-validation-for="@Model.TurnstileConfiguration.OnAccessGrantedUrl" class="text-danger"></span>
-                    <div id="onAccessGrantedHelp" class="form-text">If a seat is provided, where should the user be redirected to?</div>
+                    <div id="onAccessGrantedHelp" class="form-text">Users will be automatically directed here when either a seat is provided or they're using a Microsoft Account (MSA) which is not currently supported by Turnstile.</div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">On <b>no seats available</b> URL</label>
