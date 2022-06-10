@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Web;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
@@ -72,6 +73,13 @@ namespace Turnstile.Web.Controllers
                     return setupAction;
                 }
 
+                if (CheckForMsa(publisherConfig!) is var redirectAction && redirectAction != null)
+                {
+                    // We can't help them (yet). Bounce the user to the SaaS app...
+
+                    return redirectAction;
+                }
+
                 var user = User.ToCoreModel();
 
                 var availableSubs = (await subsClient.GetSubscriptions(user.TenantId))
@@ -118,6 +126,13 @@ namespace Turnstile.Web.Controllers
                     setupAction != null)
                 {
                     return setupAction;
+                }
+
+                if (CheckForMsa(publisherConfig!) is var redirectAction && redirectAction != null)
+                {
+                    // We can't help them (yet). Bounce the user to the SaaS app...
+
+                    return redirectAction;
                 }
 
                 var user = User.ToCoreModel();
@@ -346,6 +361,23 @@ namespace Turnstile.Web.Controllers
 
                 throw;
             }
+        }
+
+        private IActionResult? CheckForMsa(PublisherConfiguration publisherConfig)
+        {
+            if (User.IsMsa())
+            {
+                logger.LogWarning($"MSA [{User.GetObjectId()}] trying to use Turnstile. MSAs are not currently supported. Redirecting user directly to SaaS app...");
+
+                // So... Turnstile doesn't currently support MSAs but Mona does. Although they don't have to be, Mona and Turnstile are designed to be deployed together so
+                // we need a way to gracefully handle MSAs here inside Turnstile without actually providing them with seats. In the future, Turnstile will be able 
+                // to support different kinds of accounts (including B2C, et al.) but, for right now, we just do organizational accounts. If we happen to get an MSA,
+                // we just redirect them to the front door of the customer's SaaS app to let them handle them.
+
+                return Redirect(publisherConfig!.TurnstileConfiguration!.OnAccessGrantedUrl!);
+            }
+
+            return null;
         }
     }
 }

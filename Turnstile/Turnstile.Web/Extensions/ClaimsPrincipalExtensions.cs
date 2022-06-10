@@ -12,6 +12,18 @@ namespace Turnstile.Web.Extensions
 {
     public static class ClaimsPrincipalExtensions
     {
+        public const string MsaTenantId = "9188040d-6c67-4c5b-b112-36a304b66dad";
+
+        // A Microsoft Account (MSA) is just like any other organization (work/school) account except
+        // it belongs to a specific tenant ID -- `MsaTenantId`. Right now, Turnstile doesn't support MSA
+        // because Turnstile uses the tenant ID (unique if organizational AAD accounts) as part of its decision
+        // whether or not to grant a user access to a SaaS subscription. We can't use the MSA tenant ID for this
+        // decision because anyone can create a MSA and therefore have the `MsaTenantId` tenant ID. So, right now,
+        // we just don't bother with it.
+
+        public static bool IsMsa(this ClaimsPrincipal principal) =>
+            principal.GetTenantId() == MsaTenantId;
+
         public static User ToCoreModel(this ClaimsPrincipal principal)
         {
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));
