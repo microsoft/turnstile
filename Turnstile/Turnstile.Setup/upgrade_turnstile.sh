@@ -119,7 +119,7 @@ upgrade_turn_rg() {
         echo
         echo "🏗️   Creating app service [$api_app_name] temporary upgrade slot [$upgrade_slot_name]..."
 
-        az webapp deployment slot create \
+        az functionapp deployment slot create \
             --name "$api_app_name" \
             --resource-group "$rg_name" \
             --slot "$upgrade_slot_name" \
