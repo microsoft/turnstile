@@ -5,7 +5,7 @@
 
 SECONDS=0 # Let's time it
 
-turnstile_version="0.1-prerelease" # TODO: Add code to auotomatically roll this forward on PR.
+turnstile_version=$(cat ../VERSION) # TODO: Add code to auotomatically roll this forward on PR.
 
 test_location=$1 # For simplicity, this script only takes one parameter - the Azure region where the tests should be run.
                  # We'll be blowing this whole thing away when we're done testing so I don't see much reason to 

@@ -5,7 +5,7 @@
 
 SECONDS=0 # Let's time it...
 
-turnstile_version="0.1-experimental"
+turnstile_version=$(cat ../../VERSION)
 
 usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack]"; }
 
