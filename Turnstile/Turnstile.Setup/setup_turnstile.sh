@@ -170,7 +170,12 @@ resource_group_name="turnstile-$p_deployment_name"
 if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
     echo "Creating resource group [$resource_group_name]..."
 
-    az group create --location "$p_deployment_region" --name "$resource_group_name"
+    az group create \
+        --location "$p_deployment_region" \
+        --name "$resource_group_name" \
+        --tags \
+            "Turnstile Deployment Name"="$p_deployment_name" \
+            "Turnstile Version"="$turnstile_version"
 
     if [[ $? -eq 0 ]]; then
         echo "✔   Resource group [$resource_group_name] created."

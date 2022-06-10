@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Turnstile.Web": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:55386;http://localhost:55387"
+    }
+  }
+}
