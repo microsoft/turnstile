@@ -123,9 +123,7 @@ namespace Turnstile.Web.Extensions
 
             if (string.IsNullOrEmpty(publisherConfig.TurnstileConfiguration?.OnAccessDeniedUrl))
             {
-                return new RedirectToRouteResult(
-                    TurnstileController.RouteNames.OnAccessDenied,
-                    new { subscriptionId = subscriptionId });
+                return new ForbidResult(); 
             }
             else
             {
