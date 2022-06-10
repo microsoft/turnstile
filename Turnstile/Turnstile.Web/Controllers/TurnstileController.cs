@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
+using System.Text.Encodings.Web;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
@@ -180,7 +181,14 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
-                        return publisherConfig!.OnAccessGranted(subscriptionId);
+                        if (string.IsNullOrEmpty(returnTo))
+                        {
+                            return publisherConfig!.OnAccessGranted(subscriptionId);
+                        }
+                        else
+                        {
+                            return Redirect(returnTo);
+                        }
                     }
                 }
             }
