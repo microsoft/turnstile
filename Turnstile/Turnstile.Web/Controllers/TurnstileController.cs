@@ -57,10 +57,17 @@ namespace Turnstile.Web.Controllers
 
         [HttpGet]
         [Route("", Name = RouteNames.DefaultTurnstile)]
-        public async Task<IActionResult> DefaultTurnstile()
+        public async Task<IActionResult> DefaultTurnstile(string? returnTo = null)
         {
             try
             {
+                if (!Uri.TryCreate(returnTo, UriKind.Absolute, out _))
+                {
+                    // I don't know what you're trying to do here but, nice try, bad actor.
+
+                    return RedirectToRoute(RouteNames.DefaultTurnstile);
+                }
+
                 var publisherConfig = await GetPublisherConfiguration();
 
                 if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
@@ -116,10 +123,17 @@ namespace Turnstile.Web.Controllers
 
         [HttpGet]
         [Route("turnstile/{subscriptionId}", Name = RouteNames.SpecificTurnstile)]
-        public async Task<IActionResult> SpecificTurnstile(string subscriptionId)
+        public async Task<IActionResult> SpecificTurnstile(string subscriptionId, string? returnTo = null)
         {
             try
             {
+                if (!Uri.TryCreate(returnTo, UriKind.Absolute, out _))
+                {
+                    // I don't know what you're trying to do here but, nice try, bad actor.
+
+                    return RedirectToRoute(RouteNames.SpecificTurnstile, new { subscriptionId });
+                }
+
                 var publisherConfig = await GetPublisherConfiguration();
 
                 if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&

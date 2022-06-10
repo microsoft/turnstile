@@ -10,7 +10,7 @@ namespace Turnstile.Web.Models
     {
         public PickSubscriptionViewModel() { }
 
-        public PickSubscriptionViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal forPrincipal)
+        public PickSubscriptionViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal forPrincipal, string? returnTo = null)
         {
             ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
             ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));

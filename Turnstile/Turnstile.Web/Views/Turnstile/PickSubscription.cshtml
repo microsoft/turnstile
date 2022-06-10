@@ -10,7 +10,13 @@
 <div class="list-group" style="margin-top: 20px">
     @foreach (var subscription in Model.Subscriptions)
     {
-        <a href="@Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile, new { subscriptionId = subscription.SubscriptionId })" class="list-group-item list-group-item-action">
+        var subTurnstileUrl = Url.RouteUrl(
+            TurnstileController.RouteNames.SpecificTurnstile,
+            subscription.ReturnToUrl == null ?
+                new { subscriptionId = subscription.SubscriptionId } :
+                new { subscriptionId = subscription.SubscriptionId, returnTo = subscription.ReturnToUrl });
+
+        <a href="@subTurnstileUrl" class="list-group-item list-group-item-action">
             @subscription.SubscriptionName &nbsp;
             @if (subscription.CanAdminister == true)
             {
