@@ -50,7 +50,6 @@ namespace Turnstile.Api.Subscriptions
 
             subscription.State ??= SubscriptionStates.Purchased;
             subscription.SubscriptionName ??= subscription.SubscriptionId;
-            subscription.AdminRoleName ??= subscription.GetDefaultAdminRoleName();
             subscription.IsSetupComplete ??= false;
 
             subscription.State = subscription.State.ToLower();

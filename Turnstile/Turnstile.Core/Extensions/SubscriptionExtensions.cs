@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using System.Runtime.CompilerServices;
 using Turnstile.Core.Models;
 
 namespace Turnstile.Core.Extensions
@@ -18,8 +17,5 @@ namespace Turnstile.Core.Extensions
             return (subscription.TotalSeats.GetValueOrDefault() > 0 &&
                    (1 - (seatSummary.StandardSeatCount / (double)(subscription.TotalSeats!))) <= lowSeatingWarningLevel);
         }
-
-        public static string GetDefaultAdminRoleName(this Subscription subscription) =>
-            $"{subscription.SubscriptionId} Administrators";
     }
 }
