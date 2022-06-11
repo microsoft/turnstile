@@ -105,7 +105,9 @@ namespace Turnstile.Web.Controllers
                 {
                     return RedirectToRoute(
                         RouteNames.SpecificTurnstile,
-                        new { subscriptionId = availableSubs[0].SubscriptionId });
+                        returnTo == null ?
+                            new { subscriptionId = availableSubs[0].SubscriptionId } :
+                            new { subscriptionId = availableSubs[0].SubscriptionId, returnTo });
                 }
                 else
                 {
