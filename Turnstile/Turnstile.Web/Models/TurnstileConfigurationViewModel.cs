@@ -19,7 +19,8 @@ namespace Turnstile.Web.Models
             OnSubscriptionPurchasedUrl = turnstileConfig.OnSubscriptionNotReadyUrl;
             OnSubscriptionSuspendedUrl = turnstileConfig.OnSubscriptionSuspendedUrl;
             OnSubscriptionCanceledUrl = turnstileConfig.OnSubscriptionCanceledUrl;
-            OnSubscriptionNotFoundUrl = turnstileConfig.OnNoSubscriptionsFoundUrl;
+            OnSubscriptionNotFoundUrl = turnstileConfig.OnSubscriptionNotFoundUrl;
+            OnNoSubscriptionsFoundUrl = turnstileConfig.OnNoSubscriptionsFoundUrl;
             OnAccessGrantedUrl = turnstileConfig.OnAccessGrantedUrl;
         }
 
@@ -32,6 +33,7 @@ namespace Turnstile.Web.Models
                 OnSubscriptionSuspendedUrl = OnSubscriptionSuspendedUrl,
                 OnSubscriptionCanceledUrl = OnSubscriptionCanceledUrl,
                 OnSubscriptionNotFoundUrl = OnSubscriptionNotFoundUrl,
+                OnNoSubscriptionsFoundUrl = OnNoSubscriptionsFoundUrl,
                 OnAccessGrantedUrl = OnAccessGrantedUrl
             };
 
