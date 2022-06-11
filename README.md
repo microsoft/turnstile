@@ -10,6 +10,8 @@ Turnstile simplifies the building of SaaS apps on Azure by automating subscripti
 * [How Turnstile works](#how-turnstile-works)
   * [How Turnstile assigns seats to your users](#how-turnstile-assigns-seats-to-your-users)
 * [Deploying Turnstile](#deploying-turnstile)
+* [Using the API](#using-the-api)
+* [FAQ](#faq)
 * [Contributing](#contributing)
 * [Trademarks](#trademarks)
 
@@ -147,6 +149,10 @@ https://turn-web-example01.azurewebsites.net/publisher/setup
 Click the URL (it's automatically linked within the cloud shell) to navigate to that site and complete the Turnstile setup wizard.
 
 > The setup wizard is hosted entirely within your own Turnstile deployment so you're aren't sharing any information with Microsoft (or anyone else) at this point.
+
+## Using the API
+
+Turnstile exposes an API that allows you to manage seats and subscriptions. Turnstile includes an [automated end-to-end testing script](tests/e2e.sh) that stands up a Turnstile API test environment, runs a series of tests against the Turnstile API, then destroys the test environment. The script contains examples of how to perform the most common Turnstile API tasks —
 
 ## Contributing
 
