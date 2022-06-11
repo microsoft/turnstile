@@ -61,10 +61,6 @@ check_prereqs() {
     fi
 }
 
-check_turn_health() {
-   # Be back in a bit...
-}
-
 upgrade_turn_rg() {
     local subscription_id="$1"
     local rg_name="$2"
@@ -191,7 +187,7 @@ upgrade_turn_rg() {
             --slot "$upgrade_slot_name" \
             --action "swap" \
             --name "$api_app_name" \
-            --resource_group "$rg_name" \
+            --resource-group "$rg_name" \
             --subscription "$subscription_id" \
             --target-slot "production" &
 
@@ -203,7 +199,7 @@ upgrade_turn_rg() {
             --name "$web_app_name" \
             --resource-group "$rg_name" \
             --subscription "$subscription_id" \
-            --target-slot "production"
+            --target-slot "production" &
 
         web_swap_pid=$!
 
@@ -386,7 +382,7 @@ for subscription_id in $subscription_ids; do
             echo "Upgrade to Version?:  [$THIS_TURNSTILE_VERSION]"
             echo
 
-            read -p "❔   Upgrade Turnstile deployment [$rg_turn_name] to version [$THIS_TURN_VERSION]? [y/N] " initiate_upgrade
+            read -p "❔   Upgrade Turnstile deployment [$rg_turn_name] to version [$THIS_TURNSTILE_VERSION]? [y/N] " initiate_upgrade
 
             case "$initiate_upgrade" in
                 [yY1]   ) 
