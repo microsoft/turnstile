@@ -251,6 +251,9 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
                 user_id: {
                   type: 'string'
                 }
+                invite_url: {
+                  type: 'string'
+                }
               }
               type: 'object'
             }

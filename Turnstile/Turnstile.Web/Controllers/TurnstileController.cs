@@ -113,7 +113,7 @@ namespace Turnstile.Web.Controllers
                 {
                     this.ApplyLayout(publisherConfig!, User!);
 
-                    return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(availableSubs, User));
+                    return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(availableSubs, User, returnTo));
                 }
 
             }

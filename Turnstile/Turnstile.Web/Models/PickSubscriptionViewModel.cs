@@ -15,7 +15,7 @@ namespace Turnstile.Web.Models
             ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
             ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
 
-            Subscriptions = subscriptions.Select(s => new SubscriptionIdentityViewModel(s, forPrincipal)).ToList();
+            Subscriptions = subscriptions.Select(s => new SubscriptionIdentityViewModel(s, forPrincipal, returnTo)).ToList();
         }
 
         public List<SubscriptionIdentityViewModel> Subscriptions { get; set; } = new List<SubscriptionIdentityViewModel>(); 
