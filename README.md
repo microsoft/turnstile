@@ -1,5 +1,3 @@
-> Shared under NDA.
-
 # Turnstile
 
 Turnstile simplifies the building of SaaS apps on Azure by automating subscription and seat (or license) management. Turnstile is deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
@@ -11,7 +9,6 @@ Turnstile simplifies the building of SaaS apps on Azure by automating subscripti
   * [How Turnstile assigns seats to your users](#how-turnstile-assigns-seats-to-your-users)
 * [Deploying Turnstile](#deploying-turnstile)
 * [Using the API](#using-the-api)
-* [FAQ](#faq)
 * [Contributing](#contributing)
 * [Trademarks](#trademarks)
 
@@ -153,6 +150,14 @@ Click the URL (it's automatically linked within the cloud shell) to navigate to 
 ## Using the API
 
 Turnstile exposes an API that allows you to manage seats and subscriptions. Turnstile includes an [automated end-to-end testing script](tests/e2e.sh) that stands up a Turnstile API test environment, runs a series of tests against the Turnstile API, then destroys the test environment. The script contains examples of how to perform the most common Turnstile API tasks —
+
+* [Create a subscription](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L23)
+* [Patch a subscription](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L42)
+* [Reserve a seat](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L64)
+* [Redeem a reserved seat](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L85)
+* [Request a "walk-up" seat](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L108)
+* [Check if a user has a seat](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L168)
+* [Manually release a seat](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L190)
 
 ## Contributing
 
