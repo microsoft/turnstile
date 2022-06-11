@@ -219,7 +219,7 @@ for i1 in {1..5}; do
     aad_object_id=$(echo "$create_app_response" | jq -r ".id")
     aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
 
-    if [[ -z $aad_object_id || -z $aad_app_id ]]; then
+    if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
         if [[ $i1 == 5 ]]; then
             # We tried five times and it's still not working. Time to give up, unfortunately.
             echo "❌   Failed to create Turnstile AAD app. Setup failed."
@@ -248,7 +248,7 @@ for i2 in {1..5}; do
 
     aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
 
-    if [[ -z $aad_app_secret ]]; then
+    if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
         if [[ $i2 == 5 ]]; then
             echo "❌   Failed to create Turnstile AAD app client credentials. Setup failed."
             exit 1
@@ -267,7 +267,7 @@ echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
 for i3 in {1..5}; do
     aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
 
-    if [[ -z $aad_sp_id ]]; then
+    if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
         if [[ $i3 == 5 ]]; then
             echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
             exit 1
