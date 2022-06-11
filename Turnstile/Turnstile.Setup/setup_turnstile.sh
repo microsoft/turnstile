@@ -289,7 +289,7 @@ for i4 in {1..5}; do
         --assignee "$aad_sp_id" \
         --resource-group "$resource_group_name"
 
-    if [[ $? == 0 ]]; then
+    if [[ $? != 0 ]]; then
         if [[ $i4 == 5 ]]; then
             echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
             exit 1     
@@ -381,7 +381,7 @@ fi
 if [[ -z "$pack_path" ]]; then
     echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
 else
-    echo "Deploying [$p_integration_pack ($pack_path)] integration pack..."
+    echo "🦾   Deploying [$p_integration_pack ($pack_path)] integration pack..."
 
     az deployment group create \
         --resource-group "$resource_group_name" \
@@ -433,6 +433,8 @@ turnstile_admin_role_pid=$!
 
 wait $tenant_admin_role_pid
 wait $turnstile_admin_role_pid
+
+echo
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
