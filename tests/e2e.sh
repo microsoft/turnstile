@@ -14,7 +14,12 @@ test_location=$1 # For simplicity, this script only takes one parameter - the Az
 test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an identifier for the resources that we 
                         # stand up in Azure to run these tests a little later.
 
-usage() { echo "Usage: $0 <azure_region> [-k (flag: keep test environment)]"; }
+usage() { 
+  echo "Usage: $0 <azure_region> [keep]";
+  echo
+  echo "<azure_region>  The name (e.g., westus) of the Azure region to run tests."
+  echo "[keep]          Flag - optionally keep the test resource group that's created."
+}
 
 run_tests() {
     api_base_url=$1
@@ -467,18 +472,6 @@ splash
 
 # Make sure all pre-reqs are installed...
 
-while getopts "k" opt; do
-    case $opt in
-        k)
-            keep=1 # To keep the reource group around for further analysis after tests are run.
-        ;;
-        \?)
-            usage
-            exit 1
-        ;;
-    esac
-done
-
 echo "Checking prerequisites..."
 
 check_az;           [[ $? -ne 0 ]] && prereq_check_failed=1
@@ -620,7 +613,7 @@ event_verification_failed=$?
 
 echo "🧹   Cleaning up..."
 
-if [[ -z "$keep" ]]; then
+if [[ $2 != "keep" ]]; then
     az group delete --yes -g "$resource_group_name"
 fi
 
