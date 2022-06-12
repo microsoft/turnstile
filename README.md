@@ -11,6 +11,7 @@ Turnstile simplifies the building of SaaS apps on Azure by automating subscripti
   * [How Turnstile assigns seats to your users](#how-turnstile-assigns-seats-to-your-users)
 * [Deploying Turnstile](#deploying-turnstile)
 * [Using the API](#using-the-api)
+* [FAQ](#faq)
 * [Contributing](#contributing)
 * [Trademarks](#trademarks)
 
