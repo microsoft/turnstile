@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.Design;
+using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Web.Extensions;
@@ -94,7 +96,14 @@ namespace Turnstile.Web.Controllers
 
                 sort ??= SortableFields.SubscriptionName;
 
-                return View(new SubscriptionsViewModel(Sort(subscriptions, sort)));
+                if (subscriptions.Any())
+                {
+                    return View(new SubscriptionsViewModel(Sort(subscriptions, sort)));
+                }
+                else
+                {
+                    return RedirectToRoute(TurnstileController.RouteNames.OnNoSubscriptions);
+                }
             }
             catch (Exception ex)
             {
@@ -168,6 +177,11 @@ namespace Turnstile.Web.Controllers
                 if (subscription == null)
                 {
                     return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
+                }
+
+                if (subscription.State != SubscriptionStates.Active) // Seats can be reserved only in active subscriptions.
+                {
+                    return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId });
                 }
 
                 if (User.CanAdministerSubscription(subscription))

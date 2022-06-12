@@ -2,13 +2,6 @@
 @using Turnstile.Core.Constants
 @using Turnstile.Web.Controllers
 
-<script src="knockout" type="text/javascript"></script>
-
-<script type="text/javascript">
-    var model = @Html.Raw(JsonConvert.SerializeObject(Model));
-
-    ko.applyBindings(model);
-</script>
 
 @{
     ViewData["Title"] = $"Subscription | {Model.SubscriptionName} | Turnstile";
@@ -88,7 +81,7 @@
 <nav class="nav">
     @if (Model.UserIsSubscriberAdmin)
     {
-        if (Model.Seating!.HasNoMoreSeats)
+        if (Model.State != SubscriptionStates.Active || Model.Seating!.HasNoMoreSeats)
         {
             <a href="#" class="nav-link disabled">Reserve seat</a>
         }
