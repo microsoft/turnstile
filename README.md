@@ -20,7 +20,7 @@ __Customers__ (represented in your SaaS app as __tenants__) purchase __subscript
 
 ## How Turnstile works
 
-When a user tries to access your SaaS app, your app first calls an API endpoint that Turnstile exposes to check if the user already has a seat. If the user does not  have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
+When a user tries to access your SaaS app, your app first calls [an API endpoint that Turnstile exposes to check if the user already has a seat](https://github.com/microsoft/turnstile/blob/4a8769e6b01a35dfaaea04a79ac6f136e918cbe4/tests/e2e.sh#L168). If the user does not have a seat, your SaaS app redirects the user to Turnstile to try to obtain one as illustrated in the diagram below. 
 
 ```mermaid
   graph TD
