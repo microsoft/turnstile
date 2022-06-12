@@ -1,5 +1,7 @@
 # Turnstile
 
+[![Turnstile Build](https://github.com/microsoft/turnstile/actions/workflows/turnstile_build.yml/badge.svg)](https://github.com/microsoft/turnstile/actions/workflows/turnstile_build.yml)
+
 Turnstile simplifies the building of SaaS apps on Azure by automating subscription and seat (or license) management. Turnstile is deployed into your own Azure environment and is designed to work with any SaaS app regardless of development stack or architecture.
 
 ## Contents
