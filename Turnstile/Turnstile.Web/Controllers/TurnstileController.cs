@@ -227,6 +227,8 @@ namespace Turnstile.Web.Controllers
                 if (seat != null)
                 {
                     // User has a seat reserved by their email.
+                    
+                    user.Email = userEmail; // A user might have more than one email address so we need to provide the one to the API that the seat is reserved under.
 
                     return await TryRedeemSeat(subscription, user, seat!);
                 }
