@@ -14,9 +14,9 @@ namespace Turnstile.Services.Clients
         private readonly HttpClient httpClient;
         private readonly ILogger logger;
 
-        public SeatsClient(IHttpClientFactory httpClientFactory, ILogger<SeatsClient> logger)
+        public SeatsClient(HttpClient httpClient, ILogger logger)
         {
-            httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+            this.httpClient = httpClient;
             this.logger = logger;
         }
 
