@@ -239,6 +239,35 @@ namespace Turnstile.Web.Controllers
         }
 
         [HttpGet]
+        [Route("turnstile/on/subscription-not-ready/{subscriptionId}", Name = RouteNames.OnSubscriptionNotReady)]
+        public async Task<IActionResult> OnSubscriptionNotReady(string subscriptionId)
+        {
+            try
+            {
+                var pubConfig = await GetPublisherConfiguration();
+                var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                if (subscription == null)
+                {
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                }
+
+                var subUser = User.ToCoreModel();
+                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
+
+                this.ApplyLayout(pubConfig!, User!);
+
+                return View(messageModel);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ [{nameof(OnSubscriptionNotReady)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
+        [HttpGet]
         [Route("turnstile/on/subscription-suspended/{subscriptionId}", Name = RouteNames.OnSubscriptionSuspended)]
         public async Task<IActionResult> OnSubscriptionSuspended(string subscriptionId)
         {

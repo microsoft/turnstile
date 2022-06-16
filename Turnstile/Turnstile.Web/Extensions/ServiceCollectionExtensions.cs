@@ -30,6 +30,9 @@ namespace Turnstile.Web.Extensions
             // So, instead, we just use these simple inline factory methods that resolve an IHttpClientFactory to create the HttpClient to inject
             // into the constructor and ILogger<T> which is passed in as ILogger (we still retain the log category functionality that comes from ILogger<T> -
             // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-6.0#log-category).
+            //
+            // I think this is a good idea now but I may feel completely different about it a few weeks from now. We can always add dependency
+            // injection to the function app but I'd really rather not go that direction even though it's "architecturally correct."
 
             services.AddScoped<IPublisherConfigurationClient, PublisherConfigurationClient>(p =>
                 new PublisherConfigurationClient(
@@ -38,12 +41,12 @@ namespace Turnstile.Web.Extensions
 
             services.AddScoped<ISeatsClient, SeatsClient>(p =>
                 new SeatsClient(
-                    p.GetService<IHttpClientFactory>()!.CreateClient(),
+                    p.GetService<IHttpClientFactory>()!.CreateClient(HttpClientNames.TurnstileApi),
                     p.GetService<ILogger<SeatsClient>>()!));
 
             services.AddScoped<ISubscriptionsClient, SubscriptionsClient>(p =>
                 new SubscriptionsClient(
-                    p.GetService<IHttpClientFactory>()!.CreateClient(),
+                    p.GetService<IHttpClientFactory>()!.CreateClient(HttpClientNames.TurnstileApi),
                     p.GetService<ILogger<SubscriptionsClient>>()!));
 
             return services;
