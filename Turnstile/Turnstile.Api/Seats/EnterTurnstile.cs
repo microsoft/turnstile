@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
@@ -22,11 +23,11 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
 {
-    public static class Turnstile
+    public static class EnterTurnstile
     {
         private static readonly HttpClient httpClient;
 
-        static Turnstile()
+        static EnterTurnstile()
         {
             httpClient = new HttpClient();
 
@@ -43,7 +44,7 @@ namespace Turnstile.Api.Seats
                 throw new InvalidOperationException($"[{ApiAccess.AccessKey}] environment variable not configured.")));
         }
 
-        [FunctionName("Turnstile")]
+        [FunctionName("EnterTurnstile")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/turnstile")] HttpRequest req,
             ILogger log, string subscriptionId)
@@ -59,35 +60,59 @@ namespace Turnstile.Api.Seats
 
                 var seatRequest = JsonConvert.DeserializeObject<SeatRequest>(httpContent);
 
-                if (string.IsNullOrEmpty(seatRequest.UserId) ||
+                if (string.IsNullOrEmpty(seatRequest.RequestId) ||
+                    string.IsNullOrEmpty(seatRequest.UserId) ||
                     string.IsNullOrEmpty(seatRequest.TenantId) ||
                     seatRequest.EmailAddresses.None())
                 {
-                    return new BadRequestObjectResult("[user_id], [tenant_id], and at least one [email(s)] are required.");
+                    return new BadRequestObjectResult("[request_id], [user_id], [tenant_id], and at least one [email(s)] are required.");
                 }
+
+                log.LogInformation(
+                    $"Processing seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] for user [{seatRequest.UserId}].");
 
                 var subscriptionsClient = new SubscriptionsClient(httpClient, log);
                 var subscription = await subscriptionsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)                                       // Could we find the subscription?
                 {
+                    log.LogInformation(
+                        $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
+                        $"for user [{seatRequest.UserId}]. Subscription not found.");
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotFound));
                 }
                 else if (!seatRequest.HasAccessToSubscription(subscription))    // Does the user have access to the subscription?
                 {
+                    log.LogInformation(
+                        $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
+                        $"for user [{seatRequest.UserId}]. User does not have access to this subscription.");
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.AccessDenied, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Purchased ||  // Is the subscription being configured?
                          subscription.IsBeingConfigured == true)
                 {
-                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionUnavailable, subscription));
+                    log.LogInformation(
+                        $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
+                        $"for user [{seatRequest.UserId}]. Subscription is not ready.");
+
+                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotReady, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Suspended)    // Is the subscription suspended?
                 {
+                    log.LogInformation(
+                       $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
+                       $"for user [{seatRequest.UserId}]. Subscription is [{subscription.State}].");
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionSuspended, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Canceled)     // Is the subscription canceled?
                 {
+                    log.LogInformation(
+                       $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
+                       $"for user [{seatRequest.UserId}]. Subscription is [{subscription.State}].");
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionCanceled, subscription));
                 }
                 else
@@ -122,11 +147,19 @@ namespace Turnstile.Api.Seats
 
             if (seat?.Occupant?.UserId == user.UserId)                                  // Does the user already have a seat?
             {
+                log.LogInformation(
+                    $"Subscription [{subscription.SubscriptionId}] seat request [{seatRequest.RequestId}] fulfilled for " +
+                    $"user [{user.UserId}]. User already has a seat [{seat.SeatId}] in this subscription.");
+
                 return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
             }
             else if (seat?.Reservation?.UserId == user.UserId &&                        // Is a seat reserved for this user?
                      seat?.Reservation?.TenantId == user.TenantId) 
             {
+                log.LogInformation(
+                   $"Subscription [{subscription.SubscriptionId}] seat request [{seatRequest.RequestId}] fulfilled for " +
+                   $"user [{user.UserId}]. A seat [{seat.SeatId}] was reserved for this user.");
+
                 seat = await seatsClient.RedeemSeat(subscription.SubscriptionId!, user, seat!.SeatId!) ??
                        throw new Exception($"Unable to redeem seat [{seat!.SeatId}] reserved for user [{user.TenantId}/{user.UserId}].");
 
@@ -139,6 +172,14 @@ namespace Turnstile.Api.Seats
 
                 if (seat != null)
                 {
+                    const string emailObfuscationPattern = @"(?<=[\w]{1})[\w-\._\+%]*(?=[\w]{1}@)";
+
+                    var obfuscatedEmail = Regex.Replace(email, emailObfuscationPattern, m => new string('*', m.Length));
+
+                    log.LogInformation(
+                        $"Subscription [{subscription.SubscriptionId}] seat request [{seatRequest.RequestId}] fulfilled for " +
+                        $"user [{user.UserId}]. A seat [{seat.SeatId}] was reserved for this user under their email address [{obfuscatedEmail}].");
+
                     user.Email = email;
 
                     seat = await seatsClient.RedeemSeat(subscription.SubscriptionId!, user, seat!.SeatId!) ??
@@ -152,10 +193,18 @@ namespace Turnstile.Api.Seats
 
             if (seat == null)
             {
+                log.LogInformation(
+                    $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscription.SubscriptionId!}] " +
+                    $"for user [{seatRequest.UserId}]. There are no more seats available in this subscription.");
+
                 return new SeatResult(SeatResultCodes.NoSeatsAvailable, subscription);
             }
             else
             {
+                log.LogInformation(
+                    $"Subscription [{subscription.SubscriptionId}] seat request [{seatRequest.RequestId}] fulfilled for " +
+                    $"user [{user.UserId}]. A dynamic seat was created for this user.");
+
                 return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
             }
         }

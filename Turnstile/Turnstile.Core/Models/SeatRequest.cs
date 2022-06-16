@@ -5,6 +5,10 @@ namespace Turnstile.Core.Models
 {
     public class SeatRequest
     {
+        [JsonProperty("request_id")]
+        [JsonPropertyName("request_id")]
+        public string? RequestId { get; set; }
+
         [JsonProperty("user_id")]
         [JsonPropertyName("user_id")]
         public string? UserId { get; set; }

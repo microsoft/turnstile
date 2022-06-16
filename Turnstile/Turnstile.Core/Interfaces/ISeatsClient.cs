@@ -15,5 +15,11 @@ namespace Turnstile.Core.Interfaces
         Task<Seat?> ReserveSeat(string subscriptionId, Reservation reservation, string? seatId = null);
         Task<IEnumerable<Seat>> GetSeats(string subscriptionId);
         Task ReleaseSeat(string subscriptionId, string seatId);
+
+        // TODO: We might want to rethink how we call this Turnstile API later but, for now, we'll
+        // just roll it into the seats client. After all, the [EnterTurnstile] API does roll up under
+        // the seats folder in the function app.
+
+        Task<SeatResult?> EnterTurnstile(SeatRequest seatRequest, string subscriptionId);
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Microsoft.Identity.Web;
 using System.Text.Encodings.Web;
 using Turnstile.Core.Constants;
@@ -154,44 +155,29 @@ namespace Turnstile.Web.Controllers
                     return redirectAction;
                 }
 
-                var user = User.ToCoreModel();
-                var subscription = await subsClient.GetSubscription(subscriptionId);
+                var seatRequest = User.CreateSeatRequest();
+                var seatResult = await seatsClient.EnterTurnstile(seatRequest, subscriptionId);
 
-                if (subscription == null)
+                switch (seatResult!.ResultCode)
                 {
-                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                }
-                else if (subscription.State == SubscriptionStates.Canceled)
-                {
-                    return publisherConfig!.OnSubscriptionCanceled(subscriptionId);
-                }
-                else if (subscription.State == SubscriptionStates.Suspended)
-                {
-                    return publisherConfig!.OnSubscriptionSuspended(subscriptionId);
-                }
-                else if (!User.CanUseSubscription(subscription))
-                {
-                    return publisherConfig!.OnAccessDenied(subscriptionId);
-                }
-                else
-                {
-                    var seat = await TryGetSeat(subscription, user);
-
-                    if (seat == null)
-                    {
+                    case SeatResultCodes.SubscriptionSuspended:
+                        return publisherConfig!.OnSubscriptionSuspended(subscriptionId);
+                    case SeatResultCodes.SubscriptionNotReady:
+                        return publisherConfig!.OnSubscriptionNotReady(subscriptionId); // TODO: Create default "not ready" page. The default route doesn't go anywhere yet.
+                    case SeatResultCodes.SubscriptionNotFound:
+                        return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
+                    case SeatResultCodes.SeatProvided:
+                        return string.IsNullOrEmpty(returnTo) 
+                            ? publisherConfig!.OnAccessGranted(subscriptionId) 
+                            : Redirect(returnTo);
+                    case SeatResultCodes.SubscriptionCanceled:
+                        return publisherConfig!.OnSubscriptionCanceled(subscriptionId);
+                    case SeatResultCodes.AccessDenied:
+                        return publisherConfig!.OnAccessDenied(subscriptionId);
+                    case SeatResultCodes.NoSeatsAvailable:
                         return publisherConfig!.OnNoSeatsAvailable(subscriptionId);
-                    }
-                    else
-                    {
-                        if (string.IsNullOrEmpty(returnTo))
-                        {
-                            return publisherConfig!.OnAccessGranted(subscriptionId);
-                        }
-                        else
-                        {
-                            return Redirect(returnTo);
-                        }
-                    }
+                    default:
+                        throw new InvalidOperationException($"Unable to handle turnstile result code [{seatResult!.ResultCode}].");
                 }
             }
             catch (Exception ex)
@@ -199,57 +185,6 @@ namespace Turnstile.Web.Controllers
                 logger.LogError($"Exception at [{RouteNames.SpecificTurnstile}]: [{ex.Message}]");
 
                 throw;
-            }
-        }
-
-        private async Task<Seat?> TryGetSeat(Subscription subscription, User user)
-        {
-            var seat = await seatsClient.GetSeatByUserId(subscription.SubscriptionId!, user.UserId!);
-
-            if (seat?.Occupant?.UserId == user.UserId)
-            {
-                // User already has a seat.
-
-                return seat;
-            }
-            else if (seat?.Reservation?.UserId == user.UserId &&
-                     seat?.Reservation?.TenantId == user.TenantId)
-            {
-                // User has a seat reserved.
-
-                return await TryRedeemSeat(subscription, user, seat!);
-            }
-
-            foreach (var userEmail in User.GetEmailAddresses())
-            {
-                seat = await seatsClient.GetSeatByEmail(subscription.SubscriptionId!, userEmail);
-
-                if (seat != null)
-                {
-                    // User has a seat reserved by their email.
-                    
-                    user.Email = userEmail; // A user might have more than one email address so we need to provide the one to the API that the seat is reserved under.
-
-                    return await TryRedeemSeat(subscription, user, seat!);
-                }
-            }
-
-            return await seatsClient.RequestSeat(subscription.SubscriptionId!, user);
-        }
-
-        private async Task<Seat> TryRedeemSeat(Subscription subscription, User user, Seat seat)
-        {
-            var redeemedSeat = await seatsClient.RedeemSeat(subscription.SubscriptionId!, user, seat!.SeatId!);
-
-            if (seat == null)
-            {
-                throw new Exception(
-                    $"Unable to redeem seat [{seat!.SeatId}] reserved " +
-                    $"for user [{user.TenantId}/{user.UserId}].");
-            }
-            else
-            {
-                return seat;
             }
         }
 
