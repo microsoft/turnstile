@@ -172,6 +172,9 @@ namespace Turnstile.Api.Seats
 
                 if (seat != null)
                 {
+                    // No personally-identifiable information (PII) in the logs!
+                    // We obfuscate email addresses here like this [cawatson@microsoft.com] == [c******n@microsoft.com].
+                    
                     const string emailObfuscationPattern = @"(?<=[\w]{1})[\w-\._\+%]*(?=[\w]{1}@)";
 
                     var obfuscatedEmail = Regex.Replace(email, emailObfuscationPattern, m => new string('*', m.Length));
