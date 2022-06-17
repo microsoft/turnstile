@@ -364,7 +364,8 @@ topic_name=$(az deployment group show \
 # provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
 # resolve an integration pack, we don't deploy any at all (not even default) because the assumption
 # is that something was entered wrong and we don't want the user to have to go back and clean up
-# the default integration pack if that isn't what they intended to deploy.
+# the default integration pack if that isn't what they intended to deploy. Design inspired by the
+# way that node_modules work.
 
 integration_pack="${p_integration_pack#/}" # Trim leading...
 integration_pack="${p_integration_pack%/}" # and trailing slashes.
@@ -435,6 +436,56 @@ wait $tenant_admin_role_pid
 wait $turnstile_admin_role_pid
 
 echo
+
+echo "🔐   Configuring API access keys..."
+
+# So, why do we do this all the way down here instead of in the bicep template itself? Good question!
+# There appears to be some eventually consistent operation that't still completing by the time that
+# ARM reports that the deployment of the turn-services-* function app is complete. We deploy the turn-web-* 
+# site right after the turn-services-* one is deployed. Turn-web-* requires the function key but,
+# since the eventually consistent operation wasn't complete by the time that we tried to create turn-web-*,
+# the operation would always fail. We had to inject a temporary wait into the bicep template using a script
+# that I was never very happy about. Now that the function app also needs the function key since the EnterTurnstile
+# function calls other functions in the same app, this is an even bigger problem because we definitely don't know
+# the function key when we're creating the actual function app. Instead, we wait a little bit here after the function
+# app deployment, obtain the function app key here in the CLI, then manually push the function key app setting
+# to both apps (turn-services-* and turn-web-*) immediately before we publish the actual apps. Basically, we wait
+# until the last possible moment to set that setting to allow that eventually consistent operation time to complete.
+
+# Try to get the function key...
+
+for i_function_key in {1..5}; do
+    api_key=$(az functionapp keys list \
+        --resource-group "$resource_group_name" \
+        --name "$api_app_name" \
+        --query "functionKeys.default" \
+        --output "tsv")
+
+    if [[ -z $api_key || $api_key == null ]]; then
+        if [[ $i_function_key == 5 ]]; then
+            echo "❌   Failed to obtain Turnstile function app key. Setup failed."
+            exit 1     
+        else
+            sleep_for=$((2**i_function_key))
+            echo "⚠️   Trying to obtain function app key again in [$sleep_for] seconds."
+            sleep $sleep_for
+        fi
+    else
+        break
+    fi
+done
+
+# Then add the key to the function app settings...
+
+az functionapp config appsettings set \
+    --name "$api_app_name" \
+    --resource-group "$resource_group_name" \
+    --settings "Turnstile_ApiAccessKey=$api_key"
+
+az webapp config appsettings set \
+    --name "$web_app_name" \
+    --resource-group "$resource_group_name" \
+    --settings "Turnstile_ApiAccessKey=$api_key"
 
 # Build and prepare the API and function apps for deployment to the cloud...
 

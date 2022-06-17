@@ -222,54 +222,23 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
           name: 'Turnstile_PublisherConfigStorageContainerName'
           value: configStorageContainerName
         }
+        {
+          name: 'Turnstile_ApiBaseUrl'
+          value: 'https://${apiAppName}.azurewebsites.net'
+        }
       ]
     }
   }
 }
 
-// This is a nasty yet necessary hack. [webApp] is created after [apiApp] because 
-// [webApp] references the [apiApp] access key and base URL through it's appsettings. 
-// However, there's some "sneak operation" that's eventually consistent following the successful
-// deployment of [apiApp] that isn't always complete by the time that [apiApp] deployment 
-// is complete (OK status per the ARM API) and causes the listKeys operation inside [webApp] appsettings
-// to fail. For that reason, we wait an additional 2 minutes following [apiApp] deployment
-// to deploy the [webApp] giving the eventually consistent operation time to complete before
-// we try to reference the function keys.
-
-// This appears to work fine and was inspired by this Microsoft escalation engineer tecnical community article -- 
-// https://techcommunity.microsoft.com/t5/azure-database-support-blog/add-wait-operation-to-arm-template-deployment/ba-p/2915342
-
-resource waitForApiApp 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'wait-${cleanDeploymentName}'
-  location: location
-  kind: 'AzurePowerShell'
-  dependsOn: [
-    apiApp
-  ]
-  properties: {
-    azPowerShellVersion: '6.4'
-    timeout: 'PT1H'
-    scriptContent: 'start-sleep -Seconds 30'
-    cleanupPreference: 'Always'
-    retentionInterval: 'PT1H'
-  }
-}  
-
 resource webApp 'Microsoft.Web/sites@2021-03-01' = {
   name: webAppName
   location: location
   kind: 'app'
-  dependsOn: [
-    waitForApiApp
-  ]
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
       appSettings: [
-        {
-          name: 'Turnstile_ApiAccessKey'
-          value: listKeys('${apiApp.id}/host/default', apiApp.apiVersion).functionKeys.default
-        }
         {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
