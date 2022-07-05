@@ -7,7 +7,7 @@ SECONDS=0 # Let's time it...
 
 turnstile_version=$(cat ../../VERSION)
 
-usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack]"; }
+usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
 
 check_az() {
     az version >/dev/null
@@ -336,7 +336,8 @@ if [[ -z $p_headless ]]; then
             deploymentName="$p_deployment_name" \
             webAppAadClientId="$aad_app_id" \
             webAppAadTenantId="$current_user_tid" \
-            webAppAadClientSecret="$aad_app_secret"
+            webAppAadClientSecret="$aad_app_secret" \
+            headless="false"
 
     # web_app_name and web_app_base_url are only provided when
     # not deploying in headless mode.
@@ -352,8 +353,16 @@ if [[ -z $p_headless ]]; then
         --name "$az_deployment_name" \
         --query properties.outputs.webAppBaseUrl.value \
         --output tsv);
-         
+
 else
+
+    az deployment group create \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --template-file "./turnstile_deploy.bicep" \
+        --parameters \
+            deploymentName="$p_deployment_name" \
+            headless="true"
 
 fi
 
@@ -381,44 +390,48 @@ topic_name=$(az deployment group show \
     --query properties.outputs.topicName.value \
     --output tsv);
 
-# Deploy integration pack.
+if [[ -z $p_headless ]]; then
 
-# When a user provides the integration pack parameter (-i), we check two places for it.
-# First, we check to see if the user provided an absolute path, likely outside of this repo,
-# to an integration pack. If we can't find the integration pack at the absolute path, we then
-# check our local integration_packs folder (./integration_packs) for one with the same name
-# provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
-# resolve an integration pack, we don't deploy any at all (not even default) because the assumption
-# is that something was entered wrong and we don't want the user to have to go back and clean up
-# the default integration pack if that isn't what they intended to deploy. Design inspired by the
-# way that node_modules work.
+    # Deploy integration pack.
 
-integration_pack="${p_integration_pack#/}" # Trim leading...
-integration_pack="${p_integration_pack%/}" # and trailing slashes.
+    # When a user provides the integration pack parameter (-i), we check two places for it.
+    # First, we check to see if the user provided an absolute path, likely outside of this repo,
+    # to an integration pack. If we can't find the integration pack at the absolute path, we then
+    # check our local integration_packs folder (./integration_packs) for one with the same name
+    # provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
+    # resolve an integration pack, we don't deploy any at all (not even default) because the assumption
+    # is that something was entered wrong and we don't want the user to have to go back and clean up
+    # the default integration pack if that isn't what they intended to deploy. Design inspired by the
+    # way that node_modules work.
 
-pack_absolute_path="$p_integration_pack/deploy_pack.bicep" # Absolute...
-pack_relative_path="./integration_packs/$p_integration_pack/deploy_pack.bicep" # and relative pack paths.
+    integration_pack="${p_integration_pack#/}" # Trim leading...
+    integration_pack="${p_integration_pack%/}" # and trailing slashes.
 
-if [[ -f "$pack_absolute_path" ]]; then # Check the absolute path first...
-    pack_path="$pack_absolute_path"
-elif [[ -f "$pack_relative_path" ]]; then # then check the relative path.
-    pack_path="$pack_relative_path"
-fi
+    pack_absolute_path="$p_integration_pack/deploy_pack.bicep" # Absolute...
+    pack_relative_path="./integration_packs/$p_integration_pack/deploy_pack.bicep" # and relative pack paths.
 
-if [[ -z "$pack_path" ]]; then
-    echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
-else
-    echo "🦾   Deploying [$p_integration_pack ($pack_path)] integration pack..."
+    if [[ -f "$pack_absolute_path" ]]; then # Check the absolute path first...
+        pack_path="$pack_absolute_path"
+    elif [[ -f "$pack_relative_path" ]]; then # then check the relative path.
+        pack_path="$pack_relative_path"
+    fi
 
-    az deployment group create \
-        --resource-group "$resource_group_name" \
-        --name "turn-pack-deploy-$p_deployment_name" \
-        --template-file "$pack_path" \
-        --parameters \
-            deploymentName="$p_deployment_name"
+    if [[ -z "$pack_path" ]]; then
+        echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
+    else
+        echo "🦾   Deploying [$p_integration_pack ($pack_path)] integration pack..."
 
-    [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
-    [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+        az deployment group create \
+            --resource-group "$resource_group_name" \
+            --name "turn-pack-deploy-$p_deployment_name" \
+            --template-file "$pack_path" \
+            --parameters \
+                deploymentName="$p_deployment_name"
+
+        [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
+        [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+    fi
+
 fi
 
 echo "⚙️   Applying default publisher configuration..."
@@ -437,6 +450,7 @@ az storage blob upload \
     --name "publisher_config.json"
 
 if [[ -z $p_headless ]]; then
+
     echo "🔐   Adding you to this turnstile's administrative roles..."
 
     # Add the current user to the subscriber tenant administrator's AAD role...
@@ -463,6 +477,7 @@ if [[ -z $p_headless ]]; then
     wait $turnstile_admin_role_pid
 
     echo
+
 fi
 
 echo "🔐   Configuring API access keys..."
@@ -511,10 +526,12 @@ az functionapp config appsettings set \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
 if [[ -z $p_headless ]]; then
+
     az webapp config appsettings set \
         --name "$web_app_name" \
         --resource-group "$resource_group_name" \
         --settings "Turnstile_ApiAccessKey=$api_key"
+
 fi
 
 # Build and prepare the API and function apps for deployment to the cloud...
@@ -532,9 +549,11 @@ zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
 if [[ -z $p_headless ]]; then
+
     cd ./web_topublish
     zip -r ../web_topublish.zip . >/dev/null
     cd ..
+
 fi
 
 echo "☁️    Publishing Turnstile API and web apps..."
@@ -549,6 +568,7 @@ az functionapp deployment source config-zip \
 deploy_api_pid=$!
 
 if [[ -z $p_headless ]]; then
+
     az webapp deployment source config-zip \
         --resource-group "$resource_group_name" \
         --name "$web_app_name" \
@@ -557,6 +577,7 @@ if [[ -z $p_headless ]]; then
     deploy_web_pid=$!
 
     wait $deploy_web_pid
+
 fi
 
 wait $deploy_api_pid
@@ -567,12 +588,14 @@ rm -rf ./api_topublish >/dev/null
 rm -rf ./api_topublish.zip >/dev/null
 
 if [[ -z $p_headless ]]; then
+
     rm -rf ./web_topublish >/dev/null
     rm -rf ./web_topublish.zip >/dev/null
+
 fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
-echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+[[ -z $p_headless ]] && echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
 echo
 
 
