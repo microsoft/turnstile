@@ -11,11 +11,17 @@ param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
 param publisherAdminRoleName string = 'turnstile_admins'
 param subscriberTenantAdminRoleName string = 'subscriber_tenant_admins'
-param webAppAadClientId string
-param webAppAadTenantId string
+param webAppAadClientId string = ''
+param webAppAadTenantId string = ''
+
+@description('''
+In headless mode, _only_ the API and its supporting resources are deployed. 
+The web app and integration pack event grid connection are _not_ deployed in headless mode.
+''')
+param headless bool = false
 
 @secure()
-param webAppAadClientSecret string
+param webAppAadClientSecret string = ''
 
 param location string = resourceGroup().location
 
@@ -35,7 +41,7 @@ var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
 
-resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
+resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = if (!headless) {
   name: eventGridConnectionName
   location: location
   properties: {
@@ -231,7 +237,7 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2021-03-01' = {
+resource webApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
   name: webAppName
   location: location
   kind: 'app'
@@ -270,9 +276,10 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = {
 
 output deploymentName string = deploymentName
 output apiAppName string = apiAppName
-output webAppName string = webApp.name
-output webAppBaseUrl string = 'https://${webApp.properties.defaultHostName}'
 output storageAccountName string = storageAccount.name
 output storageAccountKey string = storageAccount.listKeys().keys[0].value
 output topicName string = eventGridTopic.name
+
+output webAppName string = headless ? '' : webApp.name
+output webAppBaseUrl string = headless ? '' : 'https://${webApp.properties.defaultHostName}'
 

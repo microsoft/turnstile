@@ -106,6 +106,10 @@ else
     return 1
 fi
 
+# Try to upgrade Bicep...
+
+az bicep upgrade
+
 # Log in the user if they aren't already...
 
 while [[ -z $current_user_oid ]]; do
@@ -117,7 +121,7 @@ done
 
 p_integration_pack="default"
 
-while getopts "c:d:n:r:i:" opt; do
+while getopts "c:d:n:r:i:h" opt; do
     case $opt in
         c)
             p_publisher_config_path=$OPTARG
@@ -133,6 +137,13 @@ while getopts "c:d:n:r:i:" opt; do
         ;;
         r)
             p_deployment_region=$OPTARG
+        ;;
+        h)
+            p_headless=1
+
+            # This flag allows you to deploy Turnstile in "headless" mode. Headless mode deploys _only_
+            # the API and supporting resources. It does not deploy the web app and, consequently, doesn't
+            # do any AAD configuration.
         ;;
         \?)
             usage
@@ -185,123 +196,129 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     fi
 fi
 
-# Create the app registration in AAD...
+# If we're deploying in headless mode, we can skip all these Azure AD shenanigans...
 
-aad_app_name="$display_name"
+if [[ -z $p_headless ]]; then
 
-echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
+    # Create the app registration in AAD...
 
-graph_token=$(az account get-access-token \
-    --resource-type ms-graph \
-    --query accessToken \
-    --output tsv);
+    aad_app_name="$display_name"
 
-tenant_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
-turnstile_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
-create_app_json=$(cat ./aad/manifest.json)
-create_app_json="${create_app_json/__aad_app_name__/${aad_app_name}}"
-create_app_json="${create_app_json/__deployment_name__/${p_deployment_name}}"
-create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
-create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
+    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
 
-# We occasionally run into some consistency issues with these Azure AD calls
-# so we wrap each one in a transient fault handling block. This is an implementation of
-# the retry pattern which you can learn about at https://docs.microsoft.com/en-us/azure/architecture/patterns/retry.
+    graph_token=$(az account get-access-token \
+        --resource-type ms-graph \
+        --query accessToken \
+        --output tsv);
 
-for i1 in {1..5}; do
-    create_app_response=$(curl \
-        -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $graph_token" \
-        -d "$create_app_json" \
-        "https://graph.microsoft.com/v1.0/applications")
+    tenant_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
+    turnstile_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
+    create_app_json=$(cat ./aad/manifest.json)
+    create_app_json="${create_app_json/__aad_app_name__/${aad_app_name}}"
+    create_app_json="${create_app_json/__deployment_name__/${p_deployment_name}}"
+    create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
+    create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
 
-    aad_object_id=$(echo "$create_app_response" | jq -r ".id")
-    aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
+    # We occasionally run into some consistency issues with these Azure AD calls
+    # so we wrap each one in a transient fault handling block. This is an implementation of
+    # the retry pattern which you can learn about at https://docs.microsoft.com/en-us/azure/architecture/patterns/retry.
 
-    if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
-        if [[ $i1 == 5 ]]; then
-            # We tried five times and it's still not working. Time to give up, unfortunately.
-            echo "❌   Failed to create Turnstile AAD app. Setup failed."
-            exit 1
+    for i1 in {1..5}; do
+        create_app_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $graph_token" \
+            -d "$create_app_json" \
+            "https://graph.microsoft.com/v1.0/applications")
+
+        aad_object_id=$(echo "$create_app_response" | jq -r ".id")
+        aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
+
+        if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
+            if [[ $i1 == 5 ]]; then
+                # We tried five times and it's still not working. Time to give up, unfortunately.
+                echo "❌   Failed to create Turnstile AAD app. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
+                echo "⚠️   Trying to create app again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
         else
-            sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
-            echo "⚠️   Trying to create app again in [$sleep_for] seconds."
-            sleep $sleep_for
+            break
         fi
-    else
-        break
-    fi
-done
+    done
 
-echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
+    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
 
-add_password_json=$(cat ./aad/add_password.json)
+    add_password_json=$(cat ./aad/add_password.json)
 
-for i2 in {1..5}; do
-    add_password_response=$(curl \
-        -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $graph_token" \
-        -d "$add_password_json" \
-        "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
+    for i2 in {1..5}; do
+        add_password_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $graph_token" \
+            -d "$add_password_json" \
+            "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
 
-    aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
+        aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
 
-    if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
-        if [[ $i2 == 5 ]]; then
-            echo "❌   Failed to create Turnstile AAD app client credentials. Setup failed."
-            exit 1
+        if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
+            if [[ $i2 == 5 ]]; then
+                echo "❌   Failed to create Turnstile AAD app client credentials. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i2))
+                echo "⚠️   Trying to create app client credentials again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
         else
-            sleep_for=$((2**i2))
-            echo "⚠️   Trying to create app client credentials again in [$sleep_for] seconds."
-            sleep $sleep_for
+            break
         fi
-    else
-        break
-    fi
-done
+    done
 
-echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
+    echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
 
-for i3 in {1..5}; do
-    aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
+    for i3 in {1..5}; do
+        aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
 
-    if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
-        if [[ $i3 == 5 ]]; then
-            echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
-            exit 1
+        if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
+            if [[ $i3 == 5 ]]; then
+                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i2))
+                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi     
         else
-            sleep_for=$((2**i2))
-            echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
-            sleep $sleep_for
-        fi     
-    else
-        break
-    fi
-done
-
-echo "🔐   Granting AAD app [$aad_app_name] service principal [$aad_sp_id] contributor access to resource group [$resource_group_name]..."
-
-for i4 in {1..5}; do
-    az role assignment create \
-        --role "Contributor" \
-        --assignee "$aad_sp_id" \
-        --resource-group "$resource_group_name"
-
-    if [[ $? != 0 ]]; then
-        if [[ $i4 == 5 ]]; then
-            echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
-            exit 1     
-        else
-            sleep_for=$((2**i4))
-            echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
-            sleep $sleep_for
+            break
         fi
-    else
-        break
-    fi
-done
+    done
+
+    echo "🔐   Granting AAD app [$aad_app_name] service principal [$aad_sp_id] contributor access to resource group [$resource_group_name]..."
+
+    for i4 in {1..5}; do
+        az role assignment create \
+            --role "Contributor" \
+            --assignee "$aad_sp_id" \
+            --resource-group "$resource_group_name"
+
+        if [[ $? != 0 ]]; then
+            if [[ $i4 == 5 ]]; then
+                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+                exit 1     
+            else
+                sleep_for=$((2**i4))
+                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
+        else
+            break
+        fi
+    done
+
+fi
 
 subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
@@ -309,32 +326,41 @@ az_deployment_name="turnstile-deploy-$p_deployment_name"
 
 echo "🦾   Deploying Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
 
-az deployment group create \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --template-file "./turnstile_deploy.bicep" \
-    --parameters \
-        deploymentName="$p_deployment_name" \
-        webAppAadClientId="$aad_app_id" \
-        webAppAadTenantId="$current_user_tid" \
-        webAppAadClientSecret="$aad_app_secret"
+if [[ -z $p_headless ]]; then
+
+    az deployment group create \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --template-file "./turnstile_deploy.bicep" \
+        --parameters \
+            deploymentName="$p_deployment_name" \
+            webAppAadClientId="$aad_app_id" \
+            webAppAadTenantId="$current_user_tid" \
+            webAppAadClientSecret="$aad_app_secret"
+
+    # web_app_name and web_app_base_url are only provided when
+    # not deploying in headless mode.
+
+    web_app_name=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.webAppName.value \
+        --output tsv);
+
+    web_app_base_url=$(az deployment group show \
+        --resource-group="$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.webAppBaseUrl.value \
+        --output tsv);
+         
+else
+
+fi
 
 api_app_name=$(az deployment group show \
     --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.apiAppName.value \
-    --output tsv);
-
-web_app_name=$(az deployment group show \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.webAppName.value \
-    --output tsv);
-
-web_app_base_url=$(az deployment group show \
-    --resource-group="$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.webAppBaseUrl.value \
     --output tsv);
 
 storage_account_name=$(az deployment group show \
@@ -410,32 +436,34 @@ az storage blob upload \
     --file "$publisher_config_path" \
     --name "publisher_config.json"
 
-echo "🔐   Adding you to this turnstile's administrative roles..."
+if [[ -z $p_headless ]]; then
+    echo "🔐   Adding you to this turnstile's administrative roles..."
 
-# Add the current user to the subscriber tenant administrator's AAD role...
+    # Add the current user to the subscriber tenant administrator's AAD role...
 
-curl -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $graph_token" \
-    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
-    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $graph_token" \
+        -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
+        "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
 
-tenant_admin_role_pid=$!
+    tenant_admin_role_pid=$!
 
-# Add the current user to the turnstile administrator's AAD role...
+    # Add the current user to the turnstile administrator's AAD role...
 
-curl -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $graph_token" \
-    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
-    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $graph_token" \
+        -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
+        "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
 
-turnstile_admin_role_pid=$!
+    turnstile_admin_role_pid=$!
 
-wait $tenant_admin_role_pid
-wait $turnstile_admin_role_pid
+    wait $tenant_admin_role_pid
+    wait $turnstile_admin_role_pid
 
-echo
+    echo
+fi
 
 echo "🔐   Configuring API access keys..."
 
@@ -482,17 +510,20 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
-az webapp config appsettings set \
-    --name "$web_app_name" \
-    --resource-group "$resource_group_name" \
-    --settings "Turnstile_ApiAccessKey=$api_key"
+if [[ -z $p_headless ]]; then
+    az webapp config appsettings set \
+        --name "$web_app_name" \
+        --resource-group "$resource_group_name" \
+        --settings "Turnstile_ApiAccessKey=$api_key"
+fi
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
-echo "🏗️   Building Turnstile API and web apps..."
+echo "🏗️   Building Turnstile apps..."
 
 dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
-dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+
+[[ -z $p_headless ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
 
 # Once the builds are finished, pack them up for deployment.
 
@@ -500,9 +531,11 @@ cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
-cd ./web_topublish
-zip -r ../web_topublish.zip . >/dev/null
-cd ..
+if [[ -z $p_headless ]]; then
+    cd ./web_topublish
+    zip -r ../web_topublish.zip . >/dev/null
+    cd ..
+fi
 
 echo "☁️    Publishing Turnstile API and web apps..."
 
@@ -515,24 +548,28 @@ az functionapp deployment source config-zip \
 
 deploy_api_pid=$!
 
-az webapp deployment source config-zip \
-    --resource-group "$resource_group_name" \
-    --name "$web_app_name" \
-    --src "./web_topublish.zip" &
+if [[ -z $p_headless ]]; then
+    az webapp deployment source config-zip \
+        --resource-group "$resource_group_name" \
+        --name "$web_app_name" \
+        --src "./web_topublish.zip" &
 
-deploy_web_pid=$!
+    deploy_web_pid=$!
 
-# Wait for both deployments to finish...
+    wait $deploy_web_pid
+fi
 
 wait $deploy_api_pid
-wait $deploy_web_pid
 
 echo "🧹   Cleaning up..."
 
 rm -rf ./api_topublish >/dev/null
 rm -rf ./api_topublish.zip >/dev/null
-rm -rf ./web_topublish >/dev/null
-rm -rf ./web_topublish.zip >/dev/null
+
+if [[ -z $p_headless ]]; then
+    rm -rf ./web_topublish >/dev/null
+    rm -rf ./web_topublish.zip >/dev/null
+fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
 echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
