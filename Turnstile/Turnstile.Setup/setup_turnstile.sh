@@ -536,7 +536,7 @@ fi
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
-echo "🏗️   Building Turnstile apps..."
+echo "🏗️   Building Turnstile app(s)..."
 
 dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
 
@@ -556,7 +556,7 @@ if [[ -z $p_headless ]]; then
 
 fi
 
-echo "☁️    Publishing Turnstile API and web apps..."
+echo "☁️    Publishing Turnstile app(s)..."
 
 # We can deploy both apps in parallel and hopefully save a little time...
 
