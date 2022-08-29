@@ -145,6 +145,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
     family: 'S'
     size: 'S1'
   }
+  properties: { }
 }
 
 resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
