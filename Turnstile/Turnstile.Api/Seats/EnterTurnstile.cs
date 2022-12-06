@@ -45,8 +45,8 @@ namespace Turnstile.Api.Seats
         }
 
         [FunctionName("EnterTurnstile")]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/turnstile")] HttpRequest req,
+        public static async Task<IActionResult> RunEnterTurnstile(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/entry")] HttpRequest req,
             ILogger log, string subscriptionId)
         {
             try

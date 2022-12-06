@@ -16,10 +16,9 @@ using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
-using Turnstile.Core.Models.Configuration;
 using Turnstile.Core.Models.Events.V_2022_03_18;
-using Turnstile.Services.Cosmos;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
@@ -27,10 +26,10 @@ namespace Turnstile.Api.Seats
     public static class RequestSeat
     {
         [FunctionName("RequestSeat")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunRequestSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/request")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ILogger log, string seatId, string subscriptionId)
+            ITurnstileRepository turnstileRepo, ILogger log, string seatId, string subscriptionId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -40,8 +39,7 @@ namespace Turnstile.Api.Seats
             }
 
             var user = JsonSerializer.Deserialize<User>(httpContent);
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscription = await repo.GetSubscription(subscriptionId);
+            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
             if (subscription == null)
             {
@@ -55,7 +53,7 @@ namespace Turnstile.Api.Seats
                 return new BadRequestObjectResult(validationErrors.ToParagraph());
             }
 
-            var seat = await repo.GetSeat(seatId, subscriptionId);
+            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
             if (seat != null)
             {
@@ -67,7 +65,7 @@ namespace Turnstile.Api.Seats
             seat = new Seat
             {
                 CreationDateTimeUtc = DateTime.UtcNow,
-                ExpirationDateTimeUtc = CalculateNewSeatExpirationDate(subscription.SeatingConfiguration),
+                ExpirationDateTimeUtc = subscription.SeatingConfiguration.CalculateSeatExpirationDate(),
                 Occupant = user,
                 SeatId = seatId,
                 SeatingStrategyName = subscription.SeatingConfiguration.SeatingStrategyName,
@@ -75,7 +73,7 @@ namespace Turnstile.Api.Seats
                 SubscriptionId = subscriptionId
             };
 
-            var seatCreationResult = await repo.CreateSeat(seat, subscription);
+            var seatCreationResult = await turnstileRepo.CreateSeat(seat, subscription);
 
             await eventCollector.PublishSeatWarningEvents(subscription, seatCreationResult.SeatingSummary);
 
@@ -96,7 +94,7 @@ namespace Turnstile.Api.Seats
                 seat.ExpirationDateTimeUtc = DateTime.UtcNow.Date.AddDays(1); // Limited seats only last for one day.
                 seat.SeatType = SeatTypes.Limited;
 
-                seatCreationResult = await repo.CreateSeat(seat, subscription);
+                seatCreationResult = await turnstileRepo.CreateSeat(seat, subscription);
 
                 if (seatCreationResult.IsSeatCreated)
                 {
@@ -115,18 +113,6 @@ namespace Turnstile.Api.Seats
             log.LogInformation($"Could not provide seat in subscription [{subscriptionId}]. No more seats available.");
 
             return new NotFoundObjectResult($"No seats available in subscription [{subscriptionId}].");
-        }
-
-        private static DateTime? CalculateNewSeatExpirationDate(SeatingConfiguration seatConfig)
-        {
-            var now = DateTime.UtcNow;
-
-            return seatConfig.SeatingStrategyName switch
-            {
-                SeatingStrategies.MonthlyActiveUser => new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month)).AddDays(1),
-                SeatingStrategies.FirstComeFirstServed => now.Date.AddDays((double?)seatConfig.DefaultSeatExpiryInDays ?? 1),
-                _ => throw new ArgumentException($"Seating strategy [{seatConfig.SeatingStrategyName}] not supported.")
-            };
         }
     }
 }

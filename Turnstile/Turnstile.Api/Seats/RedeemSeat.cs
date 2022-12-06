@@ -14,10 +14,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
-using Turnstile.Core.Models.Configuration;
 using Turnstile.Core.Models.Events.V_2022_03_18;
-using Turnstile.Services.Cosmos;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
@@ -25,10 +24,10 @@ namespace Turnstile.Api.Seats
     public static class RedeemSeat
     {
         [FunctionName("RedeemSeat")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunRedeemSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/redeem")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ILogger log, string subscriptionId, string seatId)
+            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -46,21 +45,20 @@ namespace Turnstile.Api.Seats
 
             user.UserName ??= user.Email;
 
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscription = await repo.GetSubscription(subscriptionId);
+            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
             if (subscription == null)
             {
                 return new NotFoundObjectResult($"Subscription [{subscriptionId}] not found.");
             }
 
-            var seat = await repo.GetSeat(seatId, subscriptionId);
+            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
             if (seat.IsReservedFor(user))
             {
                 seat.Reservation = null;
                 seat.Occupant = user;
-                seat.ExpirationDateTimeUtc = CalculateRedeemedSeatExpirationDate(subscription.SeatingConfiguration);
+                seat.ExpirationDateTimeUtc = subscription.SeatingConfiguration.CalculateSeatExpirationDate();
                 seat.RedemptionDateTimeUtc = DateTime.UtcNow;
                 seat.SeatType = SeatTypes.Standard;
 
@@ -70,7 +68,7 @@ namespace Turnstile.Api.Seats
 
                 seat.SeatingStrategyName = subscription.SeatingConfiguration.SeatingStrategyName;
 
-                seat = await repo.ReplaceSeat(seat);
+                seat = await turnstileRepo.ReplaceSeat(seat);
 
                 log.LogInformation(
                     $"Seat [{seatId}] reservation succesfully redeemed in subscription [{subscriptionId}] by user [{user.UserId}]. " +
@@ -98,19 +96,5 @@ namespace Turnstile.Api.Seats
             !string.IsNullOrEmpty(seat.Reservation!.TenantId) &&
             string.Compare(seat.Reservation!.UserId, user.UserId!, true) == 0 &&
             string.Compare(seat.Reservation!.TenantId, user.TenantId!, true) == 0;
-
-        // TODO: We do this in the RequestSeat method so we should probably stick this logic somewhere else...
-
-        private static DateTime? CalculateRedeemedSeatExpirationDate(SeatingConfiguration seatConfig)
-        {
-            var now = DateTime.UtcNow;
-
-            return seatConfig.SeatingStrategyName switch
-            {
-                SeatingStrategies.MonthlyActiveUser => new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month)).AddDays(1),
-                SeatingStrategies.FirstComeFirstServed => now.Date.AddDays((double?)seatConfig.DefaultSeatExpiryInDays ?? 1),
-                _ => throw new ArgumentException($"Seating strategy [{seatConfig.SeatingStrategyName}] not supported.")
-            };
-        }
     }
 }

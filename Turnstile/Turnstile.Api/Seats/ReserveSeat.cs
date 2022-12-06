@@ -16,9 +16,9 @@ using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Events.V_2022_03_18;
-using Turnstile.Services.Cosmos;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
@@ -26,10 +26,10 @@ namespace Turnstile.Api.Seats
     public static class ReserveSeat
     {
         [FunctionName("ReserveSeat")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunReserveSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/reserve")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ILogger log, string subscriptionId, string seatId)
+            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -39,8 +39,7 @@ namespace Turnstile.Api.Seats
             }
 
             var reservation = JsonSerializer.Deserialize<Reservation>(httpContent);
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscription = await repo.GetSubscription(subscriptionId);
+            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
             if (subscription == null)
             {
@@ -54,7 +53,7 @@ namespace Turnstile.Api.Seats
                 return new BadRequestObjectResult(validationErrors.ToParagraph());
             }
 
-            var seat = await repo.GetSeat(seatId, subscriptionId);
+            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
             if (seat != null)
             {
@@ -63,7 +62,7 @@ namespace Turnstile.Api.Seats
 
             seat = new Seat
             {
-                ExpirationDateTimeUtc = DateTime.UtcNow.Date.AddDays((double)subscription.SeatingConfiguration.SeatReservationExpiryInDays),
+                ExpirationDateTimeUtc = subscription.SeatingConfiguration.CalculateSeatReservationExpirationDate(),
                 CreationDateTimeUtc = DateTime.UtcNow,
                 SubscriptionId = subscriptionId,
                 Reservation = reservation,
@@ -72,7 +71,7 @@ namespace Turnstile.Api.Seats
                 SeatType = SeatTypes.Standard
             };
 
-            var seatCreationResult = await repo.CreateSeat(seat, subscription);
+            var seatCreationResult = await turnstileRepo.CreateSeat(seat, subscription);
 
             await eventCollector.PublishSeatWarningEvents(subscription, seatCreationResult.SeatingSummary);
 

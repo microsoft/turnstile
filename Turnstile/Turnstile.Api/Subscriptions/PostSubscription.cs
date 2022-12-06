@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.IO;
@@ -16,10 +15,10 @@ using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Core.Models.Events.V_2022_03_18;
-using Turnstile.Services.Cosmos;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Subscriptions
@@ -27,11 +26,11 @@ namespace Turnstile.Api.Subscriptions
     public static class PostSubscription
     {
         [FunctionName("PostSubscription")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunPostSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [Blob("turn-configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            string subscriptionId, ILogger log)
+            ITurnstileRepository turnstileRepo, string subscriptionId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -61,9 +60,7 @@ namespace Turnstile.Api.Subscriptions
                 return new BadRequestObjectResult(validationErrors.ToParagraph());
             }
 
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-
-            await repo.CreateSubscription(subscription);
+            await turnstileRepo.CreateSubscription(subscription);
             await eventCollector.AddAsync(new SubscriptionCreated(subscription).ToEventGridEvent());
 
             return new OkObjectResult(subscription);

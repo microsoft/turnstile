@@ -1,11 +1,10 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -21,8 +20,7 @@ namespace Turnstile.Api.Configuration
         [FunctionName("PutPublisherConfiguration")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "saas/publisher/configuration")] HttpRequest req,
-            [Blob("turn-configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream,
-            ILogger log)
+            [Blob("turn-configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream)
         {
             var httpContent =  await new StreamReader(req.Body).ReadToEndAsync();
 

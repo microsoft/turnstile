@@ -5,26 +5,29 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading.Tasks;
-using Turnstile.Services.Cosmos;
+using Turnstile.Core.Interfaces;
 
 namespace SMM.API.Subscriptions
 {
     public static class GetSubscriptions
     {
         [FunctionName("GetSubscriptions")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunGetSubscriptions(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions")] HttpRequest req,
-            ILogger log)
+            ITurnstileRepository turnstileRepo)
         {
-            var offerId = req.Query["offer_id"];
-            var planId = req.Query["plan_id"];
-            var state = req.Query["state"];
-            var tenantId = req.Query["tenant_id"];
+            // Originally, these query string parameters were underscore-spaced by default but, after reviewing
+            // some web best practices content, I decided to default to "fish-bone" style. There may be customers relying
+            // on the underscore-spaced query string parameters so we'll keep backward support here as a fallback if needed.
 
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscriptions = await repo.GetSubscriptions(state, offerId, planId, tenantId);
+            var state = req.Query["state"].FirstOrDefault();
+            var offerId = req.Query["offer-id"].FirstOrDefault() ?? req.Query["offer_id"].FirstOrDefault();
+            var planId = req.Query["plan-id"].FirstOrDefault() ?? req.Query["plan_id"].FirstOrDefault();
+            var tenantId = req.Query["tenant-id"].FirstOrDefault() ?? req.Query["tenant_id"].FirstOrDefault();
+
+            var subscriptions = await turnstileRepo.GetSubscriptions(state, offerId, planId, tenantId);
 
             return new OkObjectResult(subscriptions);
         }

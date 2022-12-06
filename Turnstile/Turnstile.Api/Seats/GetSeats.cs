@@ -6,23 +6,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading.Tasks;
-using Turnstile.Services.Cosmos;
+using Turnstile.Core.Interfaces;
 
 namespace Turnstile.Api.Seats
 {
     public static class GetSeats
     {
         [FunctionName("GetSeats")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunGetSeats(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats")] HttpRequest req,
-            ILogger log, string subscriptionId)
+            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId)
         {
-            var userId = req.Query["user_id"];
-            var userEmail = req.Query["user_email"];
+            // Originally, these query string parameters were underscore-spaced by default but, after reviewing
+            // some web best practices content, I decided to default to "fish-bone" style. There may be customers relying
+            // on the underscore-spaced query string parameters so we'll keep backward support here as a fallback if needed.
 
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var seats = await repo.GetSeats(subscriptionId, userId, userEmail);
+            var userId = req.Query["user-id"].FirstOrDefault() ?? req.Query["user_id"].FirstOrDefault();
+            var userEmail = req.Query["user-email"].FirstOrDefault() ?? req.Query["user_email"].FirstOrDefault();
+
+            var seats = await turnstileRepo.GetSeats(subscriptionId, userId, userEmail);
 
             return new OkObjectResult(seats);
         }

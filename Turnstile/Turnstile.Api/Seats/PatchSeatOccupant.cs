@@ -9,17 +9,17 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
-using Turnstile.Services.Cosmos;
 
 namespace Turnstile.Api.Seats
 {
     public static class PatchSeatOccupant
     {
         [FunctionName("PatchSeatOccupant")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunPatchSeatOccupant(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
-            ILogger log, string subscriptionId, string seatId)
+            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -35,15 +35,14 @@ namespace Turnstile.Api.Seats
                 return new BadRequestObjectResult("[tenant_id] and [user_id] are required.");
             }
 
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscription = await repo.GetSubscription(subscriptionId);
+            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
             if (subscription == null)
             {
                 return new NotFoundObjectResult($"Subscription [{subscriptionId}] not found.");
             }
 
-            var seat = await repo.GetSeat(seatId, subscriptionId);
+            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
             if (seat == null)
             {
@@ -65,7 +64,7 @@ namespace Turnstile.Api.Seats
                 seat.Occupant.UserName = user.UserName;
             }
 
-            seat = await repo.ReplaceSeat(seat);
+            seat = await turnstileRepo.ReplaceSeat(seat);
 
             return new OkObjectResult(seat);
         }

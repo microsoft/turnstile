@@ -6,26 +6,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Turnstile.Services.Cosmos;
+using Turnstile.Core.Interfaces;
 
 namespace Turnstile.Api.Seats
 {
     public static class GetUsersSeat
     {
         [FunctionName("GetUsersSeat")]
-        public static async Task<IActionResult> Run(
+        public static async Task<IActionResult> RunGetUsersSeat(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/user-seat/{tenantId}/{userId}")] HttpRequest req,
-            ILogger log, string subscriptionId, string tenantId, string userId)
+            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string tenantId, string userId)
         {
-            subscriptionId = subscriptionId.ToLower();
-            tenantId = tenantId.ToLower();
-            userId = userId.ToLower();
+            var userSeats = (await turnstileRepo.GetSeats(subscriptionId, byUserId: userId)).ToList();
 
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var userSeats = (await repo.GetSeats(subscriptionId, byUserId: userId)).ToList();
-            var userSeat = userSeats.FirstOrDefault(s => s.Occupant?.UserId == userId && s.Occupant?.TenantId == tenantId);
+            var userSeat = userSeats.FirstOrDefault(s =>
+                string.Equals(s.Occupant?.UserId, userId, StringComparison.InvariantCultureIgnoreCase) &&
+                string.Equals(s.Occupant?.TenantId, tenantId, StringComparison.InvariantCultureIgnoreCase));
 
             if (userSeat == null)
             {
