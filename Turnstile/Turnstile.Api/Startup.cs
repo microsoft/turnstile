@@ -1,23 +1,21 @@
-﻿using AzureFunctions.Extensions.Swashbuckle;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Hosting;
+﻿// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection;
 using Turnstile.Api;
 using Turnstile.Core.Interfaces;
 using Turnstile.Services.Cosmos;
 
-[assembly: WebJobsStartup(typeof(Startup))]
+[assembly: FunctionsStartup(typeof(Startup))]
 namespace Turnstile.Api
 {
-    internal class Startup : IWebJobsStartup
+    public class Startup : FunctionsStartup
     {
-        public void Configure(IWebJobsBuilder builder)
+        public override void Configure(IFunctionsHostBuilder builder)
         {
             builder.Services.AddScoped<ITurnstileRepository>(sp =>
                 new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables()));
-
-            builder.AddSwashBuckle(Assembly.GetExecutingAssembly());
         }
     }
 }

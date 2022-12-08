@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Api", "Turnstile.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web", "Turnstile.Web\Turnstile.Web.csproj", "{AD2F3FE2-79C8-4BF2-9705-A5927C2E036A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Turnstile.Management.Portal", "Turnstile.Management.Portal\Turnstile.Management.Portal.csproj", "{99A2CF70-2933-4CC5-88D6-B312A2F4D7AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Management.Portal", "Turnstile.Management.Portal\Turnstile.Management.Portal.csproj", "{99A2CF70-2933-4CC5-88D6-B312A2F4D7AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

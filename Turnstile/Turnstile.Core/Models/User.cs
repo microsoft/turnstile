@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 using Turnstile.Core.Constants;
@@ -11,6 +12,7 @@ namespace Turnstile.Core.Models
     {
         [JsonPropertyName("user_id")]
         [JsonProperty("user_id")]
+        [OpenApiProperty(Nullable = false, Description = "This user's unique identifier")]
         public string? UserId { get; set; }
 
         [JsonPropertyName("user_name")]

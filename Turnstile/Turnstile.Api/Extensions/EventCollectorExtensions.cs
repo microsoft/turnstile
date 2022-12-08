@@ -13,7 +13,8 @@ namespace Turnstile.Api.Extensions
 {
     public static class EventCollectorExtensions
     {
-        public async static Task PublishSeatWarningEvents(this IAsyncCollector<EventGridEvent> eventCollector, Subscription subscription, SeatingSummary seatingSummary)
+        public async static Task PublishSeatWarningEvents(
+            this IAsyncCollector<EventGridEvent> eventCollector, Subscription subscription, SeatingSummary seatingSummary)
         {
             ArgumentNullException.ThrowIfNull(eventCollector, nameof(eventCollector));
             ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
