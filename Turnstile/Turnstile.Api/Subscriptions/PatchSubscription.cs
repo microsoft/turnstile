@@ -7,10 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Extensions;
@@ -24,6 +28,13 @@ namespace SMM.API.Subscriptions
     public static class PatchSubscription
     {
         [FunctionName("PatchSubscription")]
+        [OpenApiOperation("patchSubscription", "subscriptions")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiRequestBody("application/json", typeof(Subscription))]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
         public static async Task<IActionResult> RunPatchSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,

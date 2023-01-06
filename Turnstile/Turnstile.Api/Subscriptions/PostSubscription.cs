@@ -7,10 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
@@ -26,6 +30,12 @@ namespace Turnstile.Api.Subscriptions
     public static class PostSubscription
     {
         [FunctionName("PostSubscription")]
+        [OpenApiOperation("postSubscription", "subscriptions")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiRequestBody("application/json", typeof(Subscription))]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
         public static async Task<IActionResult> RunPostSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [Blob("turn-configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,

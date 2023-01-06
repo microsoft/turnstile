@@ -5,15 +5,27 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.OpenApi.Models;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Turnstile.Core.Interfaces;
+using Turnstile.Core.Models;
 
 namespace SMM.API.Subscriptions
 {
     public static class GetSubscriptions
     {
         [FunctionName("GetSubscriptions")]
+        [OpenApiOperation("getSubscriptions", "subscriptions")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("state", Required = false, In = ParameterLocation.Query)]
+        [OpenApiParameter("offer-id", Required = false, In = ParameterLocation.Query)]
+        [OpenApiParameter("plan-id", Required = false, In = ParameterLocation.Query)]
+        [OpenApiParameter("tenant-id", Required = false, In = ParameterLocation.Query)]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription[]))]
         public static async Task<IActionResult> RunGetSubscriptions(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions")] HttpRequest req,
             ITurnstileRepository turnstileRepo)

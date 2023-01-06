@@ -7,10 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.OpenApi.Models;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
@@ -26,6 +30,14 @@ namespace Turnstile.Api.Seats
     public static class RequestSeat
     {
         [FunctionName("RequestSeat")]
+        [OpenApiOperation("requestSeat", "seats")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.Conflict, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
         public static async Task<IActionResult> RunRequestSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/request")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,

@@ -7,7 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Interfaces;
@@ -19,6 +23,11 @@ namespace Turnstile.Api.Seats
     public static class ReleaseSeat
     {
         [FunctionName("ReleaseSeat")]
+        [OpenApiOperation("releaseSeat", "seats")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NoContent)]
         public static async Task<IActionResult> RunReleaseSeat(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
