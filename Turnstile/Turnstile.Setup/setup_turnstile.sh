@@ -7,6 +7,34 @@ SECONDS=0 # Let's time it...
 
 turnstile_version=$(cat ../../VERSION)
 
+# We allow the user to choose the App Service Plan SKU (see https://learn.microsoft.com/azure/app-service/overview-hosting-plans) 
+# that the Turnstile API and, optionally, web app is deployed on. Unfortunately, there isn't currently (as of Feb 2023), a reliable way 
+# to pull a list of available App Service SKUs so, for now, we maintain a list here. If, at some point in the future, there is a reliable
+# way to pull a list of available SKUs, this hack should be dropped.
+
+app_service_skus=(
+    "D1"    # Shared
+    "F1"    # Free
+    "B1"    # Basic
+    "B2"
+    "B3"
+    "S1"    # Standard (S1 is default)
+    "S2"
+    "S3"
+    "P1"    # Premium
+    "P2"
+    "P3"
+    "P1V2"  # Premium v2
+    "P2V2"
+    "P3V2"
+    "I1"    # Isolated (ASE)
+    "I2"
+    "I3"
+    "Y1"    # Consumption/Dynamic (supported only for headless deployments)
+)
+
+consumption_app_service_sku="Y1" # We'll be using this later...
+
 usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
 
 check_az() {
@@ -49,6 +77,21 @@ check_dotnet() {
                 return 1
             ;;
         esac
+    fi
+}
+
+check_app_service_sku() {
+    sku=$1
+
+    if [[ " ${app_service_skus[*]} " =~ " ${sku} " ]]; then
+        echo "✔   [$sku] is a valid Azure App Service plan SKU."
+    else
+        echo "❌   [$sku] is not a Azure App Service plan SKU, but these are..."
+        echo
+        printf '%s\n' "${app_service_skus[@]}"
+        echo
+        echo "For more information, see [ https://learn.microsoft.com/azure/app-service/overview-hosting-plans ]."
+        return 1 # You did it wrong.
     fi
 }
 
@@ -119,10 +162,14 @@ done
 
 # Get our parameters...
 
+p_app_service_sku="S1"
 p_integration_pack="default"
 
-while getopts "c:d:n:r:i:h" opt; do
+while getopts "s:c:d:n:r:i:h" opt; do
     case $opt in
+        s)
+            p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
+        ;;
         c)
             p_publisher_config_path=$OPTARG
         ;;
@@ -156,8 +203,16 @@ echo "Validating script parameters..."
 
 [[ -z p_deployment_name || -z p_deployment_region ]] && { usage; exit 1; }
 
+check_app_service_sku $p_app_service_sku;       [[ $? -ne 0 ]] && param_check_failed=1
 check_deployment_region $p_deployment_region;   [[ $? -ne 0 ]] && param_check_failed=1
 check_deployment_name $p_deployment_name;       [[ $? -ne 0 ]] && param_check_failed=1
+
+# If the user has specified a headless/API-only deployment, they can choose the Y1 (Dynamic/Consumption) App Service plan sku.
+
+if [[ -z $p_headless && "$p_app_service_sku" == "$consumption_app_service_sku" ]]; then
+    echo "❌   Dynamic/consumption app service plan SKU (Y1) can be used only with headless/API-only Turnstile deployments."
+    param_check_failed=1       
+fi
 
 if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
@@ -333,6 +388,7 @@ if [[ -z $p_headless ]]; then
         --name "$az_deployment_name" \
         --template-file "./turnstile_deploy.bicep" \
         --parameters \
+            appServicePlanSku="$"
             deploymentName="$p_deployment_name" \
             webAppAadClientId="$aad_app_id" \
             webAppAadTenantId="$current_user_tid" \

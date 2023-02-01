@@ -9,6 +9,32 @@ Deployment name __must__:
 ''')
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
+@allowed([
+  'D1'    // Shared
+  'F1'    // Free
+  'B1'    // Basic
+  'B2'
+  'B3'
+  'S1'    // Standard (S1 is Default)
+  'S2'
+  'S3'
+  'P1'    // Premium v1
+  'P2'
+  'P3'
+  'P1V2'  // Premium v2
+  'P2V2'
+  'P3V2'
+  'I1'    // Isolated (ASE)
+  'I2'
+  'I3'
+  'Y1'    // Consumption/Dynamic (supported only for headless/API-only deployments)
+])
+@description('''
+Note: Y1 (consumption/dynamic) is supported _only_ for headless/API-only deployments. 
+Default is S1 (Standard).
+''')
+param appServicePlanSku string = 'S1'
+
 param publisherAdminRoleName string = 'turnstile_admins'
 param subscriberTenantAdminRoleName string = 'subscriber_tenant_admins'
 param webAppAadClientId string = ''
@@ -146,10 +172,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: appServicePlanName
   location: location
   sku: {
-    name: 'S1'
-    tier: 'Standard'
-    family: 'S'
-    size: 'S1'
+    name: appServicePlanSku
   }
 }
 
