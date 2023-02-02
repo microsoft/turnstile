@@ -9,8 +9,8 @@ turnstile_version=$(cat ../../VERSION)
 
 # We allow the user to choose the App Service Plan SKU (see https://learn.microsoft.com/azure/app-service/overview-hosting-plans) 
 # that the Turnstile API and, optionally, web app is deployed on. Unfortunately, there isn't currently (as of Feb 2023), a reliable way 
-# to pull a list of available App Service SKUs so, for now, we maintain a list here. If, at some point in the future, there is a reliable
-# way to pull a list of available SKUs, this hack should be dropped.
+# to pull a list of available App Service SKUs so, for now, we have a hardcoded list here. If, in the future, there is a reliable API
+# call we can make to pull a list of valid SKUs, this list should instead be populated with that API response.
 
 app_service_skus=(
     "D1"    # Shared
@@ -82,16 +82,22 @@ check_dotnet() {
 
 check_app_service_sku() {
     sku=$1
+    headless=$2
 
-    if [[ " ${app_service_skus[*]} " =~ " ${sku} " ]]; then
-        echo "✔   [$sku] is a valid Azure App Service plan SKU."
+    if [[ "${app_service_skus[*]}" =~ "${sku}" ]]; then
+        if [[ "$headless" == "0" && "$sku" == "$consumption_app_service_sku" ]]; then # Only functions (the API layer) can be deployed to a consumption plan.
+            echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless (-h) deployments."
+            return 1
+        else
+            echo "✔   [$sku] is a valid Azure App Service plan SKU."
+        fi
     else
         echo "❌   [$sku] is not a Azure App Service plan SKU, but these are..."
         echo
         printf '%s\n' "${app_service_skus[@]}"
         echo
         echo "For more information, see [ https://learn.microsoft.com/azure/app-service/overview-hosting-plans ]."
-        return 1 # You did it wrong.
+        return 1
     fi
 }
 
@@ -163,6 +169,7 @@ done
 # Get our parameters...
 
 p_app_service_sku="S1"
+p_headless=0
 p_integration_pack="default"
 
 while getopts "s:c:d:n:r:i:h" opt; do
@@ -203,16 +210,9 @@ echo "Validating script parameters..."
 
 [[ -z p_deployment_name || -z p_deployment_region ]] && { usage; exit 1; }
 
-check_app_service_sku $p_app_service_sku;       [[ $? -ne 0 ]] && param_check_failed=1
-check_deployment_region $p_deployment_region;   [[ $? -ne 0 ]] && param_check_failed=1
-check_deployment_name $p_deployment_name;       [[ $? -ne 0 ]] && param_check_failed=1
-
-# If the user has specified a headless/API-only deployment, they can choose the Y1 (Dynamic/Consumption) App Service plan sku.
-
-if [[ -z $p_headless && "$p_app_service_sku" == "$consumption_app_service_sku" ]]; then
-    echo "❌   Dynamic/consumption app service plan SKU (Y1) can be used only with headless/API-only Turnstile deployments."
-    param_check_failed=1       
-fi
+check_app_service_sku "$p_app_service_sku" "$p_headless"; [[ $? -ne 0 ]] && param_check_failed=1
+check_deployment_region "$p_deployment_region";           [[ $? -ne 0 ]] && param_check_failed=1
+check_deployment_name "$p_deployment_name";               [[ $? -ne 0 ]] && param_check_failed=1
 
 if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
@@ -381,19 +381,19 @@ az_deployment_name="turnstile-deploy-$p_deployment_name"
 
 echo "🦾   Deploying Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
 
-if [[ -z $p_headless ]]; then
+az deployment group create \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --template-file "./turnstile_deploy.bicep" \
+    --parameters \
+        appServicePlanSku="$"
+        deploymentName="$p_deployment_name" \
+        webAppAadClientId="$aad_app_id" \
+        webAppAadTenantId="$current_user_tid" \
+        webAppAadClientSecret="$aad_app_secret" \
+        headless="false"
 
-    az deployment group create \
-        --resource-group "$resource_group_name" \
-        --name "$az_deployment_name" \
-        --template-file "./turnstile_deploy.bicep" \
-        --parameters \
-            appServicePlanSku="$"
-            deploymentName="$p_deployment_name" \
-            webAppAadClientId="$aad_app_id" \
-            webAppAadTenantId="$current_user_tid" \
-            webAppAadClientSecret="$aad_app_secret" \
-            headless="false"
+if [[ $p_headless == 0 ]]; then
 
     # web_app_name and web_app_base_url are only provided when
     # not deploying in headless mode.
@@ -446,51 +446,50 @@ topic_name=$(az deployment group show \
     --query properties.outputs.topicName.value \
     --output tsv);
 
-if [[ -z $p_headless ]]; then
+# Deploy integration pack.
 
-    # Deploy integration pack.
+# When a user provides the integration pack parameter (-i), we check two places for it.
+# First, we check to see if the user provided an absolute path, likely outside of this repo,
+# to an integration pack. If we can't find the integration pack at the absolute path, we then
+# check our local integration_packs folder (./integration_packs) for one with the same name
+# provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
+# resolve an integration pack, we don't deploy any at all (not even default) because the assumption
+# is that something was entered wrong and we don't want the user to have to go back and clean up
+# the default integration pack if that isn't what they intended to deploy. Design inspired by the
+# way that node_modules work.
 
-    # When a user provides the integration pack parameter (-i), we check two places for it.
-    # First, we check to see if the user provided an absolute path, likely outside of this repo,
-    # to an integration pack. If we can't find the integration pack at the absolute path, we then
-    # check our local integration_packs folder (./integration_packs) for one with the same name
-    # provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
-    # resolve an integration pack, we don't deploy any at all (not even default) because the assumption
-    # is that something was entered wrong and we don't want the user to have to go back and clean up
-    # the default integration pack if that isn't what they intended to deploy. Design inspired by the
-    # way that node_modules work.
+# Originally, we didn't deploy integration packs in headless mode but, since we plan on introducing
+# a "no op" integration pack that doesn't deploy any event handlers, we'll leave it in. There is no escaping integration packs!
 
-    integration_pack="${p_integration_pack#/}" # Trim leading...
-    integration_pack="${p_integration_pack%/}" # and trailing slashes.
+integration_pack="${p_integration_pack#/}" # Trim leading...
+integration_pack="${p_integration_pack%/}" # and trailing slashes.
 
-    pack_absolute_path="$p_integration_pack/deploy_pack.bicep" # Absolute...
-    pack_relative_path="./integration_packs/$p_integration_pack/deploy_pack.bicep" # and relative pack paths.
+pack_absolute_path="$p_integration_pack/deploy_pack.bicep" # Absolute...
+pack_relative_path="./integration_packs/$p_integration_pack/deploy_pack.bicep" # and relative pack paths.
 
-    if [[ -f "$pack_absolute_path" ]]; then # Check the absolute path first...
-        pack_path="$pack_absolute_path"
-    elif [[ -f "$pack_relative_path" ]]; then # then check the relative path.
-        pack_path="$pack_relative_path"
-    fi
-
-    if [[ -z "$pack_path" ]]; then
-        echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
-    else
-        echo "🦾   Deploying [$p_integration_pack ($pack_path)] integration pack..."
-
-        az deployment group create \
-            --resource-group "$resource_group_name" \
-            --name "turn-pack-deploy-$p_deployment_name" \
-            --template-file "$pack_path" \
-            --parameters \
-                deploymentName="$p_deployment_name"
-
-        [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
-        [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
-    fi
-
+if [[ -f "$pack_absolute_path" ]]; then # Check the absolute path first...
+    pack_path="$pack_absolute_path"
+elif [[ -f "$pack_relative_path" ]]; then # then check the relative path.
+    pack_path="$pack_relative_path"
 fi
 
-echo "⚙️   Applying default publisher configuration..."
+if [[ -z "$pack_path" ]]; then
+    echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
+else
+    echo "🦾   Deploying [$p_integration_pack ($pack_path)] integration pack..."
+
+    az deployment group create \
+        --resource-group "$resource_group_name" \
+        --name "turn-pack-deploy-$p_deployment_name" \
+        --template-file "$pack_path" \
+        --parameters \
+            deploymentName="$p_deployment_name"
+
+    [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
+    [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+fi
+
+echo "⚙️   Applying initial publisher configuration..."
 
 if [[ -z $p_publisher_config_path ]]; then
     publisher_config_path="default_publisher_config.json"
@@ -539,7 +538,7 @@ fi
 echo "🔐   Configuring API access keys..."
 
 # So, why do we do this all the way down here instead of in the bicep template itself? Good question!
-# There appears to be some eventually consistent operation that't still completing by the time that
+# There appears to be some eventually consistent operation that's still completing by the time that
 # ARM reports that the deployment of the turn-services-* function app is complete. We deploy the turn-web-* 
 # site right after the turn-services-* one is deployed. Turn-web-* requires the function key but,
 # since the eventually consistent operation wasn't complete by the time that we tried to create turn-web-*,
@@ -581,7 +580,7 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
-if [[ -z $p_headless ]]; then
+if [[ $p_headless == 0 ]]; then
 
     az webapp config appsettings set \
         --name "$web_app_name" \
@@ -596,7 +595,7 @@ echo "🏗️   Building Turnstile app(s)..."
 
 dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
 
-[[ -z $p_headless ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+[[ $p_headless == 0 ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
 
 # Once the builds are finished, pack them up for deployment.
 
@@ -604,7 +603,7 @@ cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
-if [[ -z $p_headless ]]; then
+if [[ $p_headless == 0 ]]; then
 
     cd ./web_topublish
     zip -r ../web_topublish.zip . >/dev/null
@@ -623,7 +622,7 @@ az functionapp deployment source config-zip \
 
 deploy_api_pid=$!
 
-if [[ -z $p_headless ]]; then
+if [[ $p_headless == 0 ]]; then
 
     az webapp deployment source config-zip \
         --resource-group "$resource_group_name" \
@@ -643,7 +642,7 @@ echo "🧹   Cleaning up..."
 rm -rf ./api_topublish >/dev/null
 rm -rf ./api_topublish.zip >/dev/null
 
-if [[ -z $p_headless ]]; then
+if [[ $p_headless == 0 ]]; then
 
     rm -rf ./web_topublish >/dev/null
     rm -rf ./web_topublish.zip >/dev/null
@@ -651,7 +650,7 @@ if [[ -z $p_headless ]]; then
 fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
-[[ -z $p_headless ]] && echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+[[ $p_headless == 0 ]] && echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
 echo
 
 

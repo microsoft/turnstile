@@ -30,7 +30,7 @@ param deploymentName string = take(uniqueString(resourceGroup().id), 13)
   'Y1'    // Consumption/Dynamic (supported only for headless/API-only deployments)
 ])
 @description('''
-Note: Y1 (consumption/dynamic) is supported _only_ for headless/API-only deployments. 
+Note: Y1 (consumption/dynamic) is supported __only__ for headless/API-only deployments. 
 Default is S1 (Standard).
 ''')
 param appServicePlanSku string = 'S1'
@@ -41,8 +41,8 @@ param webAppAadClientId string = ''
 param webAppAadTenantId string = ''
 
 @description('''
-In headless mode, _only_ the API and its supporting resources are deployed. 
-The web app and integration pack event grid connection are _not_ deployed in headless mode.
+In headless mode, __only__ the API and its supporting resources are deployed. 
+The web app is not deployed in headless mode.
 ''')
 param headless bool = false
 
@@ -67,7 +67,7 @@ var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
 
-resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = if (!headless) {
+resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
   name: eventGridConnectionName
   location: location
   properties: {
