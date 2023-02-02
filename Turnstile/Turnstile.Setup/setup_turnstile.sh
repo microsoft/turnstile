@@ -167,7 +167,7 @@ if [[ -z $prereq_check_failed ]]; then
     echo "✔   All setup prerequisites installed."
 else
     echo "❌   Please install all setup prerequisites then try again."
-    return 1
+    exit 1
 fi
 
 # Try to upgrade Bicep...
@@ -233,7 +233,7 @@ if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
 else
     echo "❌   Parameter validation failed. Please review and try again."
-    return 1
+    exit 1
 fi
 
 if [[ "$p_headless" == "$TRUE" ]]; then 
