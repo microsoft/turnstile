@@ -3,16 +3,19 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+readonly TRUE="true"
+readonly FALSE="false"
+
 SECONDS=0 # Let's time it...
 
-turnstile_version=$(cat ../../VERSION)
+readonly TURNSTILE_VERSION=$(cat ../../VERSION)
 
 # We allow the user to choose the App Service Plan SKU (see https://learn.microsoft.com/azure/app-service/overview-hosting-plans) 
 # that the Turnstile API and, optionally, web app is deployed on. Unfortunately, there isn't currently (as of Feb 2023), a reliable way 
 # to pull a list of available App Service SKUs so, for now, we have a hardcoded list here. If, in the future, there is a reliable API
 # call we can make to pull a list of valid SKUs, this list should instead be populated with that API response.
 
-app_service_skus=(
+readonly APP_SERVICE_SKUS=(
     "D1"    # Shared
     "F1"    # Free
     "B1"    # Basic
@@ -33,7 +36,7 @@ app_service_skus=(
     "Y1"    # Consumption/Dynamic (supported only for headless deployments)
 )
 
-consumption_app_service_sku="Y1" # We'll be using this later...
+readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
 
@@ -45,6 +48,17 @@ check_az() {
         return 1
     else
         echo "✔   Azure CLI installed."
+    fi
+}
+
+check_zip() {
+    zip -h >/dev/null
+
+    if [[ $? -ne 0 ]]; then
+        echo "❌   Please install zip before continuing."
+        return 1
+    else
+        echo "✔   zip installed."
     fi
 }
 
@@ -84,9 +98,9 @@ check_app_service_sku() {
     sku=$1
     headless=$2
 
-    if [[ "${app_service_skus[*]}" =~ "${sku}" ]]; then
-        if [[ "$headless" == "0" && "$sku" == "$consumption_app_service_sku" ]]; then # Only functions (the API layer) can be deployed to a consumption plan.
-            echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless (-h) deployments."
+    if [[ "${APP_SERVICE_SKUS[*]}" =~ "${sku}" ]]; then
+        if [[ "$headless" == "$FALSE" && "$sku" == "$CONSUMPTION_APP_SERVICE_SKU" ]]; then # Only functions (the API layer) can be deployed to a consumption plan.
+            echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless/API-only (-h) deployments."
             return 1
         else
             echo "✔   [$sku] is a valid Azure App Service plan SKU."
@@ -94,7 +108,7 @@ check_app_service_sku() {
     else
         echo "❌   [$sku] is not a Azure App Service plan SKU, but these are..."
         echo
-        printf '%s\n' "${app_service_skus[@]}"
+        printf '%s\n' "${APP_SERVICE_SKUS[@]}"
         echo
         echo "For more information, see [ https://learn.microsoft.com/azure/app-service/overview-hosting-plans ]."
         return 1
@@ -129,7 +143,7 @@ check_deployment_name() {
 }
 
 splash() {
-    echo "Turnstile | $turnstile_version"
+    echo "Turnstile | $TURNSTILE_VERSION"
     echo "https://github.com/microsoft/turnstile"
     echo
     echo "Copyright (c) Microsoft Corporation. All rights reserved."
@@ -147,6 +161,7 @@ echo "Checking setup prerequisites..."
 
 check_az;           [[ $? -ne 0 ]] && prereq_check_failed=1
 check_dotnet;       [[ $? -ne 0 ]] && prereq_check_failed=1
+check_zip;          [[ $? -ne 0 ]] && prereq_check_failed=1
 
 if [[ -z $prereq_check_failed ]]; then
     echo "✔   All setup prerequisites installed."
@@ -168,8 +183,8 @@ done
 
 # Get our parameters...
 
+p_headless="$FALSE"
 p_app_service_sku="S1"
-p_headless=0
 p_integration_pack="default"
 
 while getopts "s:c:d:n:r:i:h" opt; do
@@ -193,7 +208,7 @@ while getopts "s:c:d:n:r:i:h" opt; do
             p_deployment_region=$OPTARG
         ;;
         h)
-            p_headless=1
+            p_headless="$TRUE"
 
             # This flag allows you to deploy Turnstile in "headless" mode. Headless mode deploys _only_
             # the API and supporting resources. It does not deploy the web app and, consequently, doesn't
@@ -221,7 +236,7 @@ else
     return 1
 fi
 
-if [[ $p_headless == 1 ]]; then 
+if [[ "$p_headless" == "$TRUE" ]]; then 
     echo "ℹ️   This is a HEADLESS (-h) deployment. Only the Turnstile API layer will be deployed."
 else
     echo "ℹ️   This is a FULL deployment. Both the Turnstile API and web app layers will be deployed."
@@ -247,7 +262,7 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
         --name "$resource_group_name" \
         --tags \
             "Turnstile Deployment Name"="$p_deployment_name" \
-            "Turnstile Version"="$turnstile_version"
+            "Turnstile Version"="$TURNSTILE_VERSION"
 
     if [[ $? -eq 0 ]]; then
         echo "✔   Resource group [$resource_group_name] created."
@@ -259,7 +274,7 @@ fi
 
 # If we're deploying in headless mode, we can skip all these Azure AD shenanigans...
 
-if [[ -z $p_headless ]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     # Create the app registration in AAD...
 
@@ -397,36 +412,21 @@ az deployment group create \
         webAppAadClientId="$aad_app_id" \
         webAppAadTenantId="$current_user_tid" \
         webAppAadClientSecret="$aad_app_secret" \
-        headless=$([[ $p_headless == 1 ]] && echo "true" || echo "false")
+        headless="$p_headless"
 
-if [[ $p_headless == 0 ]]; then
+# web_app_name and web_app_base_url are only provided when not deploying in headless mode.
 
-    # web_app_name and web_app_base_url are only provided when
-    # not deploying in headless mode.
+web_app_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.webAppName.value \
+    --output tsv);
 
-    web_app_name=$(az deployment group show \
-        --resource-group "$resource_group_name" \
-        --name "$az_deployment_name" \
-        --query properties.outputs.webAppName.value \
-        --output tsv);
-
-    web_app_base_url=$(az deployment group show \
-        --resource-group="$resource_group_name" \
-        --name "$az_deployment_name" \
-        --query properties.outputs.webAppBaseUrl.value \
-        --output tsv);
-
-else
-
-    az deployment group create \
-        --resource-group "$resource_group_name" \
-        --name "$az_deployment_name" \
-        --template-file "./turnstile_deploy.bicep" \
-        --parameters \
-            deploymentName="$p_deployment_name" \
-            headless="true"
-
-fi
+web_app_base_url=$(az deployment group show \
+    --resource-group="$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.webAppBaseUrl.value \
+    --output tsv);
 
 api_app_name=$(az deployment group show \
     --resource-group "$resource_group_name" \
@@ -510,7 +510,7 @@ az storage blob upload \
     --file "$publisher_config_path" \
     --name "publisher_config.json"
 
-if [[ -z $p_headless ]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     echo "🔐   Adding you to this turnstile's administrative roles..."
 
@@ -586,7 +586,7 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
-if [[ $p_headless == 0 ]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     az webapp config appsettings set \
         --name "$web_app_name" \
@@ -601,7 +601,7 @@ echo "🏗️   Building Turnstile app(s)..."
 
 dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
 
-[[ $p_headless == 0 ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+[[ "$p_headless" == "$FALSE" ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
 
 # Once the builds are finished, pack them up for deployment.
 
@@ -609,7 +609,7 @@ cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
-if [[ $p_headless == 0 ]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     cd ./web_topublish
     zip -r ../web_topublish.zip . >/dev/null
@@ -628,7 +628,7 @@ az functionapp deployment source config-zip \
 
 deploy_api_pid=$!
 
-if [[ $p_headless == 0 ]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     az webapp deployment source config-zip \
         --resource-group "$resource_group_name" \
@@ -648,7 +648,7 @@ echo "🧹   Cleaning up..."
 rm -rf ./api_topublish >/dev/null
 rm -rf ./api_topublish.zip >/dev/null
 
-if [[ $p_headless == 0 ]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     rm -rf ./web_topublish >/dev/null
     rm -rf ./web_topublish.zip >/dev/null
@@ -656,7 +656,11 @@ if [[ $p_headless == 0 ]]; then
 fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
-[[ $p_headless == 0 ]] && echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+
+if [[ "$p_headless" == "$FALSE" ]]; then
+    echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+fi
+
 echo
 
 
