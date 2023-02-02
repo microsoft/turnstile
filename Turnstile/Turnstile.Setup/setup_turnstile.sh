@@ -221,6 +221,12 @@ else
     return 1
 fi
 
+if [[ $p_headless == 1 ]]; then 
+    echo "ℹ️   This is a HEADLESS (-h) deployment. Only the Turnstile API layer will be deployed."
+else
+    echo "ℹ️   This is a FULL deployment. Both the Turnstile API and web app layers will be deployed."
+fi
+
 p_deployment_name=$(echo "$p_deployment_name" | tr '[:upper:]' '[:lower:]') # Lower the deployment name...
 
 if [[ -z $p_display_name ]]; then
