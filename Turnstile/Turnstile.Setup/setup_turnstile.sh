@@ -103,7 +103,7 @@ check_app_service_sku() {
             echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless/API-only (-h) deployments."
             return 1
         else
-            echo "✔   [$sku] is a valid Azure App Service plan SKU."
+            echo "✔   [$sku] is a valid Azure App Service plan SKU for this deployment."
         fi
     else
         echo "❌   [$sku] is not a Azure App Service plan SKU, but these are..."

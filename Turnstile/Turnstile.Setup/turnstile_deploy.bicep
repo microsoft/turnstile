@@ -60,6 +60,7 @@ var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
 var eventStoreContainerName = 'event-store'
 var appInsightsName = 'turn-insights-${cleanDeploymentName}'
+var appServiceAlwaysOn = appServicePlanSku != 'Y1'
 var appServicePlanName = 'turn-plan-${cleanDeploymentName}'
 var eventGridTopicName = 'turn-events-${cleanDeploymentName}'
 var eventGridConnectionName = 'turn-events-connection-${cleanDeploymentName}'
@@ -185,7 +186,7 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      alwaysOn: true
+      alwaysOn: appServiceAlwaysOn
       appSettings: [
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
