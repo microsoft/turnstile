@@ -397,7 +397,7 @@ az deployment group create \
         webAppAadClientId="$aad_app_id" \
         webAppAadTenantId="$current_user_tid" \
         webAppAadClientSecret="$aad_app_secret" \
-        headless=$([[ $p_headless == 0 ]] && "true" || "false")
+        headless=$([[ $p_headless == 1 ]] && echo "true" || echo "false")
 
 if [[ $p_headless == 0 ]]; then
 
