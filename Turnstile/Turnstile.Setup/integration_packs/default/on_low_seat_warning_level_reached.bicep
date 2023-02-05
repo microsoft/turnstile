@@ -2,10 +2,11 @@ param deploymentName string
 
 param location string = resourceGroup().location
 
-// For subscribing to this Mona deployment's event grid topic...
+// For subscribing to this Turnstile deployment's event grid topic...
 
-param eventGridConnectionName string = 'turn-events-connection-${deploymentName}'
-param eventGridTopicName string = 'turn-events-${deploymentName}'
+param eventGridConnectionId string
+param eventGridTopicId string
+param managedIdId string
 
 var name = 'turn-on-low-seat-warning-${deploymentName}'
 var eventType = 'seat_warning_level_reached'
@@ -18,14 +19,6 @@ var actionNames = {
   parseSeatingConfig: 'Parse_seating_configuration'
   parseSeatingSummary: 'Parse_seating_summary'
   yourIntegrationLogic: 'Add_your_integration_logic_here'
-}
-
-resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' existing = {
-  name: eventGridConnectionName
-}
-
-resource eventGridTopic 'Microsoft.EventGrid/topics@2021-12-01' existing = {
-  name: eventGridTopicName
 }
 
 resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
@@ -60,7 +53,7 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
                     eventType
                   ]
                 }
-                topic: eventGridTopic.id
+                topic: eventGridTopicId
               }
             }
             host: {
@@ -247,8 +240,13 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
       '$connections': {
         value: {
           eventGrid: {
-            connectionId: eventGridConnection.id
-            connectionName: eventGridConnection.name
+            connectionId: eventGridConnectionId
+            connectionProperties: {
+              authentication: {
+                identity: managedIdId
+                type: 'ManagedServiceIdentity'
+              }
+            }
             id: '${subscription().id}/providers/Microsoft.Web/locations/${location}/managedApis/azureeventgrid'
           }
         }

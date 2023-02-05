@@ -63,24 +63,27 @@ var appInsightsName = 'turn-insights-${cleanDeploymentName}'
 var appServiceAlwaysOn = appServicePlanSku != 'Y1'
 var appServicePlanName = 'turn-plan-${cleanDeploymentName}'
 var eventGridTopicName = 'turn-events-${cleanDeploymentName}'
-var eventGridConnectionName = 'turn-events-connection-${cleanDeploymentName}'
+var eventGridConnectionName = 'turn-events-connect-${cleanDeploymentName}'
 var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
+var midName = 'turn-id-${cleanDeploymentName}'
+
+resource mid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: midName
+  location: location
+}
 
 resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
   name: eventGridConnectionName
   location: location
   properties: {
-    displayName: eventGridConnectionDisplayName
-    parameterValues: {
-      'token:clientId': webAppAadClientId
-      'token:clientSecret': webAppAadClientSecret
-      'token:TenantId': webAppAadTenantId
-      'token:grantType': 'client_credentials'
-    }
+    customParameterValues: { }
     api: {
+      name: 'azureeventgrid'
+      displayName: eventGridConnectionDisplayName
       id: '${subscription().id}/providers/Microsoft.Web/locations/${eventGridTopic.location}/managedApis/azureeventgrid'
+      type: 'Microsoft.Web/locations/managedApis'
     }
   }
 }
@@ -302,7 +305,12 @@ output deploymentName string = deploymentName
 output apiAppName string = apiAppName
 output storageAccountName string = storageAccount.name
 output storageAccountKey string = storageAccount.listKeys().keys[0].value
-output topicName string = eventGridTopic.name
+output managedIdId string = mid.id
+output managedIdName string = mid.name
+output eventGridConnectionId string = eventGridConnection.id
+output eventGridConnectionName string = eventGridConnection.name
+output eventGridTopicId string = eventGridTopic.id
+output eventGridTopicName string = eventGridTopic.name
 
 output webAppName string = headless ? '' : webApp.name
 output webAppBaseUrl string = headless ? '' : 'https://${webApp.properties.defaultHostName}'

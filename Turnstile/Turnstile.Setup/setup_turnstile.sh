@@ -272,9 +272,10 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     fi
 fi
 
-# If we're deploying in headless mode, we can skip all these Azure AD shenanigans...
-
 if [[ "$p_headless" == "$FALSE" ]]; then
+
+    # We're creating the app registration used to authenticate users to the web app here which is different
+    # than the managed identity we create later for resource access.
 
     # Create the app registration in AAD...
 
@@ -307,97 +308,32 @@ if [[ "$p_headless" == "$FALSE" ]]; then
             -d "$create_app_json" \
             "https://graph.microsoft.com/v1.0/applications")
 
+        # Thanks, @cherchyk, for teaching me how to use jq! 👋🏻
+
         aad_object_id=$(echo "$create_app_response" | jq -r ".id")
         aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
 
         if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
             if [[ $i1 == 5 ]]; then
                 # We tried five times and it's still not working. Time to give up, unfortunately.
-                echo "❌   Failed to create Turnstile AAD app. Setup failed."
+                echo "❌   Failed to create AAD app. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
-                echo "⚠️   Trying to create app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create AAD app again in [$sleep_for] seconds."
                 sleep $sleep_for
             fi
         else
             break
         fi
     done
-
-    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
-
-    add_password_json=$(cat ./aad/add_password.json)
-
-    for i2 in {1..5}; do
-        add_password_response=$(curl \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $graph_token" \
-            -d "$add_password_json" \
-            "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
-
-        aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
-
-        if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
-            if [[ $i2 == 5 ]]; then
-                echo "❌   Failed to create Turnstile AAD app client credentials. Setup failed."
-                exit 1
-            else
-                sleep_for=$((2**i2))
-                echo "⚠️   Trying to create app client credentials again in [$sleep_for] seconds."
-                sleep $sleep_for
-            fi
-        else
-            break
-        fi
-    done
-
-    echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
-
-    for i3 in {1..5}; do
-        aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
-
-        if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
-            if [[ $i3 == 5 ]]; then
-                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
-                exit 1
-            else
-                sleep_for=$((2**i2))
-                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
-                sleep $sleep_for
-            fi     
-        else
-            break
-        fi
-    done
-
-    echo "🔐   Granting AAD app [$aad_app_name] service principal [$aad_sp_id] contributor access to resource group [$resource_group_name]..."
-
-    for i4 in {1..5}; do
-        az role assignment create \
-            --role "Contributor" \
-            --assignee "$aad_sp_id" \
-            --resource-group "$resource_group_name"
-
-        if [[ $? != 0 ]]; then
-            if [[ $i4 == 5 ]]; then
-                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
-                exit 1     
-            else
-                sleep_for=$((2**i4))
-                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
-                sleep $sleep_for
-            fi
-        else
-            break
-        fi
-    done
-
 fi
+
+# Where are we?
 
 subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
+
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
 echo "🦾   Deploying Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
@@ -414,19 +350,22 @@ az deployment group create \
         webAppAadClientSecret="$aad_app_secret" \
         headless="$p_headless"
 
-# web_app_name and web_app_base_url are only provided when not deploying in headless mode.
+if [[ "$p_headless" == "$FALSE"]]; then
 
-web_app_name=$(az deployment group show \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.webAppName.value \
-    --output tsv);
+    # web_app_name and web_app_base_url are only needed when not deploying in headless mode.
 
-web_app_base_url=$(az deployment group show \
-    --resource-group="$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.webAppBaseUrl.value \
-    --output tsv);
+    web_app_name=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.webAppName.value \
+        --output tsv);
+
+    web_app_base_url=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.webAppBaseUrl.value \
+        --output tsv);
+fi
 
 api_app_name=$(az deployment group show \
     --resource-group "$resource_group_name" \
@@ -435,22 +374,52 @@ api_app_name=$(az deployment group show \
     --output tsv);
 
 storage_account_name=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.storageAccountName.value \
     --output tsv);
 
 storage_account_key=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.storageAccountKey.value \
     --output tsv);
 
-topic_name=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+managed_id_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
-    --query properties.outputs.topicName.value \
+    --query properties.outputs.managedIdId.value \
     --output tsv);
+
+managed_id_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.managedIdName.value \
+    --output tsv);
+
+event_grid_connection_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name="$az_deployment_name" \
+    --query properties.outputs.eventGridConnectionId.value \
+    --output tsv);
+
+event_grid_topic_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridTopicId.value \
+    --output tsv);
+
+echo "🔐   Granting managed identity [$managed_id_name] contributor access to resource group [$resource_group_name]..."
+
+managed_id_sp_id=$(az identity show \
+    --ids "$managed_id_id" \
+    --query principalId \
+    --output tsv)
+
+az role assignment create \
+    --assignee "$managed_id_sp_id" \
+    --role "Contributor" \
+    --scope "/subscriptions/$subscription_id/resourceGroups/$resource_group_name"
 
 # Deploy integration pack.
 
@@ -489,7 +458,10 @@ else
         --name "turn-pack-deploy-$p_deployment_name" \
         --template-file "$pack_path" \
         --parameters \
-            deploymentName="$p_deployment_name"
+            deploymentName="$p_deployment_name" \
+            managedIdId="$managed_id_id" \
+            eventGridConnectionId="$event_grid_connection_id" \
+            eventGridTopicId="$event_grid_topic_id"
 
     [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
     [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
