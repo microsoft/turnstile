@@ -23,11 +23,11 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
 {
-    public static class EnterTurnstile
+    public class EnterTurnstile
     {
-        private static readonly HttpClient httpClient;
+        private readonly HttpClient httpClient;
 
-        static EnterTurnstile()
+        public EnterTurnstile()
         {
             httpClient = new HttpClient();
 
@@ -45,7 +45,7 @@ namespace Turnstile.Api.Seats
         }
 
         [FunctionName("EnterTurnstile")]
-        public static async Task<IActionResult> RunEnterTurnstile(
+        public async Task<IActionResult> RunEnterTurnstile(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/entry")] HttpRequest req,
             ILogger log, string subscriptionId)
         {
@@ -82,7 +82,7 @@ namespace Turnstile.Api.Seats
 
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotFound));
                 }
-                else if (!seatRequest.HasAccessToSubscription(subscription))    // Does the user have access to the subscription?
+                else if (!HasAccessToSubscription(seatRequest, subscription))    // Does the user have access to the subscription?
                 {
                     log.LogInformation(
                         $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
@@ -131,7 +131,7 @@ namespace Turnstile.Api.Seats
             }
         }
 
-        private static async Task<SeatResult> TryGetSeat(Subscription subscription, SeatRequest seatRequest, ILogger log)
+        private async Task<SeatResult> TryGetSeat(Subscription subscription, SeatRequest seatRequest, ILogger log)
         {
             var seatsClient = new SeatsClient(httpClient, log);
 
@@ -212,7 +212,7 @@ namespace Turnstile.Api.Seats
             }
         }
 
-        private static bool HasAccessToSubscription(this SeatRequest seatRequest, Subscription subscription) =>
+        private static bool HasAccessToSubscription(SeatRequest seatRequest, Subscription subscription) =>
             // Seat requested by a member of the subscription's tenant, and...
             seatRequest.TenantId == subscription.TenantId &&
             // either no required user role has been defined on the subscription, or...

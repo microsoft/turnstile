@@ -25,7 +25,7 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace SMM.API.Subscriptions
 {
-    public static class PatchSubscription
+    public class PatchSubscription
     {
         [FunctionName("PatchSubscription")]
         [OpenApiOperation("patchSubscription", "subscriptions")]
@@ -35,7 +35,7 @@ namespace SMM.API.Subscriptions
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
-        public static async Task<IActionResult> RunPatchSubscription(
+        public async Task<IActionResult> RunPatchSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
             ITurnstileRepository turnstileRepo, string subscriptionId)
@@ -70,7 +70,7 @@ namespace SMM.API.Subscriptions
             return new OkObjectResult(existingSub);
         }
 
-        private static void ApplyPatch(Subscription patch, Subscription existingSub)
+        private void ApplyPatch(Subscription patch, Subscription existingSub)
         {
             existingSub.PlanId = patch.PlanId ?? existingSub.PlanId;
             existingSub.IsBeingConfigured = patch.IsBeingConfigured ?? existingSub.IsBeingConfigured;
@@ -95,7 +95,7 @@ namespace SMM.API.Subscriptions
             }
         }
 
-        private static void ApplySeatingConfigurationPatch(Subscription patch, Subscription existingSub)
+        private void ApplySeatingConfigurationPatch(Subscription patch, Subscription existingSub)
         {
             if (patch.SeatingConfiguration != null)
             {

@@ -27,7 +27,7 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
 {
-    public static class ReserveSeat
+    public class ReserveSeat
     {
         [FunctionName("ReserveSeat")]
         [OpenApiOperation("reserveSeat", "seats")]
@@ -39,7 +39,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.Conflict, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
-        public static async Task<IActionResult> RunReserveSeat(
+        public async Task<IActionResult> RunReserveSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/reserve")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
             ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)

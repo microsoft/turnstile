@@ -25,7 +25,7 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
 {
-    public static class RedeemSeat
+    public class RedeemSeat
     {
         [FunctionName("RedeemSeat")]
         [OpenApiOperation("redeemSeat", "seats")]
@@ -36,7 +36,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
-        public static async Task<IActionResult> RunRedeemSeat(
+        public async Task<IActionResult> RunRedeemSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/redeem")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
             ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
@@ -66,7 +66,7 @@ namespace Turnstile.Api.Seats
 
             var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
-            if (seat.IsReservedFor(user))
+            if (IsReservedFor(seat, user))
             {
                 seat.Reservation = null;
                 seat.Occupant = user;
@@ -96,14 +96,14 @@ namespace Turnstile.Api.Seats
             }
         }
 
-        private static bool IsReservedFor(this Seat seat, User user) =>
-            seat.Reservation != null && (seat.IsReservedForUserId(user) || seat.IsReservedForEmail(user));
+        public bool IsReservedFor(Seat seat, User user) =>
+            seat.Reservation != null && (IsReservedForUserId(seat, user) || IsReservedForEmail(seat, user));
 
-        private static bool IsReservedForEmail(this Seat seat, User user) =>
+        public bool IsReservedForEmail(Seat seat, User user) =>
             !string.IsNullOrEmpty(seat.Reservation!.Email) &&
             string.Compare(seat.Reservation!.Email, user.Email!, true) == 0;
 
-        private static bool IsReservedForUserId(this Seat seat, User user) =>
+        public bool IsReservedForUserId(Seat seat, User user) =>
             !string.IsNullOrEmpty(seat.Reservation!.UserId) &&
             !string.IsNullOrEmpty(seat.Reservation!.TenantId) &&
             string.Compare(seat.Reservation!.UserId, user.UserId!, true) == 0 &&

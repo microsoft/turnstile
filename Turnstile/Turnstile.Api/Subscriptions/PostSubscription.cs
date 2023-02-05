@@ -27,7 +27,7 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Subscriptions
 {
-    public static class PostSubscription
+    public class PostSubscription
     {
         [FunctionName("PostSubscription")]
         [OpenApiOperation("postSubscription", "subscriptions")]
@@ -36,7 +36,7 @@ namespace Turnstile.Api.Subscriptions
         [OpenApiRequestBody("application/json", typeof(Subscription))]
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
-        public static async Task<IActionResult> RunPostSubscription(
+        public async Task<IActionResult> RunPostSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [Blob("turn-configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
@@ -76,7 +76,7 @@ namespace Turnstile.Api.Subscriptions
             return new OkObjectResult(subscription);
         }
 
-        private static SeatingConfiguration ConfigureSubscriptionSeating(SeatingConfiguration defaultSeatConfig, Subscription subscription)
+        private SeatingConfiguration ConfigureSubscriptionSeating(SeatingConfiguration defaultSeatConfig, Subscription subscription)
         {
             var seatingConfig = subscription.SeatingConfiguration ?? new SeatingConfiguration();
 

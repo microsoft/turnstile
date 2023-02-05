@@ -15,7 +15,7 @@ using Turnstile.Core.Models;
 
 namespace Turnstile.Api.Seats
 {
-    public static class GetSeat
+    public class GetSeat
     {
         [FunctionName("GetSeat")]
         [OpenApiOperation("getSeat", "seats")]
@@ -24,7 +24,7 @@ namespace Turnstile.Api.Seats
         [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
-        public static async Task<IActionResult> RunGetSeat(
+        public async Task<IActionResult> RunGetSeat(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
             ITurnstileRepository turnstileRepo, string subscriptionId, string seatId)
         {

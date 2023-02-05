@@ -7,7 +7,6 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using System;
@@ -19,7 +18,7 @@ using Turnstile.Core.Models;
 
 namespace Turnstile.Api.Seats
 {
-    public static class GetUsersSeat
+    public class GetUsersSeat
     {
         [FunctionName("GetUsersSeat")]
         [OpenApiOperation("getUsersSeat", "seat")]
@@ -29,7 +28,7 @@ namespace Turnstile.Api.Seats
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
-        public static async Task<IActionResult> RunGetUsersSeat(
+        public async Task<IActionResult> RunGetUsersSeat(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/user-seat/{tenantId}/{userId}")] HttpRequest req,
             ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string tenantId, string userId)
         {

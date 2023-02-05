@@ -18,7 +18,7 @@ using Turnstile.Core.Models;
 
 namespace Turnstile.Api.Seats
 {
-    public static class PatchSeatOccupant
+    public class PatchSeatOccupant
     {
         [FunctionName("PatchSeatOccupant")]
         [OpenApiOperation("patchSeatOccupant", "seats")]
@@ -29,7 +29,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
-        public static async Task<IActionResult> RunPatchSeatOccupant(
+        public async Task<IActionResult> RunPatchSeatOccupant(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
             ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
         {

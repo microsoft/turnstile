@@ -16,7 +16,7 @@ using Turnstile.Core.Models;
 
 namespace SMM.API.Subscriptions
 {
-    public static class GetSubscriptions
+    public class GetSubscriptions
     {
         [FunctionName("GetSubscriptions")]
         [OpenApiOperation("getSubscriptions", "subscriptions")]
@@ -26,7 +26,7 @@ namespace SMM.API.Subscriptions
         [OpenApiParameter("plan-id", Required = false, In = ParameterLocation.Query)]
         [OpenApiParameter("tenant-id", Required = false, In = ParameterLocation.Query)]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription[]))]
-        public static async Task<IActionResult> RunGetSubscriptions(
+        public async Task<IActionResult> RunGetSubscriptions(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions")] HttpRequest req,
             ITurnstileRepository turnstileRepo)
         {

@@ -20,7 +20,7 @@ using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
 {
-    public static class ReleaseSeat
+    public class ReleaseSeat
     {
         [FunctionName("ReleaseSeat")]
         [OpenApiOperation("releaseSeat", "seats")]
@@ -28,7 +28,7 @@ namespace Turnstile.Api.Seats
         [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
         [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
         [OpenApiResponseWithoutBody(HttpStatusCode.NoContent)]
-        public static async Task<IActionResult> RunReleaseSeat(
+        public async Task<IActionResult> RunReleaseSeat(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
             ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)

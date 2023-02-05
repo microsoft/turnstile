@@ -16,7 +16,7 @@ using Turnstile.Core.Models;
 
 namespace Turnstile.Api.Subscriptions
 {
-    public static class GetSubscription
+    public class GetSubscription
     {
         [FunctionName("GetSubscription")]
         [OpenApiOperation("getSubscription", "subscriptions")]
@@ -24,7 +24,7 @@ namespace Turnstile.Api.Subscriptions
         [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
         [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
-        public static async Task<IActionResult> RunGetSubscription(
+        public async Task<IActionResult> RunGetSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             ITurnstileRepository turnstileRepo, string subscriptionId, ILogger log)
         {
