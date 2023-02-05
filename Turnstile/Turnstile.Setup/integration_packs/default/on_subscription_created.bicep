@@ -24,6 +24,12 @@ var actionNames = {
 resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
   name: name
   location: location
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${managedIdId}': { }
+    }
+  }
   properties: {
     state: 'Enabled'
     definition: {
