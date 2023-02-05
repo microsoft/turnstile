@@ -350,7 +350,7 @@ az deployment group create \
         webAppAadClientSecret="$aad_app_secret" \
         headless="$p_headless"
 
-if [[ "$p_headless" == "$FALSE"]]; then
+if [[ "$p_headless" == "$FALSE" ]]; then
 
     # web_app_name and web_app_base_url are only needed when not deploying in headless mode.
 
