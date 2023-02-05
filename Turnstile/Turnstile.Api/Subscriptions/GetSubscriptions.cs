@@ -18,6 +18,10 @@ namespace SMM.API.Subscriptions
 {
     public class GetSubscriptions
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public GetSubscriptions(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("GetSubscriptions")]
         [OpenApiOperation("getSubscriptions", "subscriptions")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
@@ -27,8 +31,7 @@ namespace SMM.API.Subscriptions
         [OpenApiParameter("tenant-id", Required = false, In = ParameterLocation.Query)]
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription[]))]
         public async Task<IActionResult> RunGetSubscriptions(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions")] HttpRequest req,
-            ITurnstileRepository turnstileRepo)
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions")] HttpRequest req)
         {
             // Originally, these query string parameters were underscore-spaced by default but, after reviewing
             // some web best practices content, I decided to default to "fish-bone" style. There may be customers relying

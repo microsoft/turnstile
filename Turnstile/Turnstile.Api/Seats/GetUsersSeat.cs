@@ -20,6 +20,15 @@ namespace Turnstile.Api.Seats
 {
     public class GetUsersSeat
     {
+        private readonly ILogger log;
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public GetUsersSeat(ILogger log, ITurnstileRepository turnstileRepo)
+        {
+            this.log = log;
+            this.turnstileRepo = turnstileRepo;
+        }
+
         [FunctionName("GetUsersSeat")]
         [OpenApiOperation("getUsersSeat", "seat")]
         [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
@@ -30,7 +39,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
         public async Task<IActionResult> RunGetUsersSeat(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/user-seat/{tenantId}/{userId}")] HttpRequest req,
-            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string tenantId, string userId)
+            string subscriptionId, string tenantId, string userId)
         {
             var userSeats = (await turnstileRepo.GetSeats(subscriptionId, byUserId: userId)).ToList();
 

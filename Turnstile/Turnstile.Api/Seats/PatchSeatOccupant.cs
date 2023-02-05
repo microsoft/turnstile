@@ -20,6 +20,15 @@ namespace Turnstile.Api.Seats
 {
     public class PatchSeatOccupant
     {
+        private readonly ILogger log;
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public PatchSeatOccupant(ILogger log, ITurnstileRepository turnstileRepo)
+        {
+            this.log = log;
+            this.turnstileRepo = turnstileRepo;
+        }
+
         [FunctionName("PatchSeatOccupant")]
         [OpenApiOperation("patchSeatOccupant", "seats")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
@@ -31,7 +40,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
         public async Task<IActionResult> RunPatchSeatOccupant(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
-            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
+            string subscriptionId, string seatId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 

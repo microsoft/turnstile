@@ -27,6 +27,15 @@ namespace Turnstile.Api.Seats
 {
     public class RedeemSeat
     {
+        private readonly ILogger log;
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public RedeemSeat(ILogger log, ITurnstileRepository turnstileRepo)
+        {
+            this.log = log;
+            this.turnstileRepo = turnstileRepo;
+        }
+
         [FunctionName("RedeemSeat")]
         [OpenApiOperation("redeemSeat", "seats")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
@@ -39,7 +48,7 @@ namespace Turnstile.Api.Seats
         public async Task<IActionResult> RunRedeemSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/redeem")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ITurnstileRepository turnstileRepo, ILogger log, string subscriptionId, string seatId)
+            string subscriptionId, string seatId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 

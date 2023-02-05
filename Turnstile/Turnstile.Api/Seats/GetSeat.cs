@@ -17,6 +17,10 @@ namespace Turnstile.Api.Seats
 {
     public class GetSeat
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public GetSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("GetSeat")]
         [OpenApiOperation("getSeat", "seats")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
@@ -26,7 +30,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
         public async Task<IActionResult> RunGetSeat(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
-            ITurnstileRepository turnstileRepo, string subscriptionId, string seatId)
+            string subscriptionId, string seatId)
         {
             var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 

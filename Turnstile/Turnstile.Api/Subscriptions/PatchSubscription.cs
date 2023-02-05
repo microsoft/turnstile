@@ -27,6 +27,10 @@ namespace SMM.API.Subscriptions
 {
     public class PatchSubscription
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public PatchSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("PatchSubscription")]
         [OpenApiOperation("patchSubscription", "subscriptions")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
@@ -38,7 +42,7 @@ namespace SMM.API.Subscriptions
         public async Task<IActionResult> RunPatchSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ITurnstileRepository turnstileRepo, string subscriptionId)
+            string subscriptionId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 

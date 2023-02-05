@@ -29,6 +29,10 @@ namespace Turnstile.Api.Subscriptions
 {
     public class PostSubscription
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public PostSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("PostSubscription")]
         [OpenApiOperation("postSubscription", "subscriptions")]
         [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
@@ -40,7 +44,7 @@ namespace Turnstile.Api.Subscriptions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [Blob("turn-configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ITurnstileRepository turnstileRepo, string subscriptionId)
+            string subscriptionId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
