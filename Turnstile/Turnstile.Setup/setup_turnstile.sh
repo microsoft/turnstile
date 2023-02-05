@@ -399,8 +399,14 @@ managed_id_name=$(az deployment group show \
 
 event_grid_connection_id=$(az deployment group show \
     --resource-group "$resource_group_name" \
-    --name="$az_deployment_name" \
+    --name "$az_deployment_name" \
     --query properties.outputs.eventGridConnectionId.value \
+    --output tsv);
+
+event_grid_connection_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridConnectionName.value \
     --output tsv);
 
 event_grid_topic_id=$(az deployment group show \
@@ -461,6 +467,7 @@ else
             deploymentName="$p_deployment_name" \
             managedIdId="$managed_id_id" \
             eventGridConnectionId="$event_grid_connection_id" \
+            eventGridConnectionName="$event_grid_connection_name" \
             eventGridTopicId="$event_grid_topic_id"
 
     [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";

@@ -77,11 +77,13 @@ resource mid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
 resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
   name: eventGridConnectionName
   location: location
+  kind: 'V1'
   properties: {
     customParameterValues: { }
+    displayName: eventGridConnectionDisplayName
+    parameterValueType: 'Alternative'
     api: {
       name: 'azureeventgrid'
-      displayName: eventGridConnectionDisplayName
       id: '${subscription().id}/providers/Microsoft.Web/locations/${eventGridTopic.location}/managedApis/azureeventgrid'
       type: 'Microsoft.Web/locations/managedApis'
     }

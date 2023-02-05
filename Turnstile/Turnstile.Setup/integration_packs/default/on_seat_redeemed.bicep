@@ -5,6 +5,7 @@ param location string = resourceGroup().location
 // For subscribing to this Turnstile deployment's event grid topic...
 
 param eventGridConnectionId string
+param eventGridConnectionName string
 param eventGridTopicId string
 param managedIdId string
 
@@ -309,6 +310,7 @@ resource workflow 'Microsoft.Logic/workflows@2019-05-01' = {
         value: {
           eventGrid: {
             connectionId: eventGridConnectionId
+            connectionName: eventGridConnectionName
             connectionProperties: {
               authentication: {
                 identity: managedIdId

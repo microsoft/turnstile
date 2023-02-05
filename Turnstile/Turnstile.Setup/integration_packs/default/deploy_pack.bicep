@@ -5,6 +5,7 @@ param location string = resourceGroup().location
 // For subscribing to the event grid topic...
 
 param eventGridConnectionId string
+param eventGridConnectionName string
 param eventGridTopicId string
 param managedIdId string
 
@@ -16,6 +17,7 @@ module onLowSeatWarningLevelReached './on_low_seat_warning_level_reached.bicep' 
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
@@ -27,6 +29,7 @@ module onNoSeatsAvailable './on_no_seats_available.bicep' = {
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
@@ -38,6 +41,7 @@ module onSeatProvided './on_seat_provided.bicep' = {
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
@@ -49,6 +53,7 @@ module onSeatRedeemed './on_seat_redeemed.bicep' = {
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
@@ -60,6 +65,7 @@ module onSeatReserved './on_seat_reserved.bicep' = {
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
@@ -71,6 +77,7 @@ module onSubscriptionCreated './on_subscription_created.bicep' = {
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
@@ -82,6 +89,7 @@ module onSubscriptionUpdated './on_subscription_updated.bicep' = {
     deploymentName: deploymentName
     location: location
     eventGridConnectionId: eventGridConnectionId
+    eventGridConnectionName: eventGridConnectionName
     eventGridTopicId: eventGridTopicId
     managedIdId: managedIdId
   }
