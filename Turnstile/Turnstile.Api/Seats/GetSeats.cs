@@ -19,14 +19,9 @@ namespace Turnstile.Api.Seats
 {
     public class GetSeats
     {
-        private readonly ILogger log;
         private readonly ITurnstileRepository turnstileRepo;
 
-        public GetSeats(ILogger log, ITurnstileRepository turnstileRepo)
-        {
-            this.log = log;
-            this.turnstileRepo = turnstileRepo;
-        }
+        public GetSeats(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
 
         [FunctionName("GetSeats")]
         [OpenApiOperation("getSeats", "seats")]
@@ -37,7 +32,7 @@ namespace Turnstile.Api.Seats
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat[]))]
         public async Task<IActionResult> RunGetSeats(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats")] HttpRequest req,
-            string subscriptionId)
+            ILogger log, string subscriptionId)
         {
             // Originally, these query string parameters were underscore-spaced by default but, after reviewing
             // some web best practices content, I decided to default to "fish-bone" style. There may be customers relying

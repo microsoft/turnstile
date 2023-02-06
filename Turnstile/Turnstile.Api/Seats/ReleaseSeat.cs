@@ -22,14 +22,9 @@ namespace Turnstile.Api.Seats
 {    
     public class ReleaseSeat
     {
-        private readonly ILogger log;
         private readonly ITurnstileRepository turnstileRepo;
 
-        public ReleaseSeat(ILogger log, ITurnstileRepository turnstileRepo)
-        {
-            this.log = log;
-            this.turnstileRepo = turnstileRepo;
-        }
+        public ReleaseSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
 
         [FunctionName("ReleaseSeat")]
         [OpenApiOperation("releaseSeat", "seats")]
@@ -40,7 +35,7 @@ namespace Turnstile.Api.Seats
         public async Task<IActionResult> RunReleaseSeat(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            string subscriptionId, string seatId)
+            ILogger log, string subscriptionId, string seatId)
         {
             var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 

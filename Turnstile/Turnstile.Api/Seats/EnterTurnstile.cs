@@ -26,9 +26,8 @@ namespace Turnstile.Api.Seats
     public class EnterTurnstile
     {
         private readonly HttpClient httpClient;
-        private readonly ILogger log;
 
-        public EnterTurnstile(ILogger log)
+        public EnterTurnstile()
         {
             httpClient = new HttpClient();
 
@@ -43,14 +42,12 @@ namespace Turnstile.Api.Seats
             httpClient.DefaultRequestHeaders.Add("x-functions-key",
                 GetEnvironmentVariable(ApiAccess.AccessKey ??
                 throw new InvalidOperationException($"[{ApiAccess.AccessKey}] environment variable not configured.")));
-
-            this.log = log;
         }
 
         [FunctionName("EnterTurnstile")]
         public async Task<IActionResult> RunEnterTurnstile(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/entry")] HttpRequest req,
-            string subscriptionId)
+            string subscriptionId, ILogger log)
         {
             try
             {

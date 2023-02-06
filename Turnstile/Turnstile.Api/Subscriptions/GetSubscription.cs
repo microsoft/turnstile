@@ -18,14 +18,9 @@ namespace Turnstile.Api.Subscriptions
 {
     public class GetSubscription
     {
-        private readonly ILogger log;
         private readonly ITurnstileRepository turnstileRepo;
 
-        public GetSubscription(ILogger log, ITurnstileRepository turnstileRepo)
-        {
-            this.log = log;
-            this.turnstileRepo = turnstileRepo;
-        }
+        public GetSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
 
         [FunctionName("GetSubscription")]
         [OpenApiOperation("getSubscription", "subscriptions")]
@@ -35,7 +30,7 @@ namespace Turnstile.Api.Subscriptions
         [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
         public async Task<IActionResult> RunGetSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
-            string subscriptionId)
+            ILogger log, string subscriptionId)
         {
             var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 

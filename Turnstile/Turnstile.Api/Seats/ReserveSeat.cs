@@ -29,14 +29,9 @@ namespace Turnstile.Api.Seats
 {
     public class ReserveSeat
     {
-        private readonly ILogger log;
         private readonly ITurnstileRepository turnstileRepo;
 
-        public ReserveSeat(ILogger log, ITurnstileRepository turnstileRepo)
-        {
-            this.log = log;
-            this.turnstileRepo = turnstileRepo;
-        }
+        public ReserveSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
 
         [FunctionName("ReserveSeat")]
         [OpenApiOperation("reserveSeat", "seats")]
@@ -51,7 +46,7 @@ namespace Turnstile.Api.Seats
         public async Task<IActionResult> RunReserveSeat(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}/reserve")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            string subscriptionId, string seatId)
+            ILogger log, string subscriptionId, string seatId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
