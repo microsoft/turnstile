@@ -521,6 +521,12 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     fi
 fi
 
+if [[ -z $keep ]]; then 
+    echo "ℹ️   KEEP FLAG (k/keep) NOT SET. Resource group [$resource_group_name] will be deleted once testing is complete."
+else
+    echo "ℹ️   KEEP FLAG (k/keep) SET. Resource group [$resource_group_name] will remain once testing is complete."
+fi
+
 az_deployment_name="turn-e2e-test-$test_run_id-deploy"
 
 echo "🦾   Deploying test enviroment into resource group [$resource_group_name]..."
