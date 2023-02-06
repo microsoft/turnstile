@@ -12,7 +12,7 @@ readonly TURNSTILE_VERSION=$(cat ../../VERSION)
 
 # We allow the user to choose the App Service Plan SKU (see https://learn.microsoft.com/azure/app-service/overview-hosting-plans) 
 # that the Turnstile API and, optionally, web app is deployed on. Unfortunately, there isn't currently (as of Feb 2023), a reliable way 
-# to pull a list of available App Service SKUs so, for now, we have a hardcoded list here. If, in the future, there is a reliable API
+# to pull a list of available App Serice SKUs so, for now, we have a hardcoded list here. If, in the future, there is a reliable API
 # call we can make to pull a list of valid SKUs, this list should instead be populated with that API response.
 
 readonly APP_SERVICE_SKUS=(
@@ -35,7 +35,7 @@ readonly APP_SERVICE_SKUS=(
     "I3"
     "Y1"    # Consumption/Dynamic (supported only for headless deployments)
 )
-
+v
 readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
@@ -187,7 +187,7 @@ p_headless="$FALSE"
 p_app_service_sku="S1"
 p_integration_pack="default"
 
-while getopts "s:c:d:n:r:i:h" opt; do
+while getopts "s:c:d:n:r:i:p:h" opt; do
     case $opt in
         s)
             p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
@@ -250,28 +250,6 @@ else
     display_name="$p_display_name"
 fi
 
-# Create our resource group if it doesn't already exist...
-
-resource_group_name="turnstile-$p_deployment_name"
-
-if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
-    echo "Creating resource group [$resource_group_name]..."
-
-    az group create \
-        --location "$p_deployment_region" \
-        --name "$resource_group_name" \
-        --tags \
-            "Turnstile Deployment Name"="$p_deployment_name" \
-            "Turnstile Version"="$TURNSTILE_VERSION"
-
-    if [[ $? -eq 0 ]]; then
-        echo "✔   Resource group [$resource_group_name] created."
-    else
-        echo "❌   Unable to create resource group [$resource_group_name]."
-        exit 1
-    fi
-fi
-
 if [[ "$p_headless" == "$FALSE" ]]; then
 
     # We're creating the app registration used to authenticate users to the web app here which is different
@@ -327,12 +305,65 @@ if [[ "$p_headless" == "$FALSE" ]]; then
             break
         fi
     done
+
+    # Regardless of whether or not the user provided an existing AAD app ID, we still need to create
+    # a client secret that the web app can use for authentication.
+
+    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
+
+    add_password_json=$(cat ./aad/add_password.json)
+
+    for i2 in {1..5}; do
+        add_password_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $graph_token" \
+            -d "$add_password_json" \
+            "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
+
+        aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
+
+        if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
+            if [[ $i2 == 5 ]]; then
+                echo "❌   Failed to create AAD app client credentials. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i2))
+                echo "⚠️   Trying to create AAD app client credentials again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
+        else
+            break
+        fi
+    done
 fi
 
 # Where are we?
 
 subscription_id=$(az account show --query id --output tsv);
 current_user_tid=$(az account show --query tenantId --output tsv);
+
+# Create our resource group if it doesn't already exist...
+
+resource_group_name="turnstile-$p_deployment_name"
+
+if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
+    echo "Creating resource group [$resource_group_name]..."
+
+    az group create \
+        --location "$p_deployment_region" \
+        --name "$resource_group_name" \
+        --tags \
+            "Turnstile Deployment Name"="$p_deployment_name" \
+            "Turnstile Version"="$TURNSTILE_VERSION"
+
+    if [[ $? -eq 0 ]]; then
+        echo "✔   Resource group [$resource_group_name] created."
+    else
+        echo "❌   Unable to create resource group [$resource_group_name]."
+        exit 1
+    fi
+fi
 
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 

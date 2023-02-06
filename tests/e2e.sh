@@ -14,11 +14,13 @@ test_location=$1 # For simplicity, this script only takes one parameter - the Az
 test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an identifier for the resources that we 
                         # stand up in Azure to run these tests a little later.
 
+[[ "$2" == "keep" || "$2" == "k" ]] && keep=1; # Optionally set keep bit.
+
 usage() { 
-  echo "Usage: $0 <azure_region> [keep]";
+  echo "Usage: $0 <azure_region> [keep (or) k]";
   echo
   echo "<azure_region>  The name (e.g., westus) of the Azure region to run tests."
-  echo "[keep]          Flag - optionally keep the test resource group that's created."
+  echo "[keep (or) k]   Flag - optionally keep the test resource group that's created."
 }
 
 run_tests() {
@@ -613,7 +615,7 @@ event_verification_failed=$?
 
 echo "🧹   Cleaning up..."
 
-if [[ $2 != "keep" ]]; then
+if [[ -z $keep ]]; then # User can optionally keep the reource group by setting "keep" or "k" flag
     az group delete --yes -g "$resource_group_name"
 fi
 
