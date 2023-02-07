@@ -367,7 +367,7 @@ fi
 
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
-echo "🦾   Deploying Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
+echo "🦾   Deploying core Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
 
 az deployment group create \
     --resource-group "$resource_group_name" \
@@ -379,7 +379,17 @@ az deployment group create \
         webAppAadClientId="$aad_app_id" \
         webAppAadTenantId="$current_user_tid" \
         webAppAadClientSecret="$aad_app_secret" \
-        headless="$p_headless"
+        headless="$p_headless" 2>/dev/null
+
+if [[ $? == 0 ]]; then
+    echo "✔   Core Turnstile Bicep template successfully deployed.";
+else
+    # If this template deployment failed, we really are done at this point.
+    # We can't do anything more without confirmation that these resources are there.
+
+    echo "❌  Core Turnstile Bicep template deployment failed. See resource group [$resource_group_name] activity log for more information. Setup failed."
+    exit 1
+fi
 
 if [[ "$p_headless" == "$FALSE" ]]; then
 
@@ -499,10 +509,10 @@ else
             managedIdId="$managed_id_id" \
             eventGridConnectionId="$event_grid_connection_id" \
             eventGridConnectionName="$event_grid_connection_name" \
-            eventGridTopicId="$event_grid_topic_id"
+            eventGridTopicId="$event_grid_topic_id" 2>/dev/null
 
-    [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
-    [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+    [[ $? -eq 0 ]] && echo "✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
+    [[ $? -ne 0 ]] && echo "⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
 fi
 
 echo "⚙️   Applying initial publisher configuration..."
@@ -523,6 +533,13 @@ az storage blob upload \
 if [[ "$p_headless" == "$FALSE" ]]; then
 
     echo "🔐   Adding you to this turnstile's administrative roles..."
+
+    # We'll need the app's object/principal ID (not app ID) for this one...
+
+    aad_sp_id=$(az ad app show \
+        --id "$aad_app_id" \
+        --output tsv \
+        --query id)
 
     # Add the current user to the subscriber tenant administrator's AAD role...
 
