@@ -59,6 +59,7 @@ var storageAccountName = take('turnstor${cleanDeploymentName}', 24)
 var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
 var eventStoreContainerName = 'event-store'
+var logAnalyticsName = 'turn-logs-${cleanDeploymentName}'
 var appInsightsName = 'turn-insights-${cleanDeploymentName}'
 var appServiceAlwaysOn = appServicePlanSku != 'Y1'
 var appServicePlanName = 'turn-plan-${cleanDeploymentName}'
@@ -88,13 +89,34 @@ resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
   }
 }
 
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logAnalyticsName
+  location: location
+  properties: {
+    sku: {
+      name: 'Standalone'
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    workspaceCapping: {
+      dailyQuotaGb: -1
+    }
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
+
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
   location: location
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    IngestionMode: 'ApplicationInsights'
+    RetentionInDays: 90
+    WorkspaceResourceId: logAnalytics.id
+    IngestionMode: 'LogAnalytics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
