@@ -35,7 +35,7 @@ readonly APP_SERVICE_SKUS=(
     "I3"
     "Y1"    # Consumption/Dynamic (supported only for headless deployments)
 )
-v
+
 readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
