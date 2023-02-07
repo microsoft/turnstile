@@ -187,7 +187,7 @@ p_headless="$FALSE"
 p_app_service_sku="S1"
 p_integration_pack="default"
 
-while getopts "s:c:d:n:r:i:p:h" opt; do
+while getopts "s:c:d:n:r:i:h" opt; do
     case $opt in
         s)
             p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
@@ -336,6 +336,25 @@ if [[ "$p_headless" == "$FALSE" ]]; then
             break
         fi
     done
+
+    echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
+
+    for i3 in {1..5}; do
+        aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
+
+        if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
+            if [[ $i3 == 5 ]]; then
+                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i2))
+                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi     
+        else
+            break
+        fi
+    done
 fi
 
 # Where are we?
@@ -367,7 +386,7 @@ fi
 
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
-echo "🦾   Deploying core Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
+echo "🦾   Deploying core Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]. This may take a while..."
 
 az deployment group create \
     --resource-group "$resource_group_name" \
@@ -533,13 +552,6 @@ az storage blob upload \
 if [[ "$p_headless" == "$FALSE" ]]; then
 
     echo "🔐   Adding you to this turnstile's administrative roles..."
-
-    # We'll need the app's object/principal ID (not app ID) for this one...
-
-    aad_sp_id=$(az ad app show \
-        --id "$aad_app_id" \
-        --output tsv \
-        --query id)
 
     # Add the current user to the subscriber tenant administrator's AAD role...
 
