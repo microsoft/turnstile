@@ -7,17 +7,11 @@ SECONDS=0 # Let's time it
 
 turnstile_version=$(cat ../VERSION) # TODO: Add code to auotomatically roll this forward on PR.
 
-test_location=$1 # For simplicity, this script only takes one parameter - the Azure region where the tests should be run.
-                 # We'll be blowing this whole thing away when we're done testing so I don't see much reason to 
-                 # customize the deployment further (at this point at least.)
-
 test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an identifier for the resources that we 
                         # stand up in Azure to run these tests a little later.
 
-[[ "$2" == "keep" || "$2" == "k" ]] && keep=1; # Optionally set keep bit.
-
 usage() { 
-  echo "Usage: $0 <azure_region> [keep (or) k]";
+  echo "Usage: $0  <azure_region> [keep (or) k]";
   echo
   echo "<azure_region>  The name (e.g., westus) of the Azure region to run tests."
   echo "[keep (or) k]   Flag - optionally keep the test resource group that's created."
@@ -493,11 +487,25 @@ while [[ -z $current_user_oid ]]; do
     if [[ -z $current_user_oid ]]; then az login; fi;
 done
 
-# Check that the region the user provided is valid...
+while getopts "i:r:k" opt; do
+    case $opt in
+        i)
+            p_integration_pack=$OPTARG
+        ;;
+        r)
+            p_region=$OPTARG
+        ;;
+        k)
+            p_keep=1 
+        ;;
+        \?)
+            usage
+            exit 1
+        ;;
+    esac
+done
 
-[[ -z "$test_location" ]] && { usage; exit 1; }
-
-check_deployment_region "$test_location"
+check_deployment_region "$p_region"
 
 [[ $? == 0 ]] || exit 1 # The region is invalid and an error message has already been displayed. We're done here.
 
@@ -507,7 +515,7 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     echo "Creating resource group [$resource_group_name]..."
 
     az group create \
-        --location "$test_location" \
+        --location "$p_region" \
         --name "$resource_group_name" \
         --tags \
             "Turnstile Deployment Name"="$test_run_id" \
@@ -536,7 +544,7 @@ az deployment group create \
     --name "$az_deployment_name" \
     --template-file "./test_environment.bicep" \
     --parameters \
-        deploymentName="$test_run_id"
+        deploymentName="$test_run_id" 2>/dev/null
 
 # We're going to need these variables here in a bit...
 
@@ -564,11 +572,71 @@ storage_account_key=$(az deployment group show \
     --query properties.outputs.storageAccountKey.value \
     --output tsv);
 
-topic_id=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+naged_id_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
-    --query properties.outputs.topicId.value \
+    --query properties.outputs.managedIdId.value \
     --output tsv);
+
+managed_id_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.managedIdName.value \
+    --output tsv);
+
+event_grid_connection_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridConnectionId.value \
+    --output tsv);
+
+event_grid_connection_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridConnectionName.value \
+    --output tsv);
+
+event_grid_topic_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridTopicId.value \
+    --output tsv);
+
+if [[ -n $p_integration_pack ]]; then
+    # We're also testing out an integration pack apparently...
+
+    integration_pack="${p_integration_pack#/}" # Trim leading...
+    integration_pack="${p_integration_pack%/}" # and trailing slashes.
+
+    pack_absolute_path="$p_integration_pack/deploy_pack.bicep" # Absolute...
+    pack_relative_path="../Turnstile/Turnstile.Setup/integration_packs/$p_integration_pack/deploy_pack.bicep" # and relative pack paths.
+
+    if [[ -f "$pack_absolute_path" ]]; then # Check the absolute path first...
+        pack_path="$pack_absolute_path"
+    elif [[ -f "$pack_relative_path" ]]; then # then check the relative path.
+        pack_path="$pack_relative_path"
+    fi
+
+    if [[ -z "$pack_path" ]]; then
+        echo "⚠️   Integration pack [$p_integration_pack] not found at [$pack_absolute_path] or [$pack_relative_path]. No integration pack will be deployed."
+    else
+        echo "🦾   Deploying [$p_integration_pack ($pack_path)] integration pack..."
+
+        az deployment group create \
+            --resource-group "$resource_group_name" \
+            --name "turn-e2e-test-$test_run_id-pack-deploy" \
+            --template-file "$pack_path" \
+            --parameters \
+                deploymentName="$test_run_id" \
+                managedIdId="$managed_id_id" \
+                eventGridConnectionId="$event_grid_connection_id" \
+                eventGridConnectionName="$event_grid_connection_name" \
+                eventGridTopicId="$event_grid_topic_id" 2>/dev/null
+
+        [[ $? -eq 0 ]] && echo "✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
+        [[ $? -ne 0 ]] && echo "⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+    fi
+fi
 
 echo "🏗️   Building Turnstile API app..."
 
@@ -598,7 +666,7 @@ echo "🔌   Connecting Turnstile API event store function (PostEventToStore) to
 
 az eventgrid event-subscription create \
     --name "event-store-connection" \
-    --source-resource-id "$topic_id" \
+    --source-resource-id "$event_grid_topic_id" \
     --endpoint "$api_app_id/functions/PostEventToStore" \
     --endpoint-type azurefunction
 
@@ -621,7 +689,7 @@ event_verification_failed=$?
 
 echo "🧹   Cleaning up..."
 
-if [[ -z $keep ]]; then # User can optionally keep the reource group by setting "keep" or "k" flag
+if [[ -z $p_keep ]]; then # User can optionally keep the reource group by setting "keep" or "k" flag
     az group delete --yes -g "$resource_group_name"
 fi
 
