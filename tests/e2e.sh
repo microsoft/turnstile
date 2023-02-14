@@ -529,7 +529,7 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     fi
 fi
 
-if [[ -z $keep ]]; then 
+if [[ -z $p_keep ]]; then 
     echo "ℹ️   KEEP FLAG (k/keep) NOT SET. Resource group [$resource_group_name] will be deleted once testing is complete."
 else
     echo "ℹ️   KEEP FLAG (k/keep) SET. Resource group [$resource_group_name] will remain once testing is complete."

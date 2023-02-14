@@ -158,7 +158,7 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      alwaysOn: true
+      alwaysOn: false
       appSettings: [
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
