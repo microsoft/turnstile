@@ -572,7 +572,7 @@ storage_account_key=$(az deployment group show \
     --query properties.outputs.storageAccountKey.value \
     --output tsv);
 
-naged_id_id=$(az deployment group show \
+managed_id_id=$(az deployment group show \
     --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.managedIdId.value \

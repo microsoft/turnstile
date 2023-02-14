@@ -239,5 +239,5 @@ output apiAppId string = apiApp.id
 output apiAppName string = apiAppName
 output storageAccountName string = storageAccount.name
 output storageAccountKey string = storageAccount.listKeys().keys[0].value
-output topicId string = eventGridTopic.id
+output eventGridTopicId string = eventGridTopic.id
 
