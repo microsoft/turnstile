@@ -2,13 +2,10 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Microsoft.Identity.Web;
-using System.Text.Encodings.Web;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
-using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Extensions;
 using Turnstile.Web.Models;

@@ -602,6 +602,20 @@ event_grid_topic_id=$(az deployment group show \
     --query properties.outputs.eventGridTopicId.value \
     --output tsv);
 
+echo "🔐   Granting managed identity [$managed_id_name] contributor access to resource group [$resource_group_name]..."
+
+az_subscription_id=$(az account show --query id --output tsv);
+
+managed_id_sp_id=$(az identity show \
+    --ids "$managed_id_id" \
+    --query principalId \
+    --output tsv)
+
+az role assignment create \
+    --assignee "$managed_id_sp_id" \
+    --role "Contributor" \
+    --scope "/subscriptions/$az_subscription_id/resourceGroups/$resource_group_name"
+
 if [[ -n $p_integration_pack ]]; then
     # We're also testing out an integration pack apparently...
 
