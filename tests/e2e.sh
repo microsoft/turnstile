@@ -25,18 +25,43 @@ run_entry_api_tests() {
     api_base_url=$1
     api_key=$2
 
+    run_entry_api_test \
+        "$api_base_url" \
+        "$api_key" \
+        "./models/entry_api_tests/access_denied/subscription.json" \
+        "./models/entry_api_tests/access_denied/seat_request.json" \
+        "access_denied"
 
+    [[ $? == 0 ]] || tests_failed=1
+
+    run_entry_api_test \
+        "$api_base_url" \
+        "$api_key" \
+        "./models/entry_api_tests/subscription_canceled/subscription.json" \
+        "./models/entry_api_tests/subscription_canceled/seat_request.json" \
+        "subscription_canceled"
+
+    [[ $? == 0 ]] || tests_failed=1
+
+    run_entry_api_test \
+        "$api_base_url" \
+        "$api_key" \
+        "./models/entry_api_tests/subscription_suspended/subscription.json" \
+        "./models/entry_api_tests/subscription_suspended/seat_request.json" \
+        "subscription_suspended"
+
+    [[ $? == 0 ]] || tests_failed=1
 }
 
 run_entry_api_test() {
     api_base_url=$1
     api_key=$2
-    seat_request_json=$3
-    subscription_json=$4
+    seat_request_json_path=$3
+    subscription_json_path=$4
     expected_seat_result_code=$5
 
+    subscription_json=$(cat "$subscription_json_path")
     subscription_id=$(echo "$subscription_json" | jq -r ".subscription_id")
-    tenant_id=$(echo "$subscription_json" | jq -r ".tenant_id")
     create_subscription_url="$api_base_url/saas/subscriptions/$subscription_id" 
 
     create_subscription_status_code=$(curl -s \
@@ -51,6 +76,7 @@ run_entry_api_test() {
     if [[ "$create_subscription_status_code" == "200" ]]; then
         echo "✔️   Subscription [$subscription_id] successfully created for Turnstile entry API [$expected_seat_result_code] test."
 
+        seat_request_json=$(cat "$seat_request_json_path")
         entry_url="$api_base_url/saas/subscriptions/$subscription_id/entry"
 
         entry_response=$(curl \
@@ -756,8 +782,11 @@ api_base_url="https://$api_app_name.azurewebsites.net/api"
 
 run_core_api_tests "$api_base_url" "$api_key"
 tests_failed=$?
+
 verify_events "$storage_account_name" "$storage_account_key"
 event_verification_failed=$?
+
+run_entry_api_tests "$api_base_url" "$api_key"
 
 echo "🧹   Cleaning up..."
 
