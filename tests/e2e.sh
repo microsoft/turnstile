@@ -28,8 +28,17 @@ run_entry_api_tests() {
     run_entry_api_test \
         "$api_base_url" \
         "$api_key" \
-        "./models/entry_api_tests/access_denied/subscription.json" \
-        "./models/entry_api_tests/access_denied/seat_request.json" \
+        "./models/entry_api_tests/access_denied/because_different_tenant/subscription.json" \
+        "./models/entry_api_tests/access_denied/because_different_tenant/seat_request.json" \
+        "access_denied"
+
+    [[ $? == 0 ]] || tests_failed=1
+
+    run_entry_api_test \
+        "$api_base_url" \
+        "$api_key" \
+        "./models/entry_api_tests/access_denied/because_user_not_in_role/subscription.json" \
+        "./models/entry_api_tests/access_denied/because_user_not_in_role/seat_request.json" \
         "access_denied"
 
     [[ $? == 0 ]] || tests_failed=1
