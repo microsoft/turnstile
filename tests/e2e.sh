@@ -11,13 +11,71 @@ test_run_id=$(date +%s) # Test run ID is Unix epoch time. We'll use this as an i
                         # stand up in Azure to run these tests a little later.
 
 usage() { 
-  echo "Usage: $0  <azure_region> [keep (or) k]";
+  echo "Usage:   $0 <-r azure_region> [-i integration_pack] [-k]"
+  echo "Example: $0 -r \"southcentralus\" -i \"default\" -k"
   echo
-  echo "<azure_region>  The name (e.g., westus) of the Azure region to run tests."
-  echo "[keep (or) k]   Flag - optionally keep the test resource group that's created."
+  echo "<-r azure_region>.......The Azure region in which these tests will be run"
+  echo "                        For region list, run `az account list-locations --output table`"
+  echo "[-i integration_pack]...Optional; the integration pack that should be deployed"
+  echo "[-k]....................Optional flag; retains the test resource group"
+  echo "                        If not set, the resource group will be automatically deleted"
 }
 
-run_tests() {
+run_entry_api_tests() {
+    api_base_url=$1
+    api_key=$2
+
+
+}
+
+run_entry_api_test() {
+    api_base_url=$1
+    api_key=$2
+    seat_request_json=$3
+    subscription_json=$4
+    expected_seat_result_code=$5
+
+    subscription_id=$(echo "$subscription_json" | jq -r ".subscription_id")
+    tenant_id=$(echo "$subscription_json" | jq -r ".tenant_id")
+    create_subscription_url="$api_base_url/saas/subscriptions/$subscription_id" 
+
+    create_subscription_status_code=$(curl -s \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "x-functions-key: $api_key" \
+        -d "$subscription_json" \
+        -o /dev/null \
+        -w "%{http_code}" \
+        "$create_subscription_url")
+
+    if [[ "$create_subscription_status_code" == "200" ]]; then
+        echo "✔️   Subscription [$subscription_id] successfully created for Turnstile entry API [$expected_seat_result_code] test."
+
+        entry_url="$api_base_url/saas/subscriptions/$subscription_id/entry"
+
+        entry_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-functions-key: $api_key" \
+            -d "$seat_request_json" \
+            "$entry_url")
+
+        actual_seat_result_code=$(echo "$entry_response" | jq -r ".result_code")
+
+        if [[ "$actual_seat_result_code" == "$expected_seat_result_code" ]]; then
+            echo "✔️   Turnstile entry API [$expected_seat_result_code] test successful."
+            return 0
+        else
+            echo "❌   Turnstile entry API [$expected_seat_result_code] test failed. Actual seat result code was [$actual_seat_result_code]."
+            return 1
+        fi
+    else
+        echo "❌   Turnstile entry API [$expected_seat_result_code] test failed. Unable to create subscription [$subscription_id]."
+        return 1
+    fi
+}
+
+run_core_api_tests() {
     api_base_url=$1
     api_key=$2
 
@@ -696,7 +754,7 @@ echo "🧪   Running tests..."
 
 api_base_url="https://$api_app_name.azurewebsites.net/api"
 
-run_tests "$api_base_url" "$api_key"
+run_core_api_tests "$api_base_url" "$api_key"
 tests_failed=$?
 verify_events "$storage_account_name" "$storage_account_key"
 event_verification_failed=$?
