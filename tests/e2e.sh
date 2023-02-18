@@ -272,6 +272,8 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
+sleep 120
+
 echo "🧪   Running tests..."
 
 api_base_url="https://$api_app_name.azurewebsites.net/api"
