@@ -1,0 +1,20 @@
+{
+    "subscription_id": "no_seats_available_sub_id",
+    "subscription_name": "no_seats_available_sub",
+    "tenant_id": "no_seats_available_tenant_id",
+    "tenant_name": "no_seats_available_tenant",
+    "offer_id": "offer_1",
+    "plan_id": "plan_1",
+    "state": "active",
+    "admin_role_name": "test_admins",
+    "admin_name": "cawatson",
+    "admin_email": "cawatson@microsoft.com",
+    "total_seats": 0,
+    "seating_config": {
+        "seating_strategy_name": "first_come_first_served",
+        "low_seat_warning_level_pct": 0.25,
+        "limited_overflow_seating_enabled": false,
+        "seat_reservation_expiry_in_days": 14,
+        "default_seat_expiry_in_days": 14
+    }
+}
