@@ -155,9 +155,9 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
 fi
 
 if [[ -z $p_keep ]]; then 
-    echo "ℹ️   KEEP FLAG (k/keep) NOT SET. Resource group [$resource_group_name] will be deleted once testing is complete."
+    echo "ℹ️   -k flag not set. Resource group [$resource_group_name] will be deleted once testing is complete."
 else
-    echo "ℹ️   KEEP FLAG (k/keep) SET. Resource group [$resource_group_name] will remain once testing is complete."
+    echo "ℹ️   -k flag set. Resource group [$resource_group_name] will remain once testing is complete."
 fi
 
 az_deployment_name="turn-e2e-test-$test_run_id-deploy"
@@ -272,8 +272,9 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
-sleep 120
+sleep 120 # Replace this at some point with a health check endpoint like we do in Mona...
 
+echo
 echo "🧪   Running tests..."
 
 api_base_url="https://$api_app_name.azurewebsites.net/api"
@@ -286,6 +287,7 @@ chmod +x ./e2e_entry_api.sh
 ./e2e_entry_api.sh "$api_base_url" "$api_key"
 [[ $? == 0 ]] || tests_failed=1
 
+echo
 echo "🧹   Cleaning up..."
 
 if [[ -z $p_keep ]]; then # User can optionally keep the reource group by setting "keep" or "k" flag
@@ -295,10 +297,12 @@ fi
 rm -rf ./api_topublish
 rm -rf ./api_topublish.zip
 
+echo
 echo "Testing took [$SECONDS] seconds."
 echo
 
 if [[ -z $tests_failed ]]; then
+    echo ""
     exit 0 # All of our tests passed.
 else
     exit 1 # Some of our tests failed.

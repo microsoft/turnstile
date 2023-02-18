@@ -372,7 +372,7 @@ verify_events() {
         verify_failed=1
     fi
 
-    [[ -n $verify_failed ]] && return 1;
+    [[ -z $verify_failed ]] || return 1
 }
 
 api_base_url=$1
@@ -380,16 +380,21 @@ api_key=$2
 storage_account_name=$3
 storage_account_key=$4
 
+echo
 echo "🧪   Running core API tests..."
+echo
 
 run_core_api_tests "$api_base_url" "$api_key"
 
 if [[ $? == 0 ]]; then
     sleep 30 # Wait for those events to drop...
 
+    echo
     echo "✔️   Core API tests passed. Verifying events..."
 
     verify_events "$storage_account_name" "$storage_account_key"
+
+    echo
 
     if [[ $? == 0 ]]; then
         echo "✔️   Core API events verified."

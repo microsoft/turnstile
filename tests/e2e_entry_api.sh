@@ -24,7 +24,7 @@ run_entry_api_test() {
         "$create_subscription_url")
 
     if [[ "$create_subscription_status_code" == "200" ]]; then
-        echo "✔️   Entry API test subscription [$subscription_id] successfully created."
+        echo "🧪   Entry API test subscription [$subscription_id] successfully created."
 
         local entry_url="$api_base_url/saas/subscriptions/$subscription_id/entry"
 
@@ -38,7 +38,7 @@ run_entry_api_test() {
         local actual_seat_code=$(echo "$entry_response" | jq -r ".result_code")
 
         if [[ "$actual_seat_code" == "$expected_seat_code" ]]; then
-            echo "✔️   [$test_name] entry API test passed."
+            echo "✔️   [$test_name] entry API test passed; result code is [$actual_seat_code]."
             return 0
         else
             echo "❌   [$test_name] entry API test failed..."
@@ -69,7 +69,7 @@ run_subscription_not_found_entry_api_test() {
     local actual_seat_code=$(echo "$entry_response" | jq -r ".result_code")
 
     if [[ "$actual_seat_code" == "subscription_not_found" ]]; then
-        echo "✔️   [Subscription not found [subscription_not_found]] entry API test passed."
+        echo "✔️   [Subscription not found [subscription_not_found]] entry API test passed; result code is [$actual_seat_code]."
         return 0
     else
         echo "❌   [Subscription not found [subscription_not_found]] entry API test failed..."
@@ -155,9 +155,13 @@ run_entry_api_tests() {
 api_base_url=$1
 api_key=$2
 
+echo
 echo "🧪   Running entry API tests..."
+echo
 
 run_entry_api_tests "$api_base_url" "$api_key"
+
+echo
 
 if [[ $? == 0 ]]; then
     echo "✔️   Entry API tests passed."
