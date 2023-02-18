@@ -275,6 +275,10 @@ chmod +x ./e2e_core_api.sh
 ./e2e_core_api.sh "$api_base_url" "$api_key" "$storage_account_name" "$storage_account_key"
 [[ $? == 0 ]] || tests_failed=1
 
+chmod +x ./e2e_entry_api.sh
+./e2e_entry_api.sh "$api_base_url" "$api_key"
+[[ $? == 0 ]] || tests_failed=1
+
 echo "🧹   Cleaning up..."
 
 if [[ -z $p_keep ]]; then # User can optionally keep the reource group by setting "keep" or "k" flag
@@ -287,7 +291,7 @@ rm -rf ./api_topublish.zip
 echo "Testing took [$SECONDS] seconds."
 echo
 
-if [[ tests_failed == 0 && event_verification_failed == 0 ]]; then
+if [[ -z $tests_failed ]]; then
     exit 0 # All of our tests passed.
 else
     exit 1 # Some of our tests failed.
