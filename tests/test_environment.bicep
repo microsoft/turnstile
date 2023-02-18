@@ -224,6 +224,10 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
           name: 'Turnstile_PublisherConfigStorageContainerName'
           value: configStorageContainerName
         }
+        {
+          name: 'Turnstile_ApiBaseUrl'
+          value: 'https://${apiAppName}.azurewebsites.net'
+        }
       ]
     }
   }
