@@ -1,9 +1,9 @@
 {
-    "request_id": "c77ab487-da65-48d4-b937-3f28338e0029",
-    "user_id": "93b516a3-4462-4d0a-a802-65a7943cb88e",
-    "tenant_id": "ea690ad4-961a-4450-90cf-2ad8a06f19b8",
+    "request_id": "subscription_suspended_request_id",
+    "user_id": "subscription_suspended_user_id",
+    "tenant_id": "subscription_suspended_tenant_id",
     "emails": [
-        "93b516a3-4462-4d0a-a802-65a7943cb88e@microsoft.com"
+        "subscription_suspended_user_id@microsoft.com"
     ],
     "roles": [
     ]

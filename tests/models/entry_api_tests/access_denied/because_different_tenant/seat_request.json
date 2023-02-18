@@ -1,9 +1,9 @@
 {
-    "request_id": "a94d1694-f29e-49bc-a7cb-347770089f83",
-    "user_id": "30dc021c-5d87-4d7a-acaa-608530586765",
-    "tenant_id": "63f84500-1ca9-425c-867a-6941f336eecc",
+    "request_id": "access_denied_because_different_tenant_request_id",
+    "user_id": "access_denied_because_different_tenant_user_id",
+    "tenant_id": "!access_denied_because_different_tenant_id",
     "emails": [
-        "30dc021c-5d87-4d7a-acaa-608530586765@microsoft.com"
+        "access_denied_because_different_tenant_user_id@microsoft.com"
     ],
     "roles": [
     ]

@@ -348,3 +348,16 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+Turnstile/Turnstile.Api/Properties/serviceDependencies.turn-services-cawatsondev01 - Zip Deploy.json
+Turnstile/Turnstile.Api/Properties/serviceDependencies.turn-services-cawatsondev02 - Zip Deploy.json
+Turnstile/Turnstile.Api/Properties/ServiceDependencies/turn-services-cawatsondev01 - Zip Deploy/appInsights1.arm.json
+Turnstile/Turnstile.Api/Properties/launchSettings.json
+Turnstile/Turnstile.Api/Properties/ServiceDependencies/turn-services-cawatsondev01 - Zip Deploy/profile.arm.json
+Turnstile/Turnstile.Api/Properties/ServiceDependencies/turn-services-cawatsondev01 - Zip Deploy/storage1.arm.json
+.gitignore
+Turnstile/Turnstile.Api/Properties/ServiceDependencies/turn-services-cawatsondev02 - Zip Deploy/storage1.arm.json
+.gitignore
+Turnstile/Turnstile.Web/Properties/ServiceDependencies/turn-web-cawatsondev01 - Web Deploy/profile.arm.json
+Turnstile/Turnstile.Web/Properties/ServiceDependencies/turn-web-ppdemo01 - Web Deploy/profile.arm.json
+Turnstile/Turnstile.Api/Properties/ServiceDependencies/turn-services-cawatsondev02 - Zip Deploy/profile.arm.json
+Turnstile/Turnstile.Api/Properties/ServiceDependencies/turn-services-cawatsondev02 - Zip Deploy/appInsights1.arm.json
