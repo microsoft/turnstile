@@ -385,6 +385,8 @@ echo "🧪   Running core API tests..."
 run_core_api_tests "$api_base_url" "$api_key"
 
 if [[ $? == 0 ]]; then
+    sleep 30 # Wait for those events to drop...
+
     echo "✔️   Core API tests passed. Verifying events..."
 
     verify_events "$storage_account_name" "$storage_account_key"

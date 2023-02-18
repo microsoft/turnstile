@@ -35,7 +35,7 @@ run_entry_api_test() {
             -d "$seat_request_json" \
             "$entry_url")
 
-        local actual_seat_code=$(echo "$entry_response" | jq -r ".seat_code")
+        local actual_seat_code=$(echo "$entry_response" | jq -r ".result_code")
 
         if [[ "$actual_seat_code" == "$expected_seat_code" ]]; then
             echo "✔️   [$test_name] entry API test passed."
@@ -66,7 +66,7 @@ run_subscription_not_found_entry_api_test() {
             -d "$seat_request_json" \
             "$entry_url")
 
-    local actual_seat_code=$(echo "$entry_response" | jq -r ".seat_code")
+    local actual_seat_code=$(echo "$entry_response" | jq -r ".result_code")
 
     if [[ "$actual_seat_code" == "subscription_not_found" ]]; then
         echo "✔️   [Subscription not found [subscription_not_found]] entry API test passed."
