@@ -8,7 +8,74 @@ run_entry_api_test() {
     local expected_seat_code=$5
     local test_name=$6
 
-    
+    local subscription_json=$(cat "$subscription_json_path")
+    local seat_request_json=$(cat "$seat_request_json_path")
+
+    local subscription_id=$(echo "$subscription_json" | jq -r ".subscription_id")
+    local create_subscription_url="$api_base_url/saas/subscriptions/$subscription_id"
+
+    local create_subscription_status_code=$(curl -s \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -H "x-functions-key: $api_key" \
+        -d "$subscription_json" \
+        -o /dev/null \
+        -w "%{http_code}" \
+        "$create_subscription_url")
+
+    if [[ "$create_subscription_status_code" == "200" ]]; then
+        echo "✔️   Entry API test subscription [$subscription_id] successfully created."
+
+        local entry_url="$api_base_url/saas/subscriptions/$subscription_id/entry"
+
+        local entry_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-functions-key: $api_key" \
+            -d "$seat_request_json" \
+            "$entry_url")
+
+        local actual_seat_code=$(echo "$entry_response" | jq -r ".seat_code")
+
+        if [[ "$actual_seat_code" == "$expected_seat_code" ]]; then
+            echo "✔️   [$test_name] entry API test passed."
+            return 0
+        else
+            echo "❌   [$test_name] entry API test failed..."
+            echo "❌   Expected seat result code is [$expected_seat_code] but actual code is [$actual_seat_code]."
+            return 1
+        fi
+    else
+        echo "❌   [$test_name] entry API test failed..."
+        echo "❌   Unable to create entry API test subscription [$subscription_id]: [HTTP $create_subscription_status_code]."
+        return 1     
+    fi
+}
+
+run_subscription_not_found_entry_api_test() {
+    local api_base_url=$1
+    local api_key=$2
+
+    local seat_request_json=$(cat "./models/entry_api_tests/subscription_not_found/seat_request.json")
+    local entry_url="$api_base_url/saas/subscriptions/not_a_real_sub_id/entry"
+
+    local entry_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "x-functions-key: $api_key" \
+            -d "$seat_request_json" \
+            "$entry_url")
+
+    local actual_seat_code=$(echo "$entry_response" | jq -r ".seat_code")
+
+    if [[ "$actual_seat_code" == "subscription_not_found" ]]; then
+        echo "✔️   [Subscription not found [subscription_not_found]] entry API test passed."
+        return 0
+    else
+        echo "❌   [Subscription not found [subscription_not_found]] entry API test failed..."
+        echo "❌   Expected seat result code is [subscription_not_found] but actual code is [$actual_seat_code]."
+        return 1
+    fi
 }
 
 run_entry_api_tests() {
@@ -79,7 +146,10 @@ run_entry_api_tests() {
 
     [[ $? == 0 ]] || tests_failed=1
 
-    [[ -z test_failed ]] || return 1
+    run_subscription_not_found_entry_api_test "$api_base_url" "$api_key"
+
+    [[ $? == 0 ]] || tests_failed=1
+    [[ -z $tests_failed ]] || return 1
 }
 
 api_base_url=$1
