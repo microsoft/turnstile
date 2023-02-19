@@ -79,6 +79,31 @@ check_deployment_region() {
     fi
 }
 
+check_turnstile_health() {
+    local test_run_id="$1"
+    local api_app_name="$2"
+
+    local health_status=""
+
+    for i in {1..6}; do
+        sleep 10
+
+        health_status=$(curl -s -o /dev/null -w "%{http_code}" "https://$api_app_name.azurewebsites.net/health")
+
+        echo "🩺   Checking Turnstile test environment [$deployment_name] health (attempt $i of 6)..."
+
+        if [[ $health_status == "200" ]]; then
+            echo "✔   Turnstile test environment [$deployment_name] is healthy (HTTP $health_status)!"
+            return 0 # All good!
+        fi
+    done
+
+     # If we got this far, something's definitely not right...
+
+    echo "⚠️   Turnstile test environment [$test_run_id] is unhealthy (HTTP $health_status)."
+    return 1
+}
+
 splash() {
     echo "Turnstile | $turnstile_version"
     echo "https://github.com/microsoft/turnstile"
@@ -169,7 +194,7 @@ az deployment group create \
     --name "$az_deployment_name" \
     --template-file "./test_environment.bicep" \
     --parameters \
-        deploymentName="$test_run_id" 2>/dev/null
+        deploymentName="$test_run_id"
 
 # We're going to need these variables here in a bit...
 
@@ -272,7 +297,14 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
-sleep 120 # Replace this at some point with a health check endpoint like we do in Mona...
+# Wait for Turnstile to wake up...
+
+check_turnstile_health "$test_run_id" "$api_app_name"
+
+if [[ $? != 0 ]]; then
+    echo "❌   Failed to create test environment [$test_run_id]. Testing failed."
+    exit 1
+fi
 
 echo
 echo "🧪   Running tests..."
