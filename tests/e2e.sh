@@ -85,15 +85,19 @@ check_turnstile_health() {
 
     local health_status=""
 
+    echo
+
     for i in {1..6}; do
         sleep 10
 
-        health_status=$(curl -s -o /dev/null -w "%{http_code}" "https://$api_app_name.azurewebsites.net/health")
+        health_status=$(curl -s -o /dev/null -w "%{http_code}" "https://$api_app_name.azurewebsites.net/api/health")
 
-        echo "🩺   Checking Turnstile test environment [$deployment_name] health (attempt $i of 6)..."
+        echo "🩺   Checking Turnstile test environment [$test_run_id] health (attempt $i of 6)..."
 
         if [[ $health_status == "200" ]]; then
-            echo "✔   Turnstile test environment [$deployment_name] is healthy (HTTP $health_status)!"
+            echo "✔   Turnstile test environment [$test_run_id] is healthy (HTTP $health_status)!"
+            echo
+
             return 0 # All good!
         fi
     done
@@ -101,6 +105,8 @@ check_turnstile_health() {
      # If we got this far, something's definitely not right...
 
     echo "⚠️   Turnstile test environment [$test_run_id] is unhealthy (HTTP $health_status)."
+    echo
+
     return 1
 }
 
