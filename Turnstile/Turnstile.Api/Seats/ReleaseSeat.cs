@@ -7,31 +7,47 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models.Events.V_2022_03_18;
-using Turnstile.Services.Cosmos;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Api.Seats
-{
-    public static class ReleaseSeat
+{    
+    public class ReleaseSeat
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public ReleaseSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("ReleaseSeat")]
-        public static async Task<IActionResult> Run(
+        [OpenApiOperation("releaseSeat", "seats")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiResponseWithoutBody(HttpStatusCode.NoContent)]
+        public async Task<IActionResult> RunReleaseSeat(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
             ILogger log, string subscriptionId, string seatId)
         {
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscription = await repo.GetSubscription(subscriptionId);
-            var seat = await repo.GetSeat(seatId, subscriptionId);
+            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
-            if (subscription != null && seat != null)
+            if (subscription != null)
             {
-                await repo.DeleteSeat(seatId, subscriptionId);
-                await eventCollector.AddAsync(new SeatReleased(subscription, seat).ToEventGridEvent());
+                var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
+
+                if (seat != null)
+                {
+                    await turnstileRepo.DeleteSeat(seatId, subscriptionId);
+                    await eventCollector.AddAsync(new SeatReleased(subscription, seat).ToEventGridEvent());
+                }
             }
 
             return new NoContentResult();

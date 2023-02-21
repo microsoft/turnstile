@@ -7,28 +7,42 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Events.V_2022_03_18;
-using Turnstile.Services.Cosmos;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace SMM.API.Subscriptions
 {
-    public static class PatchSubscription
+    public class PatchSubscription
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public PatchSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("PatchSubscription")]
-        public static async Task<IActionResult> Run(
+        [OpenApiOperation("patchSubscription", "subscriptions")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiRequestBody("application/json", typeof(Subscription))]
+        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
+        public async Task<IActionResult> RunPatchSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "patch", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
             [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            string subscriptionId, ILogger log)
+            string subscriptionId)
         {
             var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
@@ -37,31 +51,30 @@ namespace SMM.API.Subscriptions
                 return new BadRequestObjectResult("Subscription patch is required.");
             }
 
-            var patch = JsonConvert.DeserializeObject<Subscription>(httpContent);
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var existingSub = await repo.GetSubscription(subscriptionId);
+            var subPatch = JsonConvert.DeserializeObject<Subscription>(httpContent);
+            var existingSub = await turnstileRepo.GetSubscription(subscriptionId);
 
             if (existingSub == null)
             {
                 return new NotFoundObjectResult($"Subscription [{subscriptionId}] not found.");
             }
 
-            var validationErrors = existingSub.ValidatePatch(patch);
+            var validationErrors = existingSub.ValidatePatch(subPatch);
 
             if (validationErrors.Any())
             {
                 return new BadRequestObjectResult(validationErrors.ToParagraph());
             }
 
-            ApplyPatch(patch, existingSub);
+            ApplyPatch(subPatch, existingSub);
 
-            await repo.ReplaceSubscription(existingSub);
+            await turnstileRepo.ReplaceSubscription(existingSub);
             await eventCollector.AddAsync(new SubscriptionUpdated(existingSub).ToEventGridEvent());
 
             return new OkObjectResult(existingSub);
         }
 
-        private static void ApplyPatch(Subscription patch, Subscription existingSub)
+        private void ApplyPatch(Subscription patch, Subscription existingSub)
         {
             existingSub.PlanId = patch.PlanId ?? existingSub.PlanId;
             existingSub.IsBeingConfigured = patch.IsBeingConfigured ?? existingSub.IsBeingConfigured;
@@ -86,7 +99,7 @@ namespace SMM.API.Subscriptions
             }
         }
 
-        private static void ApplySeatingConfigurationPatch(Subscription patch, Subscription existingSub)
+        private void ApplySeatingConfigurationPatch(Subscription patch, Subscription existingSub)
         {
             if (patch.SeatingConfiguration != null)
             {

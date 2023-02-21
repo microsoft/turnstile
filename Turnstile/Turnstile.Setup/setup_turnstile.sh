@@ -3,11 +3,42 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 
+readonly TRUE="true"
+readonly FALSE="false"
+
 SECONDS=0 # Let's time it...
 
-turnstile_version=$(cat ../../VERSION)
+readonly TURNSTILE_VERSION=$(cat ../../VERSION)
 
-usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack]"; }
+# We allow the user to choose the App Service Plan SKU (see https://learn.microsoft.com/azure/app-service/overview-hosting-plans) 
+# that the Turnstile API and, optionally, web app is deployed on. Unfortunately, there isn't currently (as of Feb 2023), a reliable way 
+# to pull a list of available App Serice SKUs so, for now, we have a hardcoded list here. If, in the future, there is a reliable API
+# call we can make to pull a list of valid SKUs, this list should instead be populated with that API response.
+
+readonly APP_SERVICE_SKUS=(
+    "D1"    # Shared
+    "F1"    # Free
+    "B1"    # Basic
+    "B2"
+    "B3"
+    "S1"    # Standard (S1 is default)
+    "S2"
+    "S3"
+    "P1"    # Premium
+    "P2"
+    "P3"
+    "P1V2"  # Premium v2
+    "P2V2"
+    "P3V2"
+    "I1"    # Isolated (ASE)
+    "I2"
+    "I3"
+    "Y1"    # Consumption/Dynamic (supported only for headless deployments)
+)
+
+readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
+
+usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
 
 check_az() {
     az version >/dev/null
@@ -17,6 +48,17 @@ check_az() {
         return 1
     else
         echo "✔   Azure CLI installed."
+    fi
+}
+
+check_zip() {
+    zip -h >/dev/null
+
+    if [[ $? -ne 0 ]]; then
+        echo "❌   Please install zip before continuing."
+        return 1
+    else
+        echo "✔   zip installed."
     fi
 }
 
@@ -52,6 +94,27 @@ check_dotnet() {
     fi
 }
 
+check_app_service_sku() {
+    sku=$1
+    headless=$2
+
+    if [[ "${APP_SERVICE_SKUS[*]}" =~ "${sku}" ]]; then
+        if [[ "$headless" == "$FALSE" && "$sku" == "$CONSUMPTION_APP_SERVICE_SKU" ]]; then # Only functions (the API layer) can be deployed to a consumption plan.
+            echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless/API-only (-h) deployments."
+            return 1
+        else
+            echo "✔   [$sku] is a valid Azure App Service plan SKU for this deployment."
+        fi
+    else
+        echo "❌   [$sku] is not a Azure App Service plan SKU, but these are..."
+        echo
+        printf '%s\n' "${APP_SERVICE_SKUS[@]}"
+        echo
+        echo "For more information, see [ https://learn.microsoft.com/azure/app-service/overview-hosting-plans ]."
+        return 1
+    fi
+}
+
 check_deployment_region() {
     region=$1
 
@@ -80,7 +143,7 @@ check_deployment_name() {
 }
 
 splash() {
-    echo "Turnstile | $turnstile_version"
+    echo "Turnstile | $TURNSTILE_VERSION"
     echo "https://github.com/microsoft/turnstile"
     echo
     echo "Copyright (c) Microsoft Corporation. All rights reserved."
@@ -98,13 +161,18 @@ echo "Checking setup prerequisites..."
 
 check_az;           [[ $? -ne 0 ]] && prereq_check_failed=1
 check_dotnet;       [[ $? -ne 0 ]] && prereq_check_failed=1
+check_zip;          [[ $? -ne 0 ]] && prereq_check_failed=1
 
 if [[ -z $prereq_check_failed ]]; then
     echo "✔   All setup prerequisites installed."
 else
     echo "❌   Please install all setup prerequisites then try again."
-    return 1
+    exit 1
 fi
+
+# Try to upgrade Bicep...
+
+az bicep upgrade
 
 # Log in the user if they aren't already...
 
@@ -115,10 +183,15 @@ done
 
 # Get our parameters...
 
+p_headless="$FALSE"
+p_app_service_sku="S1"
 p_integration_pack="default"
 
-while getopts "c:d:n:r:i:" opt; do
+while getopts "s:c:d:n:r:i:h" opt; do
     case $opt in
+        s)
+            p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
+        ;;
         c)
             p_publisher_config_path=$OPTARG
         ;;
@@ -134,6 +207,13 @@ while getopts "c:d:n:r:i:" opt; do
         r)
             p_deployment_region=$OPTARG
         ;;
+        h)
+            p_headless="$TRUE"
+
+            # This flag allows you to deploy Turnstile in "headless" mode. Headless mode deploys _only_
+            # the API and supporting resources. It does not deploy the web app and, consequently, doesn't
+            # do any AAD configuration.
+        ;;
         \?)
             usage
             exit 1
@@ -145,14 +225,21 @@ echo "Validating script parameters..."
 
 [[ -z p_deployment_name || -z p_deployment_region ]] && { usage; exit 1; }
 
-check_deployment_region $p_deployment_region;   [[ $? -ne 0 ]] && param_check_failed=1
-check_deployment_name $p_deployment_name;       [[ $? -ne 0 ]] && param_check_failed=1
+check_app_service_sku "$p_app_service_sku" "$p_headless"; [[ $? -ne 0 ]] && param_check_failed=1
+check_deployment_region "$p_deployment_region";           [[ $? -ne 0 ]] && param_check_failed=1
+check_deployment_name "$p_deployment_name";               [[ $? -ne 0 ]] && param_check_failed=1
 
 if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
 else
     echo "❌   Parameter validation failed. Please review and try again."
-    return 1
+    exit 1
+fi
+
+if [[ "$p_headless" == "$TRUE" ]]; then 
+    echo "ℹ️   This is a HEADLESS (-h) deployment. Only the Turnstile API layer will be deployed."
+else
+    echo "ℹ️   This is a FULL deployment. Both the Turnstile API and web app layers will be deployed."
 fi
 
 p_deployment_name=$(echo "$p_deployment_name" | tr '[:upper:]' '[:lower:]') # Lower the deployment name...
@@ -162,6 +249,118 @@ if [[ -z $p_display_name ]]; then
 else
     display_name="$p_display_name"
 fi
+
+if [[ "$p_headless" == "$FALSE" ]]; then
+
+    # We're creating the app registration used to authenticate users to the web app here which is different
+    # than the managed identity we create later for resource access.
+
+    # Create the app registration in AAD...
+
+    aad_app_name="$display_name"
+
+    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
+
+    graph_token=$(az account get-access-token \
+        --resource-type ms-graph \
+        --query accessToken \
+        --output tsv);
+
+    tenant_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
+    turnstile_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
+    create_app_json=$(cat ./aad/manifest.json)
+    create_app_json="${create_app_json/__aad_app_name__/${aad_app_name}}"
+    create_app_json="${create_app_json/__deployment_name__/${p_deployment_name}}"
+    create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
+    create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
+
+    # We occasionally run into some consistency issues with these Azure AD calls
+    # so we wrap each one in a transient fault handling block. This is an implementation of
+    # the retry pattern which you can learn about at https://docs.microsoft.com/en-us/azure/architecture/patterns/retry.
+
+    for i1 in {1..5}; do
+        create_app_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $graph_token" \
+            -d "$create_app_json" \
+            "https://graph.microsoft.com/v1.0/applications")
+
+        # Thanks, @cherchyk, for teaching me how to use jq! 👋🏻
+
+        aad_object_id=$(echo "$create_app_response" | jq -r ".id")
+        aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
+
+        if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
+            if [[ $i1 == 5 ]]; then
+                # We tried five times and it's still not working. Time to give up, unfortunately.
+                echo "❌   Failed to create AAD app. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
+                echo "⚠️   Trying to create AAD app again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
+        else
+            break
+        fi
+    done
+
+    # Regardless of whether or not the user provided an existing AAD app ID, we still need to create
+    # a client secret that the web app can use for authentication.
+
+    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
+
+    add_password_json=$(cat ./aad/add_password.json)
+
+    for i2 in {1..5}; do
+        add_password_response=$(curl \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $graph_token" \
+            -d "$add_password_json" \
+            "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
+
+        aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
+
+        if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
+            if [[ $i2 == 5 ]]; then
+                echo "❌   Failed to create AAD app client credentials. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i2))
+                echo "⚠️   Trying to create AAD app client credentials again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
+        else
+            break
+        fi
+    done
+
+    echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
+
+    for i3 in {1..5}; do
+        aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
+
+        if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
+            if [[ $i3 == 5 ]]; then
+                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i2))
+                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi     
+        else
+            break
+        fi
+    done
+fi
+
+# Where are we?
+
+subscription_id=$(az account show --query id --output tsv);
+current_user_tid=$(az account show --query tenantId --output tsv);
 
 # Create our resource group if it doesn't already exist...
 
@@ -175,7 +374,7 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
         --name "$resource_group_name" \
         --tags \
             "Turnstile Deployment Name"="$p_deployment_name" \
-            "Turnstile Version"="$turnstile_version"
+            "Turnstile Version"="$TURNSTILE_VERSION"
 
     if [[ $? -eq 0 ]]; then
         echo "✔   Resource group [$resource_group_name] created."
@@ -185,139 +384,48 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     fi
 fi
 
-# Create the app registration in AAD...
-
-aad_app_name="$display_name"
-
-echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
-
-graph_token=$(az account get-access-token \
-    --resource-type ms-graph \
-    --query accessToken \
-    --output tsv);
-
-tenant_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
-turnstile_admin_role_id=$(cat /proc/sys/kernel/random/uuid)
-create_app_json=$(cat ./aad/manifest.json)
-create_app_json="${create_app_json/__aad_app_name__/${aad_app_name}}"
-create_app_json="${create_app_json/__deployment_name__/${p_deployment_name}}"
-create_app_json="${create_app_json/__tenant_admin_role_id__/${tenant_admin_role_id}}"
-create_app_json="${create_app_json/__turnstile_admin_role_id__/${turnstile_admin_role_id}}"
-
-# We occasionally run into some consistency issues with these Azure AD calls
-# so we wrap each one in a transient fault handling block. This is an implementation of
-# the retry pattern which you can learn about at https://docs.microsoft.com/en-us/azure/architecture/patterns/retry.
-
-for i1 in {1..5}; do
-    create_app_response=$(curl \
-        -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $graph_token" \
-        -d "$create_app_json" \
-        "https://graph.microsoft.com/v1.0/applications")
-
-    aad_object_id=$(echo "$create_app_response" | jq -r ".id")
-    aad_app_id=$(echo "$create_app_response" | jq -r ".appId")
-
-    if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
-        if [[ $i1 == 5 ]]; then
-            # We tried five times and it's still not working. Time to give up, unfortunately.
-            echo "❌   Failed to create Turnstile AAD app. Setup failed."
-            exit 1
-        else
-            sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
-            echo "⚠️   Trying to create app again in [$sleep_for] seconds."
-            sleep $sleep_for
-        fi
-    else
-        break
-    fi
-done
-
-echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
-
-add_password_json=$(cat ./aad/add_password.json)
-
-for i2 in {1..5}; do
-    add_password_response=$(curl \
-        -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $graph_token" \
-        -d "$add_password_json" \
-        "https://graph.microsoft.com/v1.0/applications/$aad_object_id/addPassword")
-
-    aad_app_secret=$(echo "$add_password_response" | jq -r ".secretText")
-
-    if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
-        if [[ $i2 == 5 ]]; then
-            echo "❌   Failed to create Turnstile AAD app client credentials. Setup failed."
-            exit 1
-        else
-            sleep_for=$((2**i2))
-            echo "⚠️   Trying to create app client credentials again in [$sleep_for] seconds."
-            sleep $sleep_for
-        fi
-    else
-        break
-    fi
-done
-
-echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
-
-for i3 in {1..5}; do
-    aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
-
-    if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
-        if [[ $i3 == 5 ]]; then
-            echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
-            exit 1
-        else
-            sleep_for=$((2**i2))
-            echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
-            sleep $sleep_for
-        fi     
-    else
-        break
-    fi
-done
-
-echo "🔐   Granting AAD app [$aad_app_name] service principal [$aad_sp_id] contributor access to resource group [$resource_group_name]..."
-
-for i4 in {1..5}; do
-    az role assignment create \
-        --role "Contributor" \
-        --assignee "$aad_sp_id" \
-        --resource-group "$resource_group_name"
-
-    if [[ $? != 0 ]]; then
-        if [[ $i4 == 5 ]]; then
-            echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
-            exit 1     
-        else
-            sleep_for=$((2**i4))
-            echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
-            sleep $sleep_for
-        fi
-    else
-        break
-    fi
-done
-
-subscription_id=$(az account show --query id --output tsv);
-current_user_tid=$(az account show --query tenantId --output tsv);
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
-echo "🦾   Deploying Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]..."
+echo "🦾   Deploying core Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]. This may take a while..."
 
 az deployment group create \
     --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --template-file "./turnstile_deploy.bicep" \
     --parameters \
+        appServicePlanSku="$p_app_service_sku" \
         deploymentName="$p_deployment_name" \
         webAppAadClientId="$aad_app_id" \
         webAppAadTenantId="$current_user_tid" \
-        webAppAadClientSecret="$aad_app_secret"
+        webAppAadClientSecret="$aad_app_secret" \
+        headless="$p_headless" 2>/dev/null
+
+if [[ $? == 0 ]]; then
+    echo "✔   Core Turnstile Bicep template successfully deployed.";
+else
+    # If this template deployment failed, we really are done at this point.
+    # We can't do anything more without confirmation that these resources are there.
+
+    echo "❌  Core Turnstile Bicep template deployment failed. See resource group [$resource_group_name] activity log for more information. Setup failed."
+    exit 1
+fi
+
+if [[ "$p_headless" == "$FALSE" ]]; then
+
+    # web_app_name and web_app_base_url are only needed when not deploying in headless mode.
+
+    web_app_name=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.webAppName.value \
+        --output tsv);
+
+    web_app_base_url=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.webAppBaseUrl.value \
+        --output tsv);
+fi
 
 api_app_name=$(az deployment group show \
     --resource-group "$resource_group_name" \
@@ -325,35 +433,59 @@ api_app_name=$(az deployment group show \
     --query properties.outputs.apiAppName.value \
     --output tsv);
 
-web_app_name=$(az deployment group show \
-    --resource-group "$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.webAppName.value \
-    --output tsv);
-
-web_app_base_url=$(az deployment group show \
-    --resource-group="$resource_group_name" \
-    --name "$az_deployment_name" \
-    --query properties.outputs.webAppBaseUrl.value \
-    --output tsv);
-
 storage_account_name=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.storageAccountName.value \
     --output tsv);
 
 storage_account_key=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.storageAccountKey.value \
     --output tsv);
 
-topic_name=$(az deployment group show \
-    --resource-group="$resource_group_name" \
+managed_id_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
-    --query properties.outputs.topicName.value \
+    --query properties.outputs.managedIdId.value \
     --output tsv);
+
+managed_id_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.managedIdName.value \
+    --output tsv);
+
+event_grid_connection_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridConnectionId.value \
+    --output tsv);
+
+event_grid_connection_name=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridConnectionName.value \
+    --output tsv);
+
+event_grid_topic_id=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.eventGridTopicId.value \
+    --output tsv);
+
+echo "🔐   Granting managed identity [$managed_id_name] contributor access to resource group [$resource_group_name]..."
+
+managed_id_sp_id=$(az identity show \
+    --ids "$managed_id_id" \
+    --query principalId \
+    --output tsv)
+
+az role assignment create \
+    --assignee "$managed_id_sp_id" \
+    --role "Contributor" \
+    --scope "/subscriptions/$subscription_id/resourceGroups/$resource_group_name"
 
 # Deploy integration pack.
 
@@ -364,7 +496,11 @@ topic_name=$(az deployment group show \
 # provided. If there's a deploy_pack.bicep at either path, this script tries to run it. If we can't
 # resolve an integration pack, we don't deploy any at all (not even default) because the assumption
 # is that something was entered wrong and we don't want the user to have to go back and clean up
-# the default integration pack if that isn't what they intended to deploy.
+# the default integration pack if that isn't what they intended to deploy. Design inspired by the
+# way that node_modules work.
+
+# Originally, we didn't deploy integration packs in headless mode but, since we plan on introducing
+# a "no op" integration pack that doesn't deploy any event handlers, we'll leave it in. There is no escaping integration packs!
 
 integration_pack="${p_integration_pack#/}" # Trim leading...
 integration_pack="${p_integration_pack%/}" # and trailing slashes.
@@ -388,13 +524,17 @@ else
         --name "turn-pack-deploy-$p_deployment_name" \
         --template-file "$pack_path" \
         --parameters \
-            deploymentName="$p_deployment_name"
+            deploymentName="$p_deployment_name" \
+            managedIdId="$managed_id_id" \
+            eventGridConnectionId="$event_grid_connection_id" \
+            eventGridConnectionName="$event_grid_connection_name" \
+            eventGridTopicId="$event_grid_topic_id" 2>/dev/null
 
-    [[ $? -eq 0 ]] && echo "$lp ✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
-    [[ $? -ne 0 ]] && echo "$lp ⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
+    [[ $? -eq 0 ]] && echo "✔   Integration pack [$p_integration_pack ($pack_path)] deployed.";
+    [[ $? -ne 0 ]] && echo "⚠️   Integration pack [$p_integration_pack ($pack_path)] deployment failed."
 fi
 
-echo "⚙️   Applying default publisher configuration..."
+echo "⚙️   Applying initial publisher configuration..."
 
 if [[ -z $p_publisher_config_path ]]; then
     publisher_config_path="default_publisher_config.json"
@@ -409,39 +549,98 @@ az storage blob upload \
     --file "$publisher_config_path" \
     --name "publisher_config.json"
 
-echo "🔐   Adding you to this turnstile's administrative roles..."
+if [[ "$p_headless" == "$FALSE" ]]; then
 
-# Add the current user to the subscriber tenant administrator's AAD role...
+    echo "🔐   Adding you to this turnstile's administrative roles..."
 
-curl -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $graph_token" \
-    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
-    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
+    # Add the current user to the subscriber tenant administrator's AAD role...
 
-tenant_admin_role_pid=$!
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $graph_token" \
+        -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
+        "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
 
-# Add the current user to the turnstile administrator's AAD role...
+    tenant_admin_role_pid=$!
 
-curl -X POST \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer $graph_token" \
-    -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
-    "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
+    # Add the current user to the turnstile administrator's AAD role...
 
-turnstile_admin_role_pid=$!
+    curl -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $graph_token" \
+        -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
+        "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
 
-wait $tenant_admin_role_pid
-wait $turnstile_admin_role_pid
+    turnstile_admin_role_pid=$!
 
-echo
+    wait $tenant_admin_role_pid
+    wait $turnstile_admin_role_pid
+
+    echo
+
+fi
+
+echo "🔐   Configuring API access keys..."
+
+# So, why do we do this all the way down here instead of in the bicep template itself? Good question!
+# There appears to be some eventually consistent operation that's still completing by the time that
+# ARM reports that the deployment of the turn-services-* function app is complete. We deploy the turn-web-* 
+# site right after the turn-services-* one is deployed. Turn-web-* requires the function key but,
+# since the eventually consistent operation wasn't complete by the time that we tried to create turn-web-*,
+# the operation would always fail. We had to inject a temporary wait into the bicep template using a script
+# that I was never very happy about. Now that the function app also needs the function key since the EnterTurnstile
+# function calls other functions in the same app, this is an even bigger problem because we definitely don't know
+# the function key when we're creating the actual function app. Instead, we wait a little bit here after the function
+# app deployment, obtain the function app key here in the CLI, then manually push the function key app setting
+# to both apps (turn-services-* and turn-web-*) immediately before we publish the actual apps. Basically, we wait
+# until the last possible moment to set that setting to allow that eventually consistent operation time to complete.
+
+# Try to get the function key...
+
+for i_function_key in {1..5}; do
+    api_key=$(az functionapp keys list \
+        --resource-group "$resource_group_name" \
+        --name "$api_app_name" \
+        --query "functionKeys.default" \
+        --output "tsv")
+
+    if [[ -z $api_key || $api_key == null ]]; then
+        if [[ $i_function_key == 5 ]]; then
+            echo "❌   Failed to obtain Turnstile function app key. Setup failed."
+            exit 1     
+        else
+            sleep_for=$((2**i_function_key))
+            echo "⚠️   Trying to obtain function app key again in [$sleep_for] seconds."
+            sleep $sleep_for
+        fi
+    else
+        break
+    fi
+done
+
+# Then add the key to the function app settings...
+
+az functionapp config appsettings set \
+    --name "$api_app_name" \
+    --resource-group "$resource_group_name" \
+    --settings "Turnstile_ApiAccessKey=$api_key"
+
+if [[ "$p_headless" == "$FALSE" ]]; then
+
+    az webapp config appsettings set \
+        --name "$web_app_name" \
+        --resource-group "$resource_group_name" \
+        --settings "Turnstile_ApiAccessKey=$api_key"
+
+fi
 
 # Build and prepare the API and function apps for deployment to the cloud...
 
-echo "🏗️   Building Turnstile API and web apps..."
+echo "🏗️   Building Turnstile app(s)..."
 
 dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
-dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+
+[[ "$p_headless" == "$FALSE" ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
 
 # Once the builds are finished, pack them up for deployment.
 
@@ -449,11 +648,15 @@ cd ./api_topublish
 zip -r ../api_topublish.zip . >/dev/null
 cd ..
 
-cd ./web_topublish
-zip -r ../web_topublish.zip . >/dev/null
-cd ..
+if [[ "$p_headless" == "$FALSE" ]]; then
 
-echo "☁️    Publishing Turnstile API and web apps..."
+    cd ./web_topublish
+    zip -r ../web_topublish.zip . >/dev/null
+    cd ..
+
+fi
+
+echo "☁️    Publishing Turnstile app(s)..."
 
 # We can deploy both apps in parallel and hopefully save a little time...
 
@@ -464,27 +667,39 @@ az functionapp deployment source config-zip \
 
 deploy_api_pid=$!
 
-az webapp deployment source config-zip \
-    --resource-group "$resource_group_name" \
-    --name "$web_app_name" \
-    --src "./web_topublish.zip" &
+if [[ "$p_headless" == "$FALSE" ]]; then
 
-deploy_web_pid=$!
+    az webapp deployment source config-zip \
+        --resource-group "$resource_group_name" \
+        --name "$web_app_name" \
+        --src "./web_topublish.zip" &
 
-# Wait for both deployments to finish...
+    deploy_web_pid=$!
+
+    wait $deploy_web_pid
+
+fi
 
 wait $deploy_api_pid
-wait $deploy_web_pid
 
 echo "🧹   Cleaning up..."
 
 rm -rf ./api_topublish >/dev/null
 rm -rf ./api_topublish.zip >/dev/null
-rm -rf ./web_topublish >/dev/null
-rm -rf ./web_topublish.zip >/dev/null
+
+if [[ "$p_headless" == "$FALSE" ]]; then
+
+    rm -rf ./web_topublish >/dev/null
+    rm -rf ./web_topublish.zip >/dev/null
+
+fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
-echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+
+if [[ "$p_headless" == "$FALSE" ]]; then
+    echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+fi
+
 echo
 
 

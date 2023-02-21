@@ -17,9 +17,37 @@ namespace Turnstile.Web.Extensions
             services.AddHttpClient(HttpClientNames.TurnstileApi, ConfigureApiClient)
                     .AddTransientHttpErrorPolicy(pb => pb.WaitAndRetryAsync(3, r => TimeSpan.FromMilliseconds(600)));
 
-            services.AddScoped<IPublisherConfigurationClient, PublisherConfigurationClient>();
-            services.AddScoped<ISeatsClient, SeatsClient>();
-            services.AddScoped<ISubscriptionsClient, SubscriptionsClient>();
+            // This is kind of gnarly but it wasn't really easy to use IHttpClientFactory and ILogger<T> within an Azure Function.
+            // We can do it but it requires wiring up dependency injection within the function app and we're trying to keep this as simple
+            // as possible. I thought about creating two constructors - one for the function app that takes in an HttpClient and an ILogger 
+            // and another for the web app that takes IHttpClientFactory and ILogger<T> but, after reading this article -
+            //
+            // https://blogs.cuttingedge.it/steven/posts/2013/di-anti-pattern-multiple-constructors/
+            //
+            // I decided to just use the generic HttpClient and ILogger constructors for clients across the board. BUT, even though our 
+            // constructors no longer take IHttpClientFactories and ILogger<T>s, there's still a lot of value in their implementation here 
+            // within the web app (see https://docs.microsoft.com/aspnet/core/fundamentals/http-requests, https://docs.microsoft.com/aspnet/core/fundamentals/logging).
+            // So, instead, we just use these simple inline factory methods that resolve an IHttpClientFactory to create the HttpClient to inject
+            // into the constructor and ILogger<T> which is passed in as ILogger (we still retain the log category functionality that comes from ILogger<T> -
+            // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-6.0#log-category).
+            //
+            // I think this is a good idea now but I may feel completely different about it a few weeks from now. We can always add dependency
+            // injection to the function app but I'd really rather not go that direction even though it's "architecturally correct."
+
+            services.AddScoped<IPublisherConfigurationClient, PublisherConfigurationClient>(p =>
+                new PublisherConfigurationClient(
+                    p.GetService<IHttpClientFactory>()!,
+                    p.GetService<ILogger<PublisherConfigurationClient>>()!));
+
+            services.AddScoped<ISeatsClient, SeatsClient>(p =>
+                new SeatsClient(
+                    p.GetService<IHttpClientFactory>()!.CreateClient(HttpClientNames.TurnstileApi),
+                    p.GetService<ILogger<SeatsClient>>()!));
+
+            services.AddScoped<ISubscriptionsClient, SubscriptionsClient>(p =>
+                new SubscriptionsClient(
+                    p.GetService<IHttpClientFactory>()!.CreateClient(HttpClientNames.TurnstileApi),
+                    p.GetService<ILogger<SubscriptionsClient>>()!));
 
             return services;
         }

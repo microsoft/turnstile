@@ -9,13 +9,45 @@ Deployment name __must__:
 ''')
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
+@allowed([
+  'D1'    // Shared
+  'F1'    // Free
+  'B1'    // Basic
+  'B2'
+  'B3'
+  'S1'    // Standard (S1 is Default)
+  'S2'
+  'S3'
+  'P1'    // Premium v1
+  'P2'
+  'P3'
+  'P1V2'  // Premium v2
+  'P2V2'
+  'P3V2'
+  'I1'    // Isolated (ASE)
+  'I2'
+  'I3'
+  'Y1'    // Consumption/Dynamic (supported only for headless/API-only deployments)
+])
+@description('''
+Note: Y1 (consumption/dynamic) is supported __only__ for headless/API-only deployments. 
+Default is S1 (Standard).
+''')
+param appServicePlanSku string = 'S1'
+
 param publisherAdminRoleName string = 'turnstile_admins'
 param subscriberTenantAdminRoleName string = 'subscriber_tenant_admins'
-param webAppAadClientId string
-param webAppAadTenantId string
+param webAppAadClientId string = ''
+param webAppAadTenantId string = ''
+
+@description('''
+In headless mode, __only__ the API and its supporting resources are deployed. 
+The web app is not deployed in headless mode.
+''')
+param headless bool = false
 
 @secure()
-param webAppAadClientSecret string
+param webAppAadClientSecret string = ''
 
 param location string = resourceGroup().location
 
@@ -27,28 +59,52 @@ var storageAccountName = take('turnstor${cleanDeploymentName}', 24)
 var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
 var eventStoreContainerName = 'event-store'
+var logAnalyticsName = 'turn-logs-${cleanDeploymentName}'
 var appInsightsName = 'turn-insights-${cleanDeploymentName}'
+var appServiceAlwaysOn = appServicePlanSku != 'Y1'
 var appServicePlanName = 'turn-plan-${cleanDeploymentName}'
 var eventGridTopicName = 'turn-events-${cleanDeploymentName}'
-var eventGridConnectionName = 'turn-events-connection-${cleanDeploymentName}'
+var eventGridConnectionName = 'turn-events-connect-${cleanDeploymentName}'
 var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
+var midName = 'turn-id-${cleanDeploymentName}'
+
+resource mid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: midName
+  location: location
+}
 
 resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
   name: eventGridConnectionName
   location: location
+  kind: 'V1'
   properties: {
+    customParameterValues: {}
     displayName: eventGridConnectionDisplayName
-    parameterValues: {
-      'token:clientId': webAppAadClientId
-      'token:clientSecret': webAppAadClientSecret
-      'token:TenantId': webAppAadTenantId
-      'token:grantType': 'client_credentials'
-    }
+    parameterValueType: 'Alternative'
     api: {
       id: '${subscription().id}/providers/Microsoft.Web/locations/${eventGridTopic.location}/managedApis/azureeventgrid'
     }
+  }
+}
+
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logAnalyticsName
+  location: location
+  properties: {
+    sku: {
+      name: 'Standalone'
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    workspaceCapping: {
+      dailyQuotaGb: -1
+    }
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
   }
 }
 
@@ -58,7 +114,9 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    IngestionMode: 'ApplicationInsights'
+    RetentionInDays: 90
+    WorkspaceResourceId: logAnalytics.id
+    IngestionMode: 'LogAnalytics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
@@ -140,10 +198,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: appServicePlanName
   location: location
   sku: {
-    name: 'S1'
-    tier: 'Standard'
-    family: 'S'
-    size: 'S1'
+    name: appServicePlanSku
   }
   properties: { }
 }
@@ -157,7 +212,7 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      alwaysOn: true
+      alwaysOn: appServiceAlwaysOn
       appSettings: [
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -181,6 +236,10 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
         }
         {
           name: 'AzureWebJobsStorage'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
         }
         {
@@ -223,54 +282,23 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
           name: 'Turnstile_PublisherConfigStorageContainerName'
           value: configStorageContainerName
         }
+        {
+          name: 'Turnstile_ApiBaseUrl'
+          value: 'https://${apiAppName}.azurewebsites.net'
+        }
       ]
     }
   }
 }
 
-// This is a nasty yet necessary hack. [webApp] is created after [apiApp] because 
-// [webApp] references the [apiApp] access key and base URL through it's appsettings. 
-// However, there's some "sneak operation" that's eventually consistent following the successful
-// deployment of [apiApp] that isn't always complete by the time that [apiApp] deployment 
-// is complete (OK status per the ARM API) and causes the listKeys operation inside [webApp] appsettings
-// to fail. For that reason, we wait an additional 2 minutes following [apiApp] deployment
-// to deploy the [webApp] giving the eventually consistent operation time to complete before
-// we try to reference the function keys.
-
-// This appears to work fine and was inspired by this Microsoft escalation engineer tecnical community article -- 
-// https://techcommunity.microsoft.com/t5/azure-database-support-blog/add-wait-operation-to-arm-template-deployment/ba-p/2915342
-
-resource waitForApiApp 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
-  name: 'wait-${cleanDeploymentName}'
-  location: location
-  kind: 'AzurePowerShell'
-  dependsOn: [
-    apiApp
-  ]
-  properties: {
-    azPowerShellVersion: '6.4'
-    timeout: 'PT1H'
-    scriptContent: 'start-sleep -Seconds 30'
-    cleanupPreference: 'Always'
-    retentionInterval: 'PT1H'
-  }
-}  
-
-resource webApp 'Microsoft.Web/sites@2021-03-01' = {
+resource webApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
   name: webAppName
   location: location
   kind: 'app'
-  dependsOn: [
-    waitForApiApp
-  ]
   properties: {
     serverFarmId: appServicePlan.id
     siteConfig: {
       appSettings: [
-        {
-          name: 'Turnstile_ApiAccessKey'
-          value: listKeys('${apiApp.id}/host/default', apiApp.apiVersion).functionKeys.default
-        }
         {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
@@ -302,9 +330,15 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = {
 
 output deploymentName string = deploymentName
 output apiAppName string = apiAppName
-output webAppName string = webApp.name
-output webAppBaseUrl string = 'https://${webApp.properties.defaultHostName}'
 output storageAccountName string = storageAccount.name
 output storageAccountKey string = storageAccount.listKeys().keys[0].value
-output topicName string = eventGridTopic.name
+output managedIdId string = mid.id
+output managedIdName string = mid.name
+output eventGridConnectionId string = eventGridConnection.id
+output eventGridConnectionName string = eventGridConnection.name
+output eventGridTopicId string = eventGridTopic.id
+output eventGridTopicName string = eventGridTopic.name
+
+output webAppName string = headless ? '' : webApp.name
+output webAppBaseUrl string = headless ? '' : 'https://${webApp.properties.defaultHostName}'
 

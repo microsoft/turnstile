@@ -1,0 +1,10 @@
+{
+    "request_id": "subscription_canceled_request_id",
+    "user_id": "subscription_canceled_user_id",
+    "tenant_id": "subscription_canceled_tenant_id",
+    "emails": [
+        "subscription_canceled_user_id@microsoft.com"
+    ],
+    "roles": [
+    ]
+}

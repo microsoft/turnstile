@@ -1,0 +1,24 @@
+{
+    "subscription_id": "core_api_test_subscription_id",
+    "subscription_name": "patched_core_api_test_subscription",
+    "plan_id": "patched_plan_01",
+    "state": "active",
+    "admin_role_name": "patched_test_admins",
+    "user_role_name": "patched_test_users",
+    "admin_name": "patched_cawatson",
+    "admin_email": "patched_cawatson@microsoft.com",
+    "total_seats": 5,
+    "is_being_configured": false,
+    "source_subscription": {
+        "id": "patched_source_subscription_id"
+    },
+    "subscriber_info": {
+        "country": "CA"
+    },
+    "seating_config": {
+        "seating_strategy_name": "monthly_active_user",
+        "limited_overflow_seating_enabled": true,
+        "seat_reservation_expiry_in_days": 30,
+        "default_seat_expiry_in_days": 30
+    }
+}

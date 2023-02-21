@@ -1,0 +1,11 @@
+{
+    "request_id": "access_denied_because_not_in_role_id",
+    "user_id": "access_denied_because_not_in_role_user_id",
+    "tenant_id": "access_denied_because_not_in_role_tenant_id",
+    "emails": [
+        "access_denied_because_not_in_role_user_id@microsoft.com"
+    ],
+    "roles": [
+        "!test_users"
+    ]
+}

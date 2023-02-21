@@ -23,6 +23,22 @@ namespace Turnstile.Web.Extensions
         public static bool IsMsa(this ClaimsPrincipal principal) =>
             principal.GetTenantId() == MsaTenantId;
 
+        public static SeatRequest CreateSeatRequest(this ClaimsPrincipal principal) =>
+            new SeatRequest
+            {
+                RequestId = Guid.NewGuid().ToString(),
+                TenantId = principal.GetHomeTenantId(),
+                UserId = principal.GetHomeObjectId(),
+                EmailAddresses = principal.Claims
+                    .Where(c => c.Type == ClaimTypes.Email)
+                    .Select(c => c.Value.ToLower())
+                    .ToList(),
+                Roles = principal.Claims
+                    .Where(c => c.Type == ClaimTypes.Role)
+                    .Select(c => c.Value.ToLower())
+                    .ToList()
+            };
+
         public static User ToCoreModel(this ClaimsPrincipal principal)
         {
             ArgumentNullException.ThrowIfNull(principal, nameof(principal));
@@ -34,13 +50,6 @@ namespace Turnstile.Web.Extensions
                 UserId = principal.GetHomeObjectId(),
                 UserName = principal.GetDisplayName()
             };
-        }
-
-        public static IEnumerable<string> GetEmailAddresses(this ClaimsPrincipal principal)
-        {
-            ArgumentNullException.ThrowIfNull(principal, nameof(principal));
-
-            return principal.Claims.Where(c => c.Type == ClaimTypes.Email).Select(c => c.Value.ToLower());
         }
 
         public static bool CanAdministerTurnstile(this ClaimsPrincipal principal)
@@ -100,7 +109,10 @@ namespace Turnstile.Web.Extensions
                     // Then check to see if they have the admin email...
 
                     if (!string.IsNullOrEmpty(subscription.AdminEmail) &&
-                        principal.GetEmailAddresses().Contains(subscription.AdminEmail.ToLower()))
+                        principal.Claims
+                            .Where(c => c.Type == ClaimTypes.Email)
+                            .Select(c => c.Value.ToLower())
+                            .Contains(subscription.AdminEmail.ToLower()))
                     {
                         return true;
                     }
