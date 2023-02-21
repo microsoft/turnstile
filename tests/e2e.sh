@@ -303,9 +303,9 @@ az functionapp config appsettings set \
     --resource-group "$resource_group_name" \
     --settings "Turnstile_ApiAccessKey=$api_key"
 
-# Wait for Turnstile to wake up...
+# Wait for Turnstile to wake back up...
 
-check_turnstile_health "$test_run_id" "$api_app_name"
+sleep 60
 
 if [[ $? != 0 ]]; then
     echo "❌   Failed to create test environment [$test_run_id]. Testing failed."
