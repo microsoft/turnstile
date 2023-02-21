@@ -25,7 +25,7 @@ namespace Turnstile.Services.Clients
             ArgumentNullException.ThrowIfNull(seatRequest, nameof(seatRequest));
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
-            var url = $"api/saas/subscriptions/{subscriptionId}/turnstile";
+            var url = $"api/saas/subscriptions/{subscriptionId}/entry";
 
             using (var apiRequest = new HttpRequestMessage(HttpMethod.Post, url))
             {
