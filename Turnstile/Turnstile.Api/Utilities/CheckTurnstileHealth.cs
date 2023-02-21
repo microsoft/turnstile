@@ -22,7 +22,7 @@ namespace Turnstile.Api.Utilities
 
         [FunctionName("CheckTurnstileHealth")]
         public async Task<IActionResult> RunCheckTurnstileHealth(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "/health")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "health")] HttpRequest req,
             [Blob("turn-configuration/publisher_config.json", FileAccess.Read, Connection = Storage.StorageConnectionString)] string publisherConfigJson,
             ILogger log)
         {

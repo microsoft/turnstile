@@ -87,27 +87,27 @@ check_turnstile_health() {
 
     echo
 
-    for i in {1..6}; do
-        sleep 10
+    for i_check_health in {1..5}; do
+        echo "🩺   Checking Turnstile test environment [$test_run_id] health (attempt $i of 5)..."
 
         health_status=$(curl -s -o /dev/null -w "%{http_code}" "https://$api_app_name.azurewebsites.net/api/health")
 
-        echo "🩺   Checking Turnstile test environment [$test_run_id] health (attempt $i of 6)..."
-
         if [[ $health_status == "200" ]]; then
-            echo "✔   Turnstile test environment [$test_run_id] is healthy (HTTP $health_status)!"
-            echo
-
-            return 0 # All good!
+            echo "✔️   Turnstile test environment [$test_run_id] is healthy."
+            return 0
+        else
+            if [[ $i_check_health == 5 ]]; then
+                echo "❌   Turnstile test environment [$test_run_id] is unhealthy (HTTP $health_status). Testing canceled."
+                return 1
+            else
+                sleep_for=$((2**i_check_health))
+                echo "⚠️   Turnstile is unhealthy (HTTP $health_status). Trying again in [$sleep_for] seconds..."
+                sleep $sleep_for
+            fi
         fi
     done
 
-     # If we got this far, something's definitely not right...
-
-    echo "⚠️   Turnstile test environment [$test_run_id] is unhealthy (HTTP $health_status)."
     echo
-
-    return 1
 }
 
 splash() {
