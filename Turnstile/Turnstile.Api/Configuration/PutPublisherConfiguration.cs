@@ -17,42 +17,41 @@ using Turnstile.Core.Extensions;
 using Turnstile.Core.Models.Configuration;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
-namespace Turnstile.Api.Configuration
+namespace Turnstile.Api.Configuration;
+
+public static class PutPublisherConfiguration
 {
-    public static class PutPublisherConfiguration
-    {
-        [FunctionName("PutPublisherConfiguration")]
-        [OpenApiOperation("putPublisherConfiguration", "publisherConfiguration")]
-        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
-        [OpenApiRequestBody("application/json", typeof(PublisherConfiguration))]
-        [OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(PublisherConfiguration))]
-        public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "put", Route = "saas/publisher/configuration")] HttpRequest req,
-            [Blob("turn-configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream)
-        {
-            var httpContent =  await new StreamReader(req.Body).ReadToEndAsync();
+	[FunctionName("PutPublisherConfiguration")]
+	[OpenApiOperation("putPublisherConfiguration", "publisherConfiguration")]
+	[OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+	[OpenApiRequestBody("application/json", typeof(PublisherConfiguration))]
+	[OpenApiResponseWithBody(HttpStatusCode.BadRequest, "text/plain", typeof(string))]
+	[OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(PublisherConfiguration))]
+	public static async Task<IActionResult> Run(
+		[HttpTrigger(AuthorizationLevel.Function, "put", Route = "saas/publisher/configuration")] HttpRequest req,
+		[Blob("turn-configuration/publisher_config.json", FileAccess.Write, Connection = Storage.StorageConnectionString)] Stream pubConfigStream)
+	{
+		var httpContent = await new StreamReader(req.Body).ReadToEndAsync();
 
-            if (string.IsNullOrEmpty(httpContent))
-            {
-                return new BadRequestObjectResult("Publisher configuration is required.");
-            }
+		if (string.IsNullOrEmpty(httpContent))
+		{
+			return new BadRequestObjectResult("Publisher configuration is required.");
+		}
 
-            var pubConfig = JsonSerializer.Deserialize<PublisherConfiguration>(httpContent);
+		var pubConfig = JsonSerializer.Deserialize<PublisherConfiguration>(httpContent);
 
-            if (pubConfig.IsSetupComplete == true)
-            {
-                var validationErrors = pubConfig.Validate().ToList();
+		if (pubConfig.IsSetupComplete == true)
+		{
+			var validationErrors = pubConfig.Validate().ToList();
 
-                if (validationErrors.Any())
-                {
-                    return new BadRequestObjectResult($"If [is_setup_complete]... {validationErrors.ToParagraph()}");
-                }
-            }
+			if (validationErrors.Any())
+			{
+				return new BadRequestObjectResult($"If [is_setup_complete]... {validationErrors.ToParagraph()}");
+			}
+		}
 
-            await JsonSerializer.SerializeAsync(pubConfigStream, pubConfig);
+		await JsonSerializer.SerializeAsync(pubConfigStream, pubConfig);
 
-            return new OkObjectResult(pubConfig);
-        }
-    }
+		return new OkObjectResult(pubConfig);
+	}
 }

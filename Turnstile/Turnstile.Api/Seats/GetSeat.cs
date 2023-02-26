@@ -13,33 +13,32 @@ using System.Threading.Tasks;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 
-namespace Turnstile.Api.Seats
+namespace Turnstile.Api.Seats;
+
+public class GetSeat
 {
-    public class GetSeat
+    private readonly ITurnstileRepository turnstileRepo;
+
+    public GetSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
+    [FunctionName("GetSeat")]
+    [OpenApiOperation("getSeat", "seats")]
+    [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+    [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+    [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
+    [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+    [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
+    public async Task<IActionResult> RunGetSeat(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
+        string subscriptionId, string seatId)
     {
-        private readonly ITurnstileRepository turnstileRepo;
+        var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
-        public GetSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
-
-        [FunctionName("GetSeat")]
-        [OpenApiOperation("getSeat", "seats")]
-        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
-        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
-        [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
-        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
-        public async Task<IActionResult> RunGetSeat(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
-            string subscriptionId, string seatId)
+        if (seat == null)
         {
-            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
-
-            if (seat == null)
-            {
-                return new NotFoundObjectResult($"Seat [{seatId}] not found.");
-            }
-
-            return new OkObjectResult(seat);
+            return new NotFoundObjectResult($"Seat [{seatId}] not found.");
         }
+
+        return new OkObjectResult(seat);
     }
 }

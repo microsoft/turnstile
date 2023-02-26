@@ -14,34 +14,33 @@ using System.Threading.Tasks;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 
-namespace Turnstile.Api.Subscriptions
+namespace Turnstile.Api.Subscriptions;
+
+public class GetSubscription
 {
-    public class GetSubscription
+    private readonly ITurnstileRepository turnstileRepo;
+
+    public GetSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
+    [FunctionName("GetSubscription")]
+    [OpenApiOperation("getSubscription", "subscriptions")]
+    [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+    [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+    [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+    [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
+    public async Task<IActionResult> RunGetSubscription(
+        [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
+        ILogger log, string subscriptionId)
     {
-        private readonly ITurnstileRepository turnstileRepo;
+        var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
-        public GetSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
-
-        [FunctionName("GetSubscription")]
-        [OpenApiOperation("getSubscription", "subscriptions")]
-        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
-        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
-        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
-        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
-        public async Task<IActionResult> RunGetSubscription(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
-            ILogger log, string subscriptionId)
+        if (subscription == null)
         {
-            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
-
-            if (subscription == null)
-            {
-                return new NotFoundObjectResult($"Subscription [{subscriptionId}] not found.");
-            }
-            else
-            {
-                return new OkObjectResult(subscription);
-            }
+            return new NotFoundObjectResult($"Subscription [{subscriptionId}] not found.");
+        }
+        else
+        {
+            return new OkObjectResult(subscription);
         }
     }
 }

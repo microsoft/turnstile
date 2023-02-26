@@ -8,14 +8,13 @@ using Turnstile.Core.Interfaces;
 using Turnstile.Services.Cosmos;
 
 [assembly: FunctionsStartup(typeof(Startup))]
-namespace Turnstile.Api
+namespace Turnstile.Api;
+
+public class Startup : FunctionsStartup
 {
-    public class Startup : FunctionsStartup
-    {
-        public override void Configure(IFunctionsHostBuilder builder)
-        {
-            builder.Services.AddScoped<ITurnstileRepository>(sp =>
-                new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables()));
-        }
-    }
+	public override void Configure(IFunctionsHostBuilder builder)
+	{
+		builder.Services.AddScoped<ITurnstileRepository>(sp =>
+			new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables()));
+	}
 }

@@ -18,39 +18,38 @@ using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models.Events.V_2022_03_18;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
-namespace Turnstile.Api.Seats
-{    
-    public class ReleaseSeat
+namespace Turnstile.Api.Seats;
+
+public class ReleaseSeat
+{
+    private readonly ITurnstileRepository turnstileRepo;
+
+    public ReleaseSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
+    [FunctionName("ReleaseSeat")]
+    [OpenApiOperation("releaseSeat", "seats")]
+    [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+    [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+    [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
+    [OpenApiResponseWithoutBody(HttpStatusCode.NoContent)]
+    public async Task<IActionResult> RunReleaseSeat(
+        [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
+        [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
+        ILogger log, string subscriptionId, string seatId)
     {
-        private readonly ITurnstileRepository turnstileRepo;
+        var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
-        public ReleaseSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
-
-        [FunctionName("ReleaseSeat")]
-        [OpenApiOperation("releaseSeat", "seats")]
-        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
-        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
-        [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
-        [OpenApiResponseWithoutBody(HttpStatusCode.NoContent)]
-        public async Task<IActionResult> RunReleaseSeat(
-            [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
-            [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> eventCollector,
-            ILogger log, string subscriptionId, string seatId)
+        if (subscription != null)
         {
-            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
+            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
-            if (subscription != null)
+            if (seat != null)
             {
-                var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
-
-                if (seat != null)
-                {
-                    await turnstileRepo.DeleteSeat(seatId, subscriptionId);
-                    await eventCollector.AddAsync(new SeatReleased(subscription, seat).ToEventGridEvent());
-                }
+                await turnstileRepo.DeleteSeat(seatId, subscriptionId);
+                await eventCollector.AddAsync(new SeatReleased(subscription, seat).ToEventGridEvent());
             }
-
-            return new NoContentResult();
         }
+
+        return new NoContentResult();
     }
 }
