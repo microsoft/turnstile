@@ -1,10 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace Turnstile.Core.Constants
+namespace Turnstile.Core.Constants;
+
+public static class EventVersions
 {
-    public static class EventVersions
-    {
-        public const string V_2022_03_18 = "2022-03-18";
-    }
+    public const string V_2022_03_18 = "2022-03-18";
 }

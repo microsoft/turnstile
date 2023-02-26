@@ -3,16 +3,15 @@
 
 using Turnstile.Core.Models;
 
-namespace Turnstile.Core.Interfaces
+namespace Turnstile.Core.Interfaces;
+
+public interface ISubscriptionEvent
 {
-    public interface ISubscriptionEvent
-    {
-        public string EventId { get; set; }
-        public string EventType { get; set; }
-        public string EventVersion { get; set; }
+    public string EventId { get; set; }
+    public string EventType { get; set; }
+    public string EventVersion { get; set; }
 
-        DateTime OccurredDateTimeUtc { get; set; }
+    DateTime OccurredDateTimeUtc { get; set; }
 
-        Subscription? Subscription { get; set; }
-    }
+    Subscription? Subscription { get; set; }
 }

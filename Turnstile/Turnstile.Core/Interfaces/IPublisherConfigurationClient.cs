@@ -3,11 +3,10 @@
 
 using Turnstile.Core.Models.Configuration;
 
-namespace Turnstile.Core.Interfaces
+namespace Turnstile.Core.Interfaces;
+
+public interface IPublisherConfigurationClient
 {
-    public interface IPublisherConfigurationClient
-    {
-        Task<PublisherConfiguration?> GetConfiguration();
-        Task UpdateConfiguration(PublisherConfiguration configuration);
-    }
+    Task<PublisherConfiguration?> GetConfiguration();
+    Task UpdateConfiguration(PublisherConfiguration configuration);
 }
