@@ -8,76 +8,75 @@ using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models.Configuration;
 
-namespace Turnstile.Services.Clients
+namespace Turnstile.Services.Clients;
+
+public class PublisherConfigurationClient : IPublisherConfigurationClient
 {
-    public class PublisherConfigurationClient : IPublisherConfigurationClient
+    private const string url = "api/saas/publisher/configuration";
+
+    private readonly HttpClient httpClient;
+    private readonly ILogger logger;
+
+    public PublisherConfigurationClient(IHttpClientFactory httpClientFactory, ILogger<PublisherConfigurationClient> logger)
     {
-        private const string url = "api/saas/publisher/configuration";
+        httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+        this.logger = logger;
+    }        
 
-        private readonly HttpClient httpClient;
-        private readonly ILogger logger;
-
-        public PublisherConfigurationClient(IHttpClientFactory httpClientFactory, ILogger<PublisherConfigurationClient> logger)
+    public async Task<PublisherConfiguration?> GetConfiguration()
+    {
+        using (var apiRequest = new HttpRequestMessage(HttpMethod.Get, url))
         {
-            httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
-            this.logger = logger;
-        }        
+            var apiResponse = await httpClient.SendAsync(apiRequest);
 
-        public async Task<PublisherConfiguration?> GetConfiguration()
-        {
-            using (var apiRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            if (apiResponse.StatusCode == HttpStatusCode.NotFound)
             {
-                var apiResponse = await httpClient.SendAsync(apiRequest);
-
-                if (apiResponse.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return null; // Configuration not found...
-                }
-                else if (apiResponse.IsSuccessStatusCode)
-                {
-                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
-                    var publisherConfig = JsonConvert.DeserializeObject<PublisherConfiguration>(jsonString);
-
-                    return publisherConfig;
-                }
-                else
-                {
-                    var apiError = await apiResponse.Content.ReadAsStringAsync();
-                    var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
-
-                    logger.LogError(errorMessage);
-
-                    throw new HttpRequestException(errorMessage);
-                }  
+                return null; // Configuration not found...
             }
+            else if (apiResponse.IsSuccessStatusCode)
+            {
+                var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                var publisherConfig = JsonConvert.DeserializeObject<PublisherConfiguration>(jsonString);
+
+                return publisherConfig;
+            }
+            else
+            {
+                var apiError = await apiResponse.Content.ReadAsStringAsync();
+                var errorMessage = $"Turnstile API GET [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                logger.LogError(errorMessage);
+
+                throw new HttpRequestException(errorMessage);
+            }  
+        }
+    }
+
+    public async Task UpdateConfiguration(PublisherConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+
+        var validationErrors = configuration.Validate().ToList();
+
+        if (validationErrors.Any())
+        {
+            throw new ArgumentException($"If [{nameof(PublisherConfiguration.IsSetupComplete)}]... {validationErrors.ToParagraph()}", nameof(configuration));
         }
 
-        public async Task UpdateConfiguration(PublisherConfiguration configuration)
+        using (var apiRequest = new HttpRequestMessage(HttpMethod.Put, url))
         {
-            ArgumentNullException.ThrowIfNull(configuration, nameof(configuration));
+            apiRequest.Content = new StringContent(JsonConvert.SerializeObject(configuration));
 
-            var validationErrors = configuration.Validate().ToList();
+            var apiResponse = await httpClient.SendAsync(apiRequest);
 
-            if (validationErrors.Any())
+            if (!apiResponse.IsSuccessStatusCode)
             {
-                throw new ArgumentException($"If [{nameof(PublisherConfiguration.IsSetupComplete)}]... {validationErrors.ToParagraph()}", nameof(configuration));
-            }
+                var apiError = await apiResponse.Content.ReadAsStringAsync();
+                var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
 
-            using (var apiRequest = new HttpRequestMessage(HttpMethod.Put, url))
-            {
-                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(configuration));
+                logger.LogError(errorMessage);
 
-                var apiResponse = await httpClient.SendAsync(apiRequest);
-
-                if (!apiResponse.IsSuccessStatusCode)
-                {
-                    var apiError = await apiResponse.Content.ReadAsStringAsync();
-                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
-
-                    logger.LogError(errorMessage);
-
-                    throw new HttpRequestException(errorMessage);
-                }
+                throw new HttpRequestException(errorMessage);
             }
         }
     }

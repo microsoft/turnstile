@@ -8,454 +8,453 @@ using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 
-namespace Turnstile.Services.Cosmos
+namespace Turnstile.Services.Cosmos;
+
+public class CosmosTurnstileRepository : IDisposable, ITurnstileRepository
 {
-    public class CosmosTurnstileRepository : IDisposable, ITurnstileRepository
+    // TODO: We should probably improve our model validation here.
+    //       Technically, all uses of this repository should be behind a web app
+    //       or API but we never know how people are going to use a public class...
+
+    private bool disposedValue;
+
+    private readonly CosmosClient cosmosClient;
+    private readonly CosmosConfiguration cosmosConfig;
+
+    private const string allSubsPartitionKey = "subscriptions";
+
+    public CosmosTurnstileRepository(CosmosConfiguration cosmosConfig)
     {
-        // TODO: We should probably improve our model validation here.
-        //       Technically, all uses of this repository should be behind a web app
-        //       or API but we never know how people are going to use a public class...
+        ArgumentNullException.ThrowIfNull(cosmosConfig, nameof(cosmosConfig));
 
-        private bool disposedValue;
+        this.cosmosConfig = cosmosConfig;
 
-        private readonly CosmosClient cosmosClient;
-        private readonly CosmosConfiguration cosmosConfig;
+        cosmosClient = new CosmosClient(cosmosConfig.EndpointUrl, cosmosConfig.AccessKey);
+    }
 
-        private const string allSubsPartitionKey = "subscriptions";
+    public async Task<Subscription> CreateSubscription(Subscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
 
-        public CosmosTurnstileRepository(CosmosConfiguration cosmosConfig)
+        var container = GetContainer();
+
+        await container.CreateItemAsync(PutInEnvelope(subscription), new PartitionKey(allSubsPartitionKey));
+        await container.CreateItemAsync(PutInEnvelope(new SeatingSummary(), subscription.SubscriptionId!), new PartitionKey(subscription.SubscriptionId!));
+
+        return subscription;
+    }
+
+    public async Task<Subscription> ReplaceSubscription(Subscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
+
+        var container = GetContainer();
+        var subEnvelope = PutInEnvelope(subscription);
+
+        await container.ReplaceItemAsync(subEnvelope, subEnvelope.Id, new PartitionKey(allSubsPartitionKey));
+
+        return subscription;
+    }
+
+    public async Task<IList<Subscription>> GetSubscriptions(
+        string? state = null, string? offerId = null, string? planId = null, string? tenantId = null)
+    {
+        var container = GetContainer();
+        var subscriptions = new List<Subscription>();
+
+        state = state?.ToLower();
+        offerId = offerId?.ToLower();
+        planId = planId?.ToLower();
+        tenantId = tenantId?.ToLower();
+
+        var queryable = container.GetItemLinqQueryable<CosmosEnvelope<Subscription>>(
+            requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(allSubsPartitionKey) })
+            .AsQueryable();
+
+        if (state != null)
         {
-            ArgumentNullException.ThrowIfNull(cosmosConfig, nameof(cosmosConfig));
-
-            this.cosmosConfig = cosmosConfig;
-
-            cosmosClient = new CosmosClient(cosmosConfig.EndpointUrl, cosmosConfig.AccessKey);
+            queryable = queryable.Where(e => e.Data!.State == state);
         }
 
-        public async Task<Subscription> CreateSubscription(Subscription subscription)
+        if (offerId != null)
         {
-            ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
-
-            var container = GetContainer();
-
-            await container.CreateItemAsync(PutInEnvelope(subscription), new PartitionKey(allSubsPartitionKey));
-            await container.CreateItemAsync(PutInEnvelope(new SeatingSummary(), subscription.SubscriptionId!), new PartitionKey(subscription.SubscriptionId!));
-
-            return subscription;
+            queryable = queryable.Where(e => e.Data!.OfferId == offerId);
         }
 
-        public async Task<Subscription> ReplaceSubscription(Subscription subscription)
+        if (planId != null)
         {
-            ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
-
-            var container = GetContainer();
-            var subEnvelope = PutInEnvelope(subscription);
-
-            await container.ReplaceItemAsync(subEnvelope, subEnvelope.Id, new PartitionKey(allSubsPartitionKey));
-
-            return subscription;
+            queryable = queryable.Where(e => e.Data!.PlanId == planId);
         }
 
-        public async Task<IList<Subscription>> GetSubscriptions(
-            string? state = null, string? offerId = null, string? planId = null, string? tenantId = null)
+        if (tenantId != null)
         {
-            var container = GetContainer();
-            var subscriptions = new List<Subscription>();
-
-            state = state?.ToLower();
-            offerId = offerId?.ToLower();
-            planId = planId?.ToLower();
-            tenantId = tenantId?.ToLower();
-
-            var queryable = container.GetItemLinqQueryable<CosmosEnvelope<Subscription>>(
-                requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(allSubsPartitionKey) })
-                .AsQueryable();
-
-            if (state != null)
-            {
-                queryable = queryable.Where(e => e.Data!.State == state);
-            }
-
-            if (offerId != null)
-            {
-                queryable = queryable.Where(e => e.Data!.OfferId == offerId);
-            }
-
-            if (planId != null)
-            {
-                queryable = queryable.Where(e => e.Data!.PlanId == planId);
-            }
-
-            if (tenantId != null)
-            {
-                queryable = queryable.Where(e => e.Data!.TenantId == tenantId);
-            }
-
-            using (var feedIterator = queryable.ToFeedIterator())
-            {
-                while (feedIterator.HasMoreResults)
-                {
-                    var feedResponse = await feedIterator.ReadNextAsync();
-
-                    subscriptions.AddRange(feedResponse.Select(e => e.Data!));
-                }
-            }
-
-            return subscriptions;
+            queryable = queryable.Where(e => e.Data!.TenantId == tenantId);
         }
 
-        public async Task<Subscription?> GetSubscription(string subscriptionId)
+        using (var feedIterator = queryable.ToFeedIterator())
         {
-            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
-
-            subscriptionId = subscriptionId.ToLower();
-
-            var container = GetContainer();
-
-            try
+            while (feedIterator.HasMoreResults)
             {
-                var cosmosResponse = await container.ReadItemAsync<CosmosEnvelope<Subscription>>(
-                    subscriptionId, new PartitionKey(allSubsPartitionKey));
+                var feedResponse = await feedIterator.ReadNextAsync();
 
-                return cosmosResponse.Resource!.Data;
-            }
-            catch (CosmosException ex)
-            {
-                // It's kind of silly that Cosmos throws a 404 exception when no document is found
-                // but it seems like this is a topic of some debate with very valid reasons on 
-                // either side >> https://github.com/Azure/azure-cosmos-dotnet-v3/issues/122
-
-                if (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
+                subscriptions.AddRange(feedResponse.Select(e => e.Data!));
             }
         }
 
-        public async Task<IList<Seat>> GetSeats(string subscriptionId, string? byUserId = null, string? byEmail = null)
+        return subscriptions;
+    }
+
+    public async Task<Subscription?> GetSubscription(string subscriptionId)
+    {
+        ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+        subscriptionId = subscriptionId.ToLower();
+
+        var container = GetContainer();
+
+        try
         {
-            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+            var cosmosResponse = await container.ReadItemAsync<CosmosEnvelope<Subscription>>(
+                subscriptionId, new PartitionKey(allSubsPartitionKey));
 
-            subscriptionId = subscriptionId.ToLower();
-            byUserId = byUserId?.ToLower();
-            byEmail = byEmail?.ToLower();
+            return cosmosResponse.Resource!.Data;
+        }
+        catch (CosmosException ex)
+        {
+            // It's kind of silly that Cosmos throws a 404 exception when no document is found
+            // but it seems like this is a topic of some debate with very valid reasons on 
+            // either side >> https://github.com/Azure/azure-cosmos-dotnet-v3/issues/122
 
-            var seats = new List<Seat>();
-
-            var queryDefinition = new QueryDefinition(
-                "SELECT * FROM s WHERE s.data_type = 'Seat' " +
-                "AND (IS_NULL(s.data.expires_utc) OR s.data.expires_utc > GetCurrentDateTime()) " +
-                (string.IsNullOrEmpty(byUserId) ? string.Empty : "AND (s.data.occupant.user_id = @userId OR s.data.reservation.user_id = @userId) ") +
-                (string.IsNullOrEmpty(byEmail) ? string.Empty : "AND (s.data.occupant.email = @userEmail OR s.data.reservation.email = @userEmail)"));
-
-            if (!string.IsNullOrEmpty(byUserId))
+            if (ex.StatusCode == HttpStatusCode.NotFound)
             {
-                queryDefinition = queryDefinition.WithParameter("@userId", byUserId);
+                return null;
             }
-
-            if (!string.IsNullOrEmpty(byEmail))
+            else
             {
-                queryDefinition = queryDefinition.WithParameter("@userEmail", byEmail);
+                throw;
             }
+        }
+    }
 
-            var container = GetContainer();
-            var queryOptions = new QueryRequestOptions { PartitionKey = new PartitionKey(subscriptionId) };
+    public async Task<IList<Seat>> GetSeats(string subscriptionId, string? byUserId = null, string? byEmail = null)
+    {
+        ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
-            using (var iterator = container.GetItemQueryIterator<CosmosEnvelope<Seat>>(queryDefinition, requestOptions: queryOptions))
-            {
-                while (iterator.HasMoreResults)
-                {
-                    var resultSet = await iterator.ReadNextAsync();
+        subscriptionId = subscriptionId.ToLower();
+        byUserId = byUserId?.ToLower();
+        byEmail = byEmail?.ToLower();
 
-                    seats.AddRange(resultSet.Select(e => e.Data!));
-                }
-            }
+        var seats = new List<Seat>();
 
-            return seats;
+        var queryDefinition = new QueryDefinition(
+            "SELECT * FROM s WHERE s.data_type = 'Seat' " +
+            "AND (IS_NULL(s.data.expires_utc) OR s.data.expires_utc > GetCurrentDateTime()) " +
+            (string.IsNullOrEmpty(byUserId) ? string.Empty : "AND (s.data.occupant.user_id = @userId OR s.data.reservation.user_id = @userId) ") +
+            (string.IsNullOrEmpty(byEmail) ? string.Empty : "AND (s.data.occupant.email = @userEmail OR s.data.reservation.email = @userEmail)"));
+
+        if (!string.IsNullOrEmpty(byUserId))
+        {
+            queryDefinition = queryDefinition.WithParameter("@userId", byUserId);
         }
 
-        public async Task<Seat?> GetSeat(string seatId, string subscriptionId)
+        if (!string.IsNullOrEmpty(byEmail))
         {
-            ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
-            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+            queryDefinition = queryDefinition.WithParameter("@userEmail", byEmail);
+        }
 
-            seatId = seatId.ToLower();
-            subscriptionId = subscriptionId.ToLower();
+        var container = GetContainer();
+        var queryOptions = new QueryRequestOptions { PartitionKey = new PartitionKey(subscriptionId) };
 
-            var container = GetContainer();
-
-            try
+        using (var iterator = container.GetItemQueryIterator<CosmosEnvelope<Seat>>(queryDefinition, requestOptions: queryOptions))
+        {
+            while (iterator.HasMoreResults)
             {
-                var itemResponse = await container.ReadItemAsync<CosmosEnvelope<Seat>>(
-                    partitionKey: new PartitionKey(subscriptionId),
-                    id: seatId);
+                var resultSet = await iterator.ReadNextAsync();
 
-                // There's a chance that there are expired seats in Cosmos that have not yet
-                // been picked up by Cosmos TTL. Since this is real $$$ we're talking about, an
-                // expired seat may as well not be a seat at all...
-
-                if (itemResponse.Resource.Data!.ExpirationDateTimeUtc <= DateTime.UtcNow)
-                {
-                    return null;
-                }
-                else
-                {
-                    return itemResponse.Resource.Data;
-                }
-            }
-            catch (CosmosException ex)
-            {
-                // It's kind of silly that Cosmos throws a 404 exception when no document is found
-                // but it seems like this is a topic of some debate with very valid reasons on 
-                // either side >> https://github.com/Azure/azure-cosmos-dotnet-v3/issues/122
-
-                if (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
+                seats.AddRange(resultSet.Select(e => e.Data!));
             }
         }
 
-        public async Task<SeatCreationContext> CreateSeat(Seat seat, Subscription subscription)
+        return seats;
+    }
+
+    public async Task<Seat?> GetSeat(string seatId, string subscriptionId)
+    {
+        ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
+        ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+        seatId = seatId.ToLower();
+        subscriptionId = subscriptionId.ToLower();
+
+        var container = GetContainer();
+
+        try
         {
-            ArgumentNullException.ThrowIfNull(seat, nameof(seat));
+            var itemResponse = await container.ReadItemAsync<CosmosEnvelope<Seat>>(
+                partitionKey: new PartitionKey(subscriptionId),
+                id: seatId);
 
-            while (true)
+            // There's a chance that there are expired seats in Cosmos that have not yet
+            // been picked up by Cosmos TTL. Since this is real $$$ we're talking about, an
+            // expired seat may as well not be a seat at all...
+
+            if (itemResponse.Resource.Data!.ExpirationDateTimeUtc <= DateTime.UtcNow)
             {
-                var actualSeatSummary = await GetActualSeatSummary(subscription.SubscriptionId!);
-                var seatSummaryEnvelope = await GetSeatSummaryEnvelope(subscription.SubscriptionId!);
-                var currentSeatSummary = seatSummaryEnvelope.Data!;
+                return null;
+            }
+            else
+            {
+                return itemResponse.Resource.Data;
+            }
+        }
+        catch (CosmosException ex)
+        {
+            // It's kind of silly that Cosmos throws a 404 exception when no document is found
+            // but it seems like this is a topic of some debate with very valid reasons on 
+            // either side >> https://github.com/Azure/azure-cosmos-dotnet-v3/issues/122
 
-                currentSeatSummary.StandardSeatCount = actualSeatSummary.StandardSeatCount;
-                currentSeatSummary.LimitedSeatCount = actualSeatSummary.LimitedSeatCount;
+            if (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
 
-                if (seat.SeatType == SeatTypes.Standard)
+    public async Task<SeatCreationContext> CreateSeat(Seat seat, Subscription subscription)
+    {
+        ArgumentNullException.ThrowIfNull(seat, nameof(seat));
+
+        while (true)
+        {
+            var actualSeatSummary = await GetActualSeatSummary(subscription.SubscriptionId!);
+            var seatSummaryEnvelope = await GetSeatSummaryEnvelope(subscription.SubscriptionId!);
+            var currentSeatSummary = seatSummaryEnvelope.Data!;
+
+            currentSeatSummary.StandardSeatCount = actualSeatSummary.StandardSeatCount;
+            currentSeatSummary.LimitedSeatCount = actualSeatSummary.LimitedSeatCount;
+
+            if (seat.SeatType == SeatTypes.Standard)
+            {
+                if (subscription.TotalSeats != null && // Seating is user-based, not site-wide, and...
+                    subscription.TotalSeats <= actualSeatSummary.StandardSeatCount) // there are no more seats available.
                 {
-                    if (subscription.TotalSeats != null && // Seating is user-based, not site-wide, and...
-                        subscription.TotalSeats <= actualSeatSummary.StandardSeatCount) // there are no more seats available.
+                    return new SeatCreationContext // No seat for you.
                     {
-                        return new SeatCreationContext // No seat for you.
-                        {
-                            IsSeatCreated = false,
-                            SeatingSummary = currentSeatSummary
-                        };
-                    }
-
-                    currentSeatSummary.StandardSeatCount++;
-                }
-                else
-                {
-                    currentSeatSummary.LimitedSeatCount++;
+                        IsSeatCreated = false,
+                        SeatingSummary = currentSeatSummary
+                    };
                 }
 
-                seatSummaryEnvelope.Data = currentSeatSummary;
-
-                var container = GetContainer();
-                var seatEnvelope = PutInEnvelope(seat);
-
-                var txnBatchResponse = await container.CreateTransactionalBatch(new PartitionKey(subscription.SubscriptionId))
-                    .ReplaceItem(seatSummaryEnvelope.Id, seatSummaryEnvelope, new TransactionalBatchItemRequestOptions { IfMatchEtag = seatSummaryEnvelope.Etag })
-                    .CreateItem(seatEnvelope)
-                    .ExecuteAsync();
-
-                using (txnBatchResponse)
-                {
-                    if (txnBatchResponse.IsSuccessStatusCode)
-                    {
-                        return new SeatCreationContext
-                        {
-                            CreatedSeat = seat,
-                            IsSeatCreated = true,
-                            SeatingSummary = currentSeatSummary
-                        };
-                    }
-                }
+                currentSeatSummary.StandardSeatCount++;
             }
-        }
+            else
+            {
+                currentSeatSummary.LimitedSeatCount++;
+            }
 
-        public async Task<Seat> ReplaceSeat(Seat seat)
-        {
-            ArgumentNullException.ThrowIfNull(seat, nameof(seat));
+            seatSummaryEnvelope.Data = currentSeatSummary;
 
             var container = GetContainer();
             var seatEnvelope = PutInEnvelope(seat);
 
-            await container.ReplaceItemAsync(seatEnvelope, seatEnvelope.Id, new PartitionKey(seat.SubscriptionId));
+            var txnBatchResponse = await container.CreateTransactionalBatch(new PartitionKey(subscription.SubscriptionId))
+                .ReplaceItem(seatSummaryEnvelope.Id, seatSummaryEnvelope, new TransactionalBatchItemRequestOptions { IfMatchEtag = seatSummaryEnvelope.Etag })
+                .CreateItem(seatEnvelope)
+                .ExecuteAsync();
 
-            return seat;
-        }
-
-        public async Task DeleteSeat(string seatId, string subscriptionId)
-        {
-            ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
-            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
-
-            seatId = seatId.ToLower();
-            subscriptionId = subscriptionId.ToLower();
-
-            var container = GetContainer();
-
-            try
+            using (txnBatchResponse)
             {
-                await container.DeleteItemAsync<CosmosEnvelope<Seat>>(seatId, new PartitionKey(subscriptionId));
-            }
-            catch (CosmosException ex)
-            {
-                if (ex.StatusCode != HttpStatusCode.NotFound) // If the seat wasn't found, it's not _really_ a problem...
+                if (txnBatchResponse.IsSuccessStatusCode)
                 {
-                    throw;
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    if (cosmosClient != null)
+                    return new SeatCreationContext
                     {
-                        cosmosClient.Dispose();
-                    }
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        private Container GetContainer(Database database) => database.GetContainer(cosmosConfig.ContainerId);
-
-        private Container GetContainer() => GetContainer(GetDatabase());
-
-        private Database GetDatabase() => cosmosClient.GetDatabase(cosmosConfig.DatabaseId);
-
-        private async Task<CosmosEnvelope<SeatingSummary>> GetSeatSummaryEnvelope(string subscriptionId)
-        {
-            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
-
-            subscriptionId = subscriptionId.ToLower();
-
-            var container = GetContainer();
-
-            try
-            {
-                var itemResponse = await container.ReadItemAsync<CosmosEnvelope<SeatingSummary>>(
-                    partitionKey: new PartitionKey(subscriptionId),
-                    id: GetSubscriptionSeatSummaryId(subscriptionId));
-
-                return itemResponse.Resource!;
-            }
-            catch (CosmosException ex)
-            {
-                // It's kind of silly that Cosmos throws a 404 exception when no document is found
-                // but it seems like this is a topic of some debate with very valid reasons on 
-                // either side >> https://github.com/Azure/azure-cosmos-dotnet-v3/issues/122
-
-                if (ex.StatusCode == HttpStatusCode.NotFound)
-                {
-                    throw new Exception($"Subscription [{subscriptionId}] seat counts not found.");
-                }
-                else
-                {
-                    throw;
+                        CreatedSeat = seat,
+                        IsSeatCreated = true,
+                        SeatingSummary = currentSeatSummary
+                    };
                 }
             }
         }
-
-        private async Task<SeatingSummary> GetActualSeatSummary(string subscriptionId)
-        {
-            subscriptionId = subscriptionId.ToLower();
-
-            var seatSummary = new SeatingSummary();
-
-            var queryDefinition = new QueryDefinition(
-                "SELECT COUNT(1) AS seat_count, e.data.seat_type FROM e " +
-                "WHERE e.data_type = 'Seat' " +
-                "AND (IS_NULL(e.data.expires_utc) OR e.data.expires_utc > GetCurrentDateTime()) " +
-                "GROUP BY e.data.seat_type");
-
-            var container = GetContainer();
-            var queryOptions = new QueryRequestOptions { PartitionKey = new PartitionKey(subscriptionId) };
-
-            using (var iterator = container.GetItemQueryIterator<CosmosSeatCount>(queryDefinition, requestOptions: queryOptions))
-            {
-                while (iterator.HasMoreResults)
-                {
-                    var resultSet = await iterator.ReadNextAsync();
-
-                    foreach (var seatCt in resultSet)
-                    {
-                        if (seatCt.SeatType == SeatTypes.Standard)
-                        {
-                            seatSummary.StandardSeatCount = seatCt.SeatCount;
-                        }
-                        else
-                        {
-                            seatSummary.LimitedSeatCount = seatCt.SeatCount;
-                        }
-                    }
-                }
-            }
-
-            return seatSummary;
-        }
-
-        private string GetSubscriptionSeatSummaryId(string subscriptionId) =>
-            $"{subscriptionId}___seat_summary";
-
-        private CosmosEnvelope<SeatingSummary> PutInEnvelope(SeatingSummary seatSummary, string subscriptionId) =>
-            new CosmosEnvelope<SeatingSummary>
-            {
-                Data = seatSummary,
-                DataType = nameof(SeatingSummary),
-                Id = GetSubscriptionSeatSummaryId(subscriptionId),
-                PartitionId = subscriptionId
-            };
-
-        private CosmosEnvelope<Seat> PutInEnvelope(Seat seat)
-        {
-            var seatEnvelope = new CosmosEnvelope<Seat>
-            {
-                Data = seat,
-                DataType = nameof(Seat),
-                Id = seat.SeatId,
-                PartitionId = seat.SubscriptionId
-            };
-
-            if (seat.ExpirationDateTimeUtc.GetValueOrDefault(DateTime.UtcNow) > DateTime.UtcNow)
-            {
-                // It turns out that Cosmos has a really cool time-to-live (TTL) feature!
-                // Since a seat really only exists if someone is sitting in it, setting the TTL on it
-                // should automatically delete it when it expires.
-
-                seatEnvelope.TimeToLive = (int)seat.ExpirationDateTimeUtc!.Value.Subtract(DateTime.UtcNow).TotalSeconds;
-            }
-
-            return seatEnvelope;
-        }
-
-        private CosmosEnvelope<Subscription> PutInEnvelope(Subscription subscription) =>
-            new CosmosEnvelope<Subscription>
-            {
-                Data = subscription,
-                DataType = nameof(Subscription),
-                Id = subscription.SubscriptionId,
-                PartitionId = allSubsPartitionKey
-            };
     }
+
+    public async Task<Seat> ReplaceSeat(Seat seat)
+    {
+        ArgumentNullException.ThrowIfNull(seat, nameof(seat));
+
+        var container = GetContainer();
+        var seatEnvelope = PutInEnvelope(seat);
+
+        await container.ReplaceItemAsync(seatEnvelope, seatEnvelope.Id, new PartitionKey(seat.SubscriptionId));
+
+        return seat;
+    }
+
+    public async Task DeleteSeat(string seatId, string subscriptionId)
+    {
+        ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
+        ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+        seatId = seatId.ToLower();
+        subscriptionId = subscriptionId.ToLower();
+
+        var container = GetContainer();
+
+        try
+        {
+            await container.DeleteItemAsync<CosmosEnvelope<Seat>>(seatId, new PartitionKey(subscriptionId));
+        }
+        catch (CosmosException ex)
+        {
+            if (ex.StatusCode != HttpStatusCode.NotFound) // If the seat wasn't found, it's not _really_ a problem...
+            {
+                throw;
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                if (cosmosClient != null)
+                {
+                    cosmosClient.Dispose();
+                }
+            }
+
+            disposedValue = true;
+        }
+    }
+
+    private Container GetContainer(Database database) => database.GetContainer(cosmosConfig.ContainerId);
+
+    private Container GetContainer() => GetContainer(GetDatabase());
+
+    private Database GetDatabase() => cosmosClient.GetDatabase(cosmosConfig.DatabaseId);
+
+    private async Task<CosmosEnvelope<SeatingSummary>> GetSeatSummaryEnvelope(string subscriptionId)
+    {
+        ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+        subscriptionId = subscriptionId.ToLower();
+
+        var container = GetContainer();
+
+        try
+        {
+            var itemResponse = await container.ReadItemAsync<CosmosEnvelope<SeatingSummary>>(
+                partitionKey: new PartitionKey(subscriptionId),
+                id: GetSubscriptionSeatSummaryId(subscriptionId));
+
+            return itemResponse.Resource!;
+        }
+        catch (CosmosException ex)
+        {
+            // It's kind of silly that Cosmos throws a 404 exception when no document is found
+            // but it seems like this is a topic of some debate with very valid reasons on 
+            // either side >> https://github.com/Azure/azure-cosmos-dotnet-v3/issues/122
+
+            if (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                throw new Exception($"Subscription [{subscriptionId}] seat counts not found.");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task<SeatingSummary> GetActualSeatSummary(string subscriptionId)
+    {
+        subscriptionId = subscriptionId.ToLower();
+
+        var seatSummary = new SeatingSummary();
+
+        var queryDefinition = new QueryDefinition(
+            "SELECT COUNT(1) AS seat_count, e.data.seat_type FROM e " +
+            "WHERE e.data_type = 'Seat' " +
+            "AND (IS_NULL(e.data.expires_utc) OR e.data.expires_utc > GetCurrentDateTime()) " +
+            "GROUP BY e.data.seat_type");
+
+        var container = GetContainer();
+        var queryOptions = new QueryRequestOptions { PartitionKey = new PartitionKey(subscriptionId) };
+
+        using (var iterator = container.GetItemQueryIterator<CosmosSeatCount>(queryDefinition, requestOptions: queryOptions))
+        {
+            while (iterator.HasMoreResults)
+            {
+                var resultSet = await iterator.ReadNextAsync();
+
+                foreach (var seatCt in resultSet)
+                {
+                    if (seatCt.SeatType == SeatTypes.Standard)
+                    {
+                        seatSummary.StandardSeatCount = seatCt.SeatCount;
+                    }
+                    else
+                    {
+                        seatSummary.LimitedSeatCount = seatCt.SeatCount;
+                    }
+                }
+            }
+        }
+
+        return seatSummary;
+    }
+
+    private string GetSubscriptionSeatSummaryId(string subscriptionId) =>
+        $"{subscriptionId}___seat_summary";
+
+    private CosmosEnvelope<SeatingSummary> PutInEnvelope(SeatingSummary seatSummary, string subscriptionId) =>
+        new CosmosEnvelope<SeatingSummary>
+        {
+            Data = seatSummary,
+            DataType = nameof(SeatingSummary),
+            Id = GetSubscriptionSeatSummaryId(subscriptionId),
+            PartitionId = subscriptionId
+        };
+
+    private CosmosEnvelope<Seat> PutInEnvelope(Seat seat)
+    {
+        var seatEnvelope = new CosmosEnvelope<Seat>
+        {
+            Data = seat,
+            DataType = nameof(Seat),
+            Id = seat.SeatId,
+            PartitionId = seat.SubscriptionId
+        };
+
+        if (seat.ExpirationDateTimeUtc.GetValueOrDefault(DateTime.UtcNow) > DateTime.UtcNow)
+        {
+            // It turns out that Cosmos has a really cool time-to-live (TTL) feature!
+            // Since a seat really only exists if someone is sitting in it, setting the TTL on it
+            // should automatically delete it when it expires.
+
+            seatEnvelope.TimeToLive = (int)seat.ExpirationDateTimeUtc!.Value.Subtract(DateTime.UtcNow).TotalSeconds;
+        }
+
+        return seatEnvelope;
+    }
+
+    private CosmosEnvelope<Subscription> PutInEnvelope(Subscription subscription) =>
+        new CosmosEnvelope<Subscription>
+        {
+            Data = subscription,
+            DataType = nameof(Subscription),
+            Id = subscription.SubscriptionId,
+            PartitionId = allSubsPartitionKey
+        };
 }

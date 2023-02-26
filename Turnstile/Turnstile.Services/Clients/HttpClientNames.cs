@@ -1,10 +1,9 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-namespace Turnstile.Services.Clients
+namespace Turnstile.Services.Clients;
+
+public static class HttpClientNames
 {
-    public static class HttpClientNames
-    {
-        public const string TurnstileApi = "turnstile_api";
-    }
+    public const string TurnstileApi = "turnstile_api";
 }
