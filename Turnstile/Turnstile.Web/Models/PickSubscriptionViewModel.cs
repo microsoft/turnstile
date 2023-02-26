@@ -4,20 +4,19 @@
 using System.Security.Claims;
 using Turnstile.Core.Models;
 
-namespace Turnstile.Web.Models
+namespace Turnstile.Web.Models;
+
+public class PickSubscriptionViewModel
 {
-    public class PickSubscriptionViewModel
+    public PickSubscriptionViewModel() { }
+
+    public PickSubscriptionViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal forPrincipal, string? returnTo = null)
     {
-        public PickSubscriptionViewModel() { }
+        ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
+        ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
 
-        public PickSubscriptionViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal forPrincipal, string? returnTo = null)
-        {
-            ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
-            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
-
-            Subscriptions = subscriptions.Select(s => new SubscriptionIdentityViewModel(s, forPrincipal, returnTo)).ToList();
-        }
-
-        public List<SubscriptionIdentityViewModel> Subscriptions { get; set; } = new List<SubscriptionIdentityViewModel>(); 
+        Subscriptions = subscriptions.Select(s => new SubscriptionIdentityViewModel(s, forPrincipal, returnTo)).ToList();
     }
+
+    public List<SubscriptionIdentityViewModel> Subscriptions { get; set; } = new List<SubscriptionIdentityViewModel>(); 
 }
