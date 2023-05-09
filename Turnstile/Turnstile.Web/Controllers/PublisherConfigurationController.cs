@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Turnstile.Core.Interfaces;
 using Turnstile.Web.Extensions;
-using Turnstile.Web.Models;
+using Turnstile.Web.Models.PublisherConfig;
 
 namespace Turnstile.Web.Controllers
 {
@@ -14,40 +14,41 @@ namespace Turnstile.Web.Controllers
     {
         public static class RouteNames
         {
-            public const string GetPublisherConfiguration = "get_publisher_config";
-            public const string PostPublisherConfiguration = "post_publisher_config";
+            public const string ConfigureBasics = "configure_basics";
+            public const string ConfigureSeatingStrategy = "configure_seating_strategy";
+            public const string ConfigureUserRedirection = "configure_redirection";
+            public const string ConfigureMonaIntegration = "configure_mona";
         }
 
         private readonly ILogger logger;
-        private readonly IPublisherConfigurationClient pubConfigClient;
+        private readonly IPublisherConfigurationClient publisherConfigClient;
 
         public PublisherConfigurationController(
             ILogger<PublisherConfigurationController> logger,
-            IPublisherConfigurationClient pubConfigClient)
+            IPublisherConfigurationClient publisherConfigClient)
         {
             this.logger = logger;
-            this.pubConfigClient = pubConfigClient;
+            this.publisherConfigClient = publisherConfigClient;
         }
 
-        [HttpGet]
-        [Route("publisher/setup", Name = RouteNames.GetPublisherConfiguration)]
-        public async Task<IActionResult> PublisherSetup()
+        [HttpGet, Route("config/basics", Name = RouteNames.ConfigureBasics)]
+        public async Task<IActionResult> GetConfigureBasics()
         {
             try
             {
                 if (User.CanAdministerTurnstile())
                 {
-                    var pubConfig = await pubConfigClient.GetConfiguration();
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (pubConfig == null)
+                    if (publisherConfig == null)
                     {
-                        return View(new PublisherConfigurationViewModel());
+                        return View(new BasicConfigurationViewModel());
                     }
                     else
                     {
-                        this.ApplyLayout(pubConfig, User!);
+                        this.ApplyLayout(publisherConfig, User!);
 
-                        return View(new PublisherConfigurationViewModel(pubConfig));
+                        return View(new BasicConfigurationViewModel(publisherConfig));
                     }
                 }
                 else
@@ -57,41 +58,43 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ GET [{nameof(PublisherSetup)}: [{ex.Message}]");
+                logger.LogError($"Exception @ GET [{nameof(GetConfigureBasics)}]: [{ex.Message}].");
 
                 throw;
             }
         }
 
-        [HttpPost]
-        [Route("publisher/setup")]
-        public async Task<IActionResult> PublisherSetup([FromForm] PublisherConfigurationViewModel pubConfigModel)
+        [HttpPost, Route("config/basics")]
+        public async Task<IActionResult> PostConfigureBasics([FromForm] BasicConfigurationViewModel basicConfig)
         {
             try
             {
                 if (User.CanAdministerTurnstile())
                 {
-                    if (ModelState.IsValid)
-                    {
-                        await pubConfigClient.UpdateConfiguration(pubConfigModel.ToCoreModel(true));
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                        pubConfigModel.HasValidationErrors = false;
-                        pubConfigModel.IsConfigurationSaved = true;
+                    if (publisherConfig == null)
+                    {
+                        return View(new BasicConfigurationViewModel());
+                    }
+                    else if (ModelState.IsValid)
+                    {
+                        publisherConfig.Apply(basicConfig);
+
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+
+                        basicConfig.IsConfigurationSaved = true;
+                        basicConfig.HasValidationErrors = false;
                     }
                     else
                     {
-                        pubConfigModel.HasValidationErrors = true;
-                        pubConfigModel.IsConfigurationSaved = false;
+                        basicConfig.IsConfigurationSaved = false;
+                        basicConfig.HasValidationErrors = true;
                     }
 
-                    var pubConfig = await pubConfigClient.GetConfiguration();
+                    this.ApplyLayout(publisherConfig, User!);
 
-                    if (pubConfig != null)
-                    {
-                        this.ApplyLayout(pubConfig, User!);
-                    }
-
-                    return View(nameof(PublisherSetup), pubConfigModel);
+                    return View(basicConfig);
                 }
                 else
                 {
@@ -100,10 +103,245 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ POST [{nameof(PublisherSetup)}: [{ex.Message}]");
+                logger.LogError($"Exception @ POST [{nameof(PostConfigureBasics)}: [{ex.Message}]");
 
                 throw;
             }
-        }    
+        }
+
+        [HttpGet, Route("config/redirection", Name = RouteNames.ConfigureUserRedirection)]
+        public async Task<IActionResult> GetConfigureUserRedirection()
+        {
+            try
+            {
+                if (User.CanAdministerTurnstile())
+                {
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                    if (publisherConfig == null)
+                    {
+                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                    }
+                    else
+                    {
+                        this.ApplyLayout(publisherConfig, User!);
+
+                        return View(new RedirectConfigurationViewModel(publisherConfig));
+                    }
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ GET [{nameof(GetConfigureBasics)}]: [{ex.Message}].");
+
+                throw;
+            }
+        }
+
+        [HttpPost, Route("config/redirection")]
+        public async Task<IActionResult> PostConfigureUserRedirection([FromForm] RedirectConfigurationViewModel redirectConfig)
+        {
+            try
+            {
+                if (User.CanAdministerTurnstile())
+                {
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                    if (publisherConfig == null)
+                    {
+                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                    }
+                    else if (ModelState.IsValid)
+                    {
+                        publisherConfig.Apply(redirectConfig);
+
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+
+                        redirectConfig.IsConfigurationSaved = true;
+                        redirectConfig.HasValidationErrors = false;
+                    }
+                    else
+                    {
+                        redirectConfig.IsConfigurationSaved = false;
+                        redirectConfig.HasValidationErrors = true;
+                    }
+
+                    this.ApplyLayout(publisherConfig, User!);
+
+                    return View(redirectConfig);
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ POST [{nameof(PostConfigureUserRedirection)}: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
+        [HttpGet, Route("config/mona", Name = RouteNames.ConfigureMonaIntegration)]
+        public async Task<IActionResult> GetConfigureMonaIntegration()
+        {
+            try
+            {
+                if (User.CanAdministerTurnstile())
+                {
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                    if (publisherConfig == null)
+                    {
+                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                    }
+                    else
+                    {
+                        this.ApplyLayout(publisherConfig, User!);
+
+                        return View(new MonaConfigurationViewModel(publisherConfig));
+                    }
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ GET [{nameof(GetConfigureMonaIntegration)}]: [{ex.Message}].");
+
+                throw;
+            }
+        }
+
+
+        [HttpPost, Route("config/redirection")]
+        public async Task<IActionResult> PostConfigureMonaIntegration([FromForm] MonaConfigurationViewModel monaConfig)
+        {
+            try
+            {
+                if (User.CanAdministerTurnstile())
+                {
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                    if (publisherConfig == null)
+                    {
+                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                    }
+                    else if (ModelState.IsValid)
+                    {
+                        publisherConfig.Apply(monaConfig);
+
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+
+                        monaConfig.IsConfigurationSaved = true;
+                        monaConfig.HasValidationErrors = false;
+                    }
+                    else
+                    {
+                        monaConfig.IsConfigurationSaved = false;
+                        monaConfig.HasValidationErrors = true;
+                    }
+
+                    this.ApplyLayout(publisherConfig, User!);
+
+                    return View(monaConfig);
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ POST [{nameof(PostConfigureMonaIntegration)}: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
+        [HttpGet, Route("config/seating", Name = RouteNames.ConfigureSeatingStrategy)]
+        public async Task<IActionResult> GetConfigureSeatingStrategy()
+        {
+            try
+            {
+                if (User.CanAdministerTurnstile())
+                {
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                    if (publisherConfig == null)
+                    {
+                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                    }
+                    else
+                    {
+                        this.ApplyLayout(publisherConfig, User!);
+
+                        return View(new SeatingConfigurationViewModel(publisherConfig));
+                    }
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ GET [{nameof(GetConfigureSeatingStrategy)}]: [{ex.Message}].");
+
+                throw;
+            }
+        }
+
+        [HttpPost, Route("config/redirection")]
+        public async Task<IActionResult> PostConfigureSeatingStrategy([FromForm] SeatingConfigurationViewModel seatingConfig)
+        {
+            try
+            {
+                if (User.CanAdministerTurnstile())
+                {
+                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                    if (publisherConfig == null)
+                    {
+                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                    }
+                    else if (ModelState.IsValid)
+                    {
+                        publisherConfig.Apply(seatingConfig);
+
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+
+                        seatingConfig.IsConfigurationSaved = true;
+                        seatingConfig.HasValidationErrors = false;
+                    }
+                    else
+                    {
+                        seatingConfig.IsConfigurationSaved = false;
+                        seatingConfig.HasValidationErrors = true;
+                    }
+
+                    this.ApplyLayout(publisherConfig, User!);
+
+                    return View(seatingConfig);
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ POST [{nameof(PostConfigureSeatingStrategy)}: [{ex.Message}]");
+
+                throw;
+            }
+        }
     }
 }

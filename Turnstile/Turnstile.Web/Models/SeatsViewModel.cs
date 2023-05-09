@@ -41,7 +41,7 @@ namespace Turnstile.Web.Models
                     {
                         HasNoMoreSeats = true;
                     }
-                    else if ((1 - pctConsumed) <= SeatingConfiguration.DefaultLowSeatWarningLevelPercent)
+                    else if ((1 - pctConsumed) <= seatConfig.LowSeatWarningLevelPercent) // Now hard-coded as 25%
                     {
                         HasReachedLowSeatLevel = true;
                     }
