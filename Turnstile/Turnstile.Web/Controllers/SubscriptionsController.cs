@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.Design;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
@@ -15,38 +14,10 @@ namespace Turnstile.Web.Controllers
     {
         public static class RouteNames
         {
-            public const string GetSubscription = "get_subscription";
-            public const string GetSubscriptions = "get_subscriptions";
-            public const string GetReserveSeat = "get_reserve_seat";
-            public const string PostReserveSeat = "post_reserve_seat";
-            public const string GetSubscriptionSetup = "get_subscription_setup";
-            public const string PostSubscriptionSetup = "post_subscription_setup";
+            public const string GetSubscription = "subscription";
+            public const string GetSubscriptions = "subscriptions";
+            public const string GetReserveSeat = "reserve_seat";
         }
-
-        public static class SortableFields
-        {
-            public const string SubscriptionName = "subscription_name";
-            public const string TenantName = "tenant_name";
-            public const string State = "state";
-            public const string OfferId = "offer_id";
-            public const string PlanId = "plan_id";
-            public const string SeatingStrategy = "seating_strategy";
-            public const string TotalSeats = "total_seats";
-            public const string CreatedDate = "created";
-        }
-
-        public static IEnumerable<Subscription> Sort(IEnumerable<Subscription> subscriptions, string fieldName) =>
-            fieldName switch
-            {
-                SortableFields.TenantName => subscriptions.OrderBy(s => s.TenantName ?? s.TenantId),
-                SortableFields.State => subscriptions.OrderBy(s => s.State),
-                SortableFields.OfferId => subscriptions.OrderBy(s => s.OfferId),
-                SortableFields.PlanId => subscriptions.OrderBy(s => s.PlanId),
-                SortableFields.SeatingStrategy => subscriptions.OrderBy(s => s.SeatingConfiguration!.SeatingStrategyName),
-                SortableFields.TotalSeats => subscriptions.OrderBy(s => s.TotalSeats),
-                SortableFields.CreatedDate => subscriptions.OrderBy(s => s.CreatedDateTimeUtc),
-                _ => subscriptions.OrderBy(s => s.SubscriptionName)
-            };
 
         private readonly ILogger logger;
         private readonly IPublisherConfigurationClient publisherConfigClient;
@@ -94,11 +65,10 @@ namespace Turnstile.Web.Controllers
                     subscriptions.AddRange(tenantSubs.Where(s => User.CanAdministerSubscription(s)));
                 }
 
-                sort ??= SortableFields.SubscriptionName;
-
                 if (subscriptions.Any())
+
                 {
-                    return View(new SubscriptionsViewModel(Sort(subscriptions, sort)));
+                    return View(new SubscriptionsViewModel(subscriptions));
                 }
                 else
                 {
@@ -158,8 +128,61 @@ namespace Turnstile.Web.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("subscriptions/{subscriptionId}")]
+        public async Task<IActionResult> Subscription(string subscriptionId, [FromBody] SubscriptionDetailViewModel subscriptionDetail)
+        {
+            try
+            {
+                var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
+                var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                if (subscription == null)
+                {
+                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
+                }
+
+                if (User.CanAdministerSubscription(subscription))
+                {
+                    if (ModelState.IsValid)
+                    {
+                        subscription.ApplyUpdate(subscriptionDetail);
+
+                        await subsClient.UpdateSubscription(subscription);
+
+                        subscriptionDetail.IsSubscriptionUpdated = true;
+                        subscriptionDetail.HasValidationErrors = false;
+                    }
+                    else
+                    {
+                        subscriptionDetail.IsSubscriptionUpdated = false;
+                        subscriptionDetail.HasValidationErrors = true;
+                    }
+
+                    return View(subscriptionDetail);
+                }
+                else
+                {
+                    return Forbid();
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ POST [{nameof(Subscription)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
         [HttpGet]
-        [Route("subscriptions/{subscriptionId}/seats/reserve", Name = RouteNames.GetReserveSeat)]
+        [Route("subscriptions/{subscriptionId}/reserve-seat", Name = RouteNames.GetReserveSeat)]
         public async Task<IActionResult> ReserveSeat(string subscriptionId)
         {
             try
@@ -204,7 +227,7 @@ namespace Turnstile.Web.Controllers
         }
 
         [HttpPost]
-        [Route("subscriptions/{subscriptionId}/seats/reserve", Name = RouteNames.PostReserveSeat)]
+        [Route("subscriptions/{subscriptionId}/reserve-seat")]
         public async Task<IActionResult> ReserveSeat(string subscriptionId, [FromForm] ReserveSeatViewModel model)
         {
             try
@@ -236,8 +259,6 @@ namespace Turnstile.Web.Controllers
                         }
                         else
                         {
-
-
                             var seat = await seatsClient.ReserveSeat(subscriptionId, new Reservation 
                             { 
                                 Email = model.ForEmail!,
@@ -273,88 +294,6 @@ namespace Turnstile.Web.Controllers
             catch (Exception ex)
             {
                 logger.LogError($"Exception @ POST [{nameof(ReserveSeat)}]: [{ex.Message}]");
-
-                throw;
-            }
-        }
-
-
-        [HttpGet]
-        [Route("subscriptions/{subscriptionId}/setup", Name = RouteNames.GetSubscriptionSetup)]
-        public async Task<IActionResult> SubscriptionSetup(string subscriptionId)
-        {
-            try
-            {
-                var publisherConfig = await publisherConfigClient.GetConfiguration();
-
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-
-                var subscription = await subsClient.GetSubscription(subscriptionId);
-
-                if (subscription == null)
-                {
-                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                }
-
-                this.ApplyLayout(publisherConfig!, User!);
-
-                var setupModel = new SubscriptionSetupViewModel(publisherConfig!, subscription, User!);
-
-                return View(setupModel);
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Exception @ GET [{nameof(SubscriptionSetup)}]: [{ex.Message}");
-
-                throw;
-            }
-        }
-
-        [HttpPost]
-        [Route("subscriptions/{subscriptionId}/setup", Name = RouteNames.PostSubscriptionSetup)]
-        public async Task<IActionResult> SubscriptionSetup(string subscriptionId, [FromForm] SubscriptionSetupViewModel setupModel)
-        {
-            try
-            {
-                var publisherConfig = await publisherConfigClient.GetConfiguration();
-
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-
-                if (ModelState.IsValid)
-                {
-                    var subscription = await subsClient.GetSubscription(subscriptionId);
-
-                    if (subscription == null)
-                    {
-                        return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                    }
-
-                    var patch = setupModel.CreatePatch();
-
-                    patch.IsSetupComplete = true;
-
-                    await subsClient.UpdateSubscription(patch);
-
-                    return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId = subscriptionId });
-                }
-                else
-                {
-                    this.ApplyLayout(publisherConfig!, User!);
-
-                    return View(setupModel);
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Exception @ POST [{nameof(SubscriptionSetup)}]: [{ex.Message}");
 
                 throw;
             }

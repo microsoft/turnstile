@@ -1,0 +1,288 @@
+﻿@using Newtonsoft.Json
+@using Turnstile.Core.Constants
+@using Turnstile.Web.Controllers
+
+
+@{
+    ViewData["Title"] = $"{Model.SubscriptionName} | Subscription | Turnstile";
+
+    string ChooseStateRowClass()
+    {
+        return Model.State switch
+        {
+            SubscriptionStates.Active => "table-primary",
+            SubscriptionStates.Canceled => "table-danger",
+            SubscriptionStates.Suspended => "table-warning",
+            SubscriptionStates.Purchased => "table-success",
+            _ => string.Empty
+        };
+    }
+
+    //string ChooseSeatingMeterClass()
+    //{
+    //    if (Model.Seating!.HasNoMoreSeats)
+    //    {
+    //        return "progress-bar progress-bar-striped bg-danger";
+    //    }
+    //    else if (Model.Seating!.HasReachedLowSeatLevel)
+    //    {
+    //        return "progress-bar progress-bar-striped bg-warning";
+    //    }
+    //    else
+    //    {
+    //        return "progress-bar progress-bar-striped bg-success";
+    //    }
+    //}
+
+    string DescribeState()
+    {
+        return Model.State switch
+        {
+            SubscriptionStates.Active => "Active",
+            SubscriptionStates.Canceled => "Canceled",
+            SubscriptionStates.Suspended => "Suspended",
+            SubscriptionStates.Purchased => "Provisioning",
+            _ => throw new InvalidOperationException($"Subscription state [{Model.State}] not supported.")
+        };
+    }
+
+    //string DescribeSeatingStrategy()
+    //{
+    //    return Model.Seating!.SeatingStrategyName switch
+    //    {
+    //        SeatingStrategies.FirstComeFirstServed => "First come, first served",
+    //        SeatingStrategies.MonthlyActiveUser => "Monthly active user",
+    //        _ => throw new InvalidOperationException($"Subscription seating strategy [{Model.Seating!.SeatingStrategyName}] not supported.")
+    //    };
+    //}
+}
+
+@model SubscriptionDetailViewModel
+
+<script src="./js/knockout/knockout-latest.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+    ko.applyBindings({ });
+</script>
+
+<h4 class="text-muted">Subscription</h4>
+<h1>
+    @Model.SubscriptionName &nbsp;
+    @if (Model.IsFreeSubscription)
+    {
+        <span>&nbsp;<span class="badge bg-secondary">Free</span></span>
+    }
+    @if (Model.IsTestSubscription)
+    {
+        <span>&nbsp;<span class="badge bg-warning text-dark">Test</span></span>
+    }
+</h1>
+
+<nav class="nav">
+    @if (Model.UserIsSubscriberAdmin)
+    {
+        if (Model.State != SubscriptionStates.Active || Model.Seating!.HasNoMoreSeats)
+        {
+            <a href="#" class="nav-link disabled">Reserve seat</a>
+        }
+        else
+        {
+            <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Reserve seat</a>
+        }
+
+        <a href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = Model.SubscriptionId })" class="nav-link">Setup subscription</a>
+    }
+
+    @if (Model.ManagementUrls != null)
+    {
+        foreach (var urlName in Model.ManagementUrls.Keys)
+        {
+            <a href="@Model.ManagementUrls[urlName]" class="nav-link" target="_blank">@urlName</a>
+        }
+    }
+</nav>
+
+<hr />
+
+@if (Model.IsBeingConfigured)
+{
+    <div class="alert alert-warning d-flex align-items-center" style="margin-top: 10px; margin-bottom: 20px">
+        <div>
+            This subscription is being configured and is temporarily unavailable.
+        </div>
+    </div>
+}
+
+@if (Model.Seating!.HasReachedLowSeatLevel)
+{
+    <div class="alert alert-warning d-flex align-items-center" role="alert" style="margin-top: 20px; margin-bottom: 20px">
+        <div>
+            This subscription has less than 25% available seating. @if (!Model.UserIsTurnstileAdmin)
+            {
+                <a href="#" class="alert-link" target="_blank">Buy more »</a>
+            }
+        </div>
+    </div>
+}
+
+@if (Model.Seating!.HasNoMoreSeats)
+{
+    <div class="alert alert-danger d-flex align-items-center" style="margin-top: 20px; margin-bottom: 20px">
+        <div>
+            This subscription has no available seats. @if (!Model.UserIsTurnstileAdmin)
+            {
+                <a href="#" class="alert-link" target="_blank">Buy more »</a>
+            }
+        </div>
+    </div>
+}
+
+<table class="table" style="margin-bottom: 20px">
+    <tbody>
+        <tr style="width: 25%">
+            <th scope="row">ID</th>
+            <td>@Model.SubscriptionId</td>
+        </tr>
+        <tr>
+            <th scope="row">Tenant</th>
+            <td>
+                @(Model.TenantName ?? Model.TenantId) <br />
+                <small class="text-muted">@Model.TenantId</small>
+            </td>
+        </tr>
+        <tr class="@ChooseStateRowClass()">
+            <th scope="row">State</th>
+            <td>
+                @DescribeState()
+                <small class="text-muted">as of @Model.StateLastUpdatedDateTimeUtc!.Value.ToString("g") UTC</small>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">Offer</th>
+            <td>@Model.OfferId</td>
+        </tr>
+        <tr>
+            <th scope="row">Plan</th>
+            <td>@Model.PlanId</td>
+        </tr>
+        <tr>
+            <th scope="row">Created</th>
+            <td>@Model.CreatedDateTimeUtc!.Value.ToString("g") UTC</td>
+        </tr>
+        <tr class="table-secondary">
+            <th scope="row" colspan="2">Security Roles</th>
+        </tr>
+        <tr>
+            <th scope="row">Administrators</th>
+            <td>@Model.AdminRoleName</td>
+        </tr>
+        <tr>
+            <th scope="row">Users</th>
+            <td>@Model.UserRoleName</td>
+        </tr>
+        <tr class="table-secondary">
+            <th scope="row" colspan="2">Administrator</th>
+        </tr>
+        <tr>
+            <th scope="row">Name</th>
+            <td>@Model.AdminName</td>
+        </tr>
+        <tr>
+            <th scope="row">Email</th>
+            <td>@Model.AdminEmail</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Seating</h2>
+<hr />
+
+<table class="table" style="margin-bottom: 20px">
+    <thead>
+        <tr>
+            <th>Seating strategy</th>
+            <th>Default seat expiry</th>
+            <th>Seat reservation expiry</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>
+                @DescribeSeatingStrategy()
+                @if (Model.Seating!.IsLimitedOverflowSeatingEnabled)
+                {
+                    <br />
+                    <small class="text-muted">Limited overflow seating enabled</small>
+                }
+            </td>
+            <td>@($"{Model.Seating!.SeatExpiryInDays} day(s)")</td>
+            <td>@($"{Model.Seating!.SeatReservationExpiryInDays} day(s)")</td>
+        </tr>
+    </tbody>
+</table>
+
+@if (Model.Seating!.ShowSeatingMeter)
+{
+    <div style="margin-top: 20px; margin-bottom: 20px">
+        <h3> @Model.Seating!.TotalUsedSeats <span> / </span> @Model.Seating!.TotalSeats <small class="text-muted">seats consumed</small></h3>
+        <div class="progress">
+            <div class="@ChooseSeatingMeterClass()" role="progressbar" style="@($"width: {Model.Seating!.ConsumedSeatsPct}%")" aria-valuenow="@Model.Seating!.ConsumedSeatsPct" aria-valuemin="0" aria-valuemax="100">
+            </div>
+        </div>
+    </div>
+}
+
+<table class="table align-middle" style="margin-bottom: 20px">
+    <tbody>
+        <tr class="table-secondary">
+            <th colspan="4">Occupied seats</th>
+        </tr>
+        <tr>
+            <th>Occupant</th>
+            <th>Provided on</th>
+            <th>Expires on</th>
+            <th></th>
+        </tr>
+        @foreach (var occupiedSeat in Model.Seating!.OccupiedSeats)
+        {
+            var rowClass = (occupiedSeat.IsLimited ? "table-warning" : string.Empty);
+
+            <tr class="@rowClass">
+                <td>
+                    @occupiedSeat.UserName
+                    @if (occupiedSeat.IsLimited)
+                    {
+                        <span class="badge bg-warning text-dark">Limited</span>
+                    }
+                    <br />
+                    <small class="text-muted">@occupiedSeat.UserId</small>
+                </td>
+                <td>@occupiedSeat.ProvidedDateTimeUtc!.Value.ToString("g") UTC</td>
+                <td>@occupiedSeat.ExpiresDateTimeUtc!.Value.ToString("g") UTC</td>
+                <td>
+                    <button type="button" class="btn btn-danger float-end" disabled>Release seat</button>
+                </td>
+            </tr>
+        }
+        <tr class="table-secondary">
+            <th colspan="4">Reserved seats</th>
+        </tr>
+        <tr>
+            <th>Reserved for</th>
+            <th>Reserved on</th>
+            <th>Expires on</th>
+            <th></th>
+        </tr>
+        @foreach (var reservedSeat in Model.Seating!.ReservedSeats)
+        {
+            <tr>
+                <td>@reservedSeat.ReservedForEmail</td>
+                <td>@reservedSeat.ReservedDateTimeUtc!.Value.ToString("g") UTC</td>
+                <td>@reservedSeat.ExpiresDateTimeUtc!.Value.ToString("g") UTC</td>
+                <td>
+                    <button type="button" class="btn btn-danger float-end" disabled>Release seat</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

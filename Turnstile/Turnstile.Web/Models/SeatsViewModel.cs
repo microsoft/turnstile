@@ -3,7 +3,6 @@
 
 using Turnstile.Core.Constants;
 using Turnstile.Core.Models;
-using Turnstile.Core.Models.Configuration;
 
 namespace Turnstile.Web.Models
 {
@@ -74,10 +73,7 @@ namespace Turnstile.Web.Models
         public bool HasReachedLowSeatLevel { get; set; }
 
         public bool IsLimitedOverflowSeatingEnabled { get; set; }
-        public bool IsSeatReserved { get; set; }
-        public bool DidSeatReservationValidationFail { get; set; }
 
-        public string? ReserveSeatForEmail { get; set; }
         public string? SeatingStrategyName { get; set; }
     }
 }
