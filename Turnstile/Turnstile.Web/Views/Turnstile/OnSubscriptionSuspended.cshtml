@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = $"Subscription suspended | {Model.SubscriptionName ?? Model.SubscriptionId} | Turnstile";
+    Layout = "_SubscriberLayout";
 }
 
 <h1>Subscription suspended</h1>
@@ -17,5 +18,5 @@ else
 }
 
 <div style="margin-top: 20px">
-<a role="button" class="btn btn-light" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
+    <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
 </div>

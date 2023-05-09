@@ -13,10 +13,10 @@ using static System.Environment;
 
 namespace Turnstile.Api.Testing
 {
-    public static class PostEventToStore
+    public class PostEventToStore
     {
         [FunctionName("PostEventToStore")]
-        public static async Task Run([EventGridTrigger]EventGridEvent eventGridEvent, ILogger log)
+        public async Task RunPostEventToStore([EventGridTrigger]EventGridEvent eventGridEvent, ILogger log)
         {
             // This is just an event sink that dumps Turnstile events to blob storage. It's not connected by default 
             // and is normally only connected when the end-to-end test script (./test/e2e.sh) runs. The script checks the events dumped

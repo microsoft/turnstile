@@ -160,6 +160,25 @@ namespace Turnstile.Web.Extensions
             }
         }
 
+        public static IActionResult OnSubscriptionNotReady(this PublisherConfiguration publisherConfig, string subscriptionId)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+            if (string.IsNullOrEmpty(publisherConfig.TurnstileConfiguration?.OnSubscriptionNotReadyUrl))
+            {
+                return new RedirectToRouteResult(
+                    TurnstileController.RouteNames.OnSubscriptionNotReady,
+                    new { subscriptionId = subscriptionId });
+            }
+            else
+            {
+                return new RedirectResult(MergeSubscriptionId(
+                    publisherConfig.TurnstileConfiguration!.OnSubscriptionNotReadyUrl,
+                    subscriptionId));
+            }
+        }
+
         public static IActionResult OnSubscriptionNotFound(this PublisherConfiguration publisherConfig, string subscriptionId)
         {
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));

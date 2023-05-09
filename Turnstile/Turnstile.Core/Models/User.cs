@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 using Turnstile.Core.Constants;
@@ -11,18 +12,22 @@ namespace Turnstile.Core.Models
     {
         [JsonPropertyName("user_id")]
         [JsonProperty("user_id")]
+        [OpenApiProperty(Nullable = false, Description = "This user's unique identifier")]
         public string? UserId { get; set; }
 
         [JsonPropertyName("user_name")]
         [JsonProperty("user_name")]
+        [OpenApiProperty(Nullable = true, Description = "This user's display name")]
         public string? UserName { get; set; }
 
         [JsonPropertyName("tenant_id")]
         [JsonProperty("tenant_id")]
+        [OpenApiProperty(Nullable = false, Description = "This user's tenant ID")]
         public string? TenantId { get; set; }
 
         [JsonPropertyName("email")]
         [JsonProperty("email")]
+        [OpenApiProperty(Nullable = true, Description = "This user's primary email address")]
         public string? Email { get; set; }
 
         public IEnumerable<string> Validate()

@@ -14,10 +14,42 @@ namespace Turnstile.Services.Clients
         private readonly HttpClient httpClient;
         private readonly ILogger logger;
 
-        public SeatsClient(IHttpClientFactory httpClientFactory, ILogger<SeatsClient> logger)
+        public SeatsClient(HttpClient httpClient, ILogger logger)
         {
-            httpClient = httpClientFactory.CreateClient(HttpClientNames.TurnstileApi);
+            this.httpClient = httpClient;
             this.logger = logger;
+        }
+
+        public async Task<SeatResult?> EnterTurnstile(SeatRequest seatRequest, string subscriptionId)
+        {
+            ArgumentNullException.ThrowIfNull(seatRequest, nameof(seatRequest));
+            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+            var url = $"api/saas/subscriptions/{subscriptionId}/entry";
+
+            using (var apiRequest = new HttpRequestMessage(HttpMethod.Post, url))
+            {
+                apiRequest.Content = new StringContent(JsonConvert.SerializeObject(seatRequest));
+
+                var apiResponse = await httpClient.SendAsync(apiRequest);
+
+                if (apiResponse.IsSuccessStatusCode)
+                {
+                    var jsonString = await apiResponse.Content.ReadAsStringAsync();
+                    var seatResult = JsonConvert.DeserializeObject<SeatResult>(jsonString);
+
+                    return seatResult!;
+                }
+                else
+                {
+                    var apiError = await apiResponse.Content.ReadAsStringAsync();
+                    var errorMessage = $"Turnstile API POST [{url}] failed with status code [{apiResponse.StatusCode}]: [{apiError}]";
+
+                    logger.LogError(errorMessage);
+
+                    throw new HttpRequestException(errorMessage);
+                }
+            }
         }
 
         public async Task<Seat?> GetSeat(string subscriptionId, string seatId)

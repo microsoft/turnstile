@@ -1,0 +1,10 @@
+{
+    "request_id": "access_denied_because_different_tenant_request_id",
+    "user_id": "access_denied_because_different_tenant_user_id",
+    "tenant_id": "!access_denied_because_different_tenant_id",
+    "emails": [
+        "access_denied_because_different_tenant_user_id@microsoft.com"
+    ],
+    "roles": [
+    ]
+}

@@ -5,21 +5,34 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.Extensions.Logging;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
+using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Threading.Tasks;
-using Turnstile.Services.Cosmos;
+using Turnstile.Core.Interfaces;
+using Turnstile.Core.Models;
 
 namespace Turnstile.Api.Seats
 {
-    public static class GetSeat
+    public class GetSeat
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public GetSeat(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("GetSeat")]
-        public static async Task<IActionResult> Run(
+        [OpenApiOperation("getSeat", "seats")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiParameter("seatId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Seat))]
+        public async Task<IActionResult> RunGetSeat(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}/seats/{seatId}")] HttpRequest req,
-            ILogger log, string subscriptionId, string seatId)
+            string subscriptionId, string seatId)
         {
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var seat = await repo.GetSeat(seatId, subscriptionId);
+            var seat = await turnstileRepo.GetSeat(seatId, subscriptionId);
 
             if (seat == null)
             {

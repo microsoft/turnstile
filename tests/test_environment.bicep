@@ -8,10 +8,52 @@ var storageAccountName = take('turnstor${deploymentName}', 24)
 var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
 var eventStoreContainerName = 'event-store'
+var logAnalyticsName = 'turn-logs-${deploymentName}'
 var appInsightsName = 'turn-insights-${deploymentName}'
 var appServicePlanName = 'turn-plan-${deploymentName}'
 var eventGridTopicName = 'turn-events-${deploymentName}'
 var apiAppName = 'turn-services-${deploymentName}'
+var eventGridConnectionName = 'turn-events-connect-${deploymentName}'
+var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
+var midName = 'turn-id-${deploymentName}'
+
+resource mid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+  name: midName
+  location: location
+}
+
+resource eventGridConnection 'Microsoft.Web/connections@2016-06-01' = {
+  name: eventGridConnectionName
+  location: location
+  kind: 'V1'
+  properties: {
+    customParameterValues: {}
+    displayName: eventGridConnectionDisplayName
+    parameterValueType: 'Alternative'
+    api: {
+      id: '${subscription().id}/providers/Microsoft.Web/locations/${eventGridTopic.location}/managedApis/azureeventgrid'
+    }
+  }
+}
+
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
+  name: logAnalyticsName
+  location: location
+  properties: {
+    sku: {
+      name: 'Standalone'
+    }
+    retentionInDays: 30
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+    }
+    workspaceCapping: {
+      dailyQuotaGb: -1
+    }
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+  }
+}
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   name: appInsightsName
@@ -19,7 +61,9 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   kind: 'web'
   properties: {
     Application_Type: 'web'
-    IngestionMode: 'ApplicationInsights'
+    RetentionInDays: 90
+    WorkspaceResourceId: logAnalytics.id
+    IngestionMode: 'LogAnalytics'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
   }
@@ -101,10 +145,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   name: appServicePlanName
   location: location
   sku: {
-    name: 'S1'
-    tier: 'Standard'
-    family: 'S'
-    size: 'S1'
+    name: 'Y1'
   }
 }
 
@@ -117,7 +158,7 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      alwaysOn: true
+      alwaysOn: false
       appSettings: [
         {
           name: 'FUNCTIONS_EXTENSION_VERSION'
@@ -183,14 +224,24 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
           name: 'Turnstile_PublisherConfigStorageContainerName'
           value: configStorageContainerName
         }
+        {
+          name: 'Turnstile_ApiBaseUrl'
+          value: 'https://${apiAppName}.azurewebsites.net'
+        }
       ]
     }
   }
 }
 
+output managedIdId string = mid.id
+output managedIdName string = mid.name
+output eventGridConnectionId string = eventGridConnection.id
+output eventGridConnectionName string = eventGridConnection.name
+output eventGridTopicName string = eventGridTopic.name
+
 output apiAppId string = apiApp.id
 output apiAppName string = apiAppName
 output storageAccountName string = storageAccount.name
 output storageAccountKey string = storageAccount.listKeys().keys[0].value
-output topicId string = eventGridTopic.id
+output eventGridTopicId string = eventGridTopic.id
 

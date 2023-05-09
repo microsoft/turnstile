@@ -62,6 +62,11 @@ namespace Turnstile.Services.Cosmos
             var container = GetContainer();
             var subscriptions = new List<Subscription>();
 
+            state = state?.ToLower();
+            offerId = offerId?.ToLower();
+            planId = planId?.ToLower();
+            tenantId = tenantId?.ToLower();
+
             var queryable = container.GetItemLinqQueryable<CosmosEnvelope<Subscription>>(
                 requestOptions: new QueryRequestOptions { PartitionKey = new PartitionKey(allSubsPartitionKey) })
                 .AsQueryable();
@@ -103,6 +108,8 @@ namespace Turnstile.Services.Cosmos
         {
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
+            subscriptionId = subscriptionId.ToLower();
+
             var container = GetContainer();
 
             try
@@ -132,6 +139,10 @@ namespace Turnstile.Services.Cosmos
         public async Task<IList<Seat>> GetSeats(string subscriptionId, string? byUserId = null, string? byEmail = null)
         {
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+            subscriptionId = subscriptionId.ToLower();
+            byUserId = byUserId?.ToLower();
+            byEmail = byEmail?.ToLower();
 
             var seats = new List<Seat>();
 
@@ -171,6 +182,9 @@ namespace Turnstile.Services.Cosmos
         {
             ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
+
+            seatId = seatId.ToLower();
+            subscriptionId = subscriptionId.ToLower();
 
             var container = GetContainer();
 
@@ -225,10 +239,10 @@ namespace Turnstile.Services.Cosmos
 
                 if (seat.SeatType == SeatTypes.Standard)
                 {
-                    if (subscription.TotalSeats != null && 
-                        subscription.TotalSeats <= actualSeatSummary.StandardSeatCount)
+                    if (subscription.TotalSeats != null && // Seating is user-based, not site-wide, and...
+                        subscription.TotalSeats <= actualSeatSummary.StandardSeatCount) // there are no more seats available.
                     {
-                        return new SeatCreationContext
+                        return new SeatCreationContext // No seat for you.
                         {
                             IsSeatCreated = false,
                             SeatingSummary = currentSeatSummary
@@ -284,6 +298,9 @@ namespace Turnstile.Services.Cosmos
             ArgumentNullException.ThrowIfNull(seatId, nameof(seatId));
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
+            seatId = seatId.ToLower();
+            subscriptionId = subscriptionId.ToLower();
+
             var container = GetContainer();
 
             try
@@ -331,6 +348,8 @@ namespace Turnstile.Services.Cosmos
         {
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
+            subscriptionId = subscriptionId.ToLower();
+
             var container = GetContainer();
 
             try
@@ -360,6 +379,8 @@ namespace Turnstile.Services.Cosmos
 
         private async Task<SeatingSummary> GetActualSeatSummary(string subscriptionId)
         {
+            subscriptionId = subscriptionId.ToLower();
+
             var seatSummary = new SeatingSummary();
 
             var queryDefinition = new QueryDefinition(

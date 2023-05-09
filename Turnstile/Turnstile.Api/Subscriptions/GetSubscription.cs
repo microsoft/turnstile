@@ -5,21 +5,34 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
+using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Enums;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
+using System.Net;
 using System.Threading.Tasks;
-using Turnstile.Services.Cosmos;
+using Turnstile.Core.Interfaces;
+using Turnstile.Core.Models;
 
 namespace Turnstile.Api.Subscriptions
 {
-    public static class GetSubscription
+    public class GetSubscription
     {
+        private readonly ITurnstileRepository turnstileRepo;
+
+        public GetSubscription(ITurnstileRepository turnstileRepo) => this.turnstileRepo = turnstileRepo;
+
         [FunctionName("GetSubscription")]
-        public static async Task<IActionResult> Run(
+        [OpenApiOperation("getSubscription", "subscriptions")]
+        [OpenApiSecurity("function_key", SecuritySchemeType.ApiKey, Name = "x-functions-key", In = OpenApiSecurityLocationType.Header)]
+        [OpenApiParameter("subscriptionId", Required = true, In = ParameterLocation.Path)]
+        [OpenApiResponseWithBody(HttpStatusCode.NotFound, "text/plain", typeof(string))]
+        [OpenApiResponseWithBody(HttpStatusCode.OK, "application/json", typeof(Subscription))]
+        public async Task<IActionResult> RunGetSubscription(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "saas/subscriptions/{subscriptionId}")] HttpRequest req,
-            string subscriptionId, ILogger log)
+            ILogger log, string subscriptionId)
         {
-            var repo = new CosmosTurnstileRepository(CosmosConfiguration.FromEnvironmentVariables());
-            var subscription = await repo.GetSubscription(subscriptionId);
+            var subscription = await turnstileRepo.GetSubscription(subscriptionId);
 
             if (subscription == null)
             {
