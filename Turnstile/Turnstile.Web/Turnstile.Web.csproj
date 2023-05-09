@@ -30,4 +30,8 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Views\PublisherConfiguration\" />
+  </ItemGroup>
+
 </Project>

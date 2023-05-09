@@ -10,15 +10,13 @@ namespace Turnstile.Core.Models.Configuration
 {
     public class SeatingConfiguration
     {
-        public const double DefaultLowSeatWarningLevelPercent = .25;
-
         [JsonPropertyName("seating_strategy_name")]
         [JsonProperty("seating_strategy_name")]
         public string? SeatingStrategyName { get; set; }
 
         [JsonPropertyName("low_seat_warning_level_pct")]
         [JsonProperty("low_seat_warning_level_pct")]
-        public double? LowSeatWarningLevelPercent { get; set; }
+        public double? LowSeatWarningLevelPercent { get; set; } = .25;
 
         [JsonPropertyName("limited_overflow_seating_enabled")]
         [JsonProperty("limited_overflow_seating_enabled")]
@@ -26,11 +24,11 @@ namespace Turnstile.Core.Models.Configuration
 
         [JsonPropertyName("seat_reservation_expiry_in_days")]
         [JsonProperty("seat_reservation_expiry_in_days")]
-        public int? SeatReservationExpiryInDays { get; set; }
+        public int? SeatReservationExpiryInDays { get; set; } = 14;
 
         [JsonPropertyName("default_seat_expiry_in_days")]
         [JsonProperty("default_seat_expiry_in_days")]
-        public int? DefaultSeatExpiryInDays { get; set; }
+        public int? DefaultSeatExpiryInDays { get; set; } = 14;
 
         public IEnumerable<string> Validate()
         {

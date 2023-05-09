@@ -6,11 +6,74 @@ using System.Net;
 using System.Security.Claims;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Controllers;
+using Turnstile.Web.Models.PublisherConfig;
 
 namespace Turnstile.Web.Extensions
 {
     public static class PublisherConfigurationExtensions
     {
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, BasicConfigurationViewModel basicConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(basicConfig, nameof(basicConfig));
+
+            publisherConfig.ContactPageUrl = basicConfig.ContactPageUrl;
+            publisherConfig.ContactSalesEmail = basicConfig.ContactSalesEmail;
+            publisherConfig.ContactSalesUrl = basicConfig.ContactSalesUrl;
+            publisherConfig.ContactSupportEmail = basicConfig.ContactSupportEmail;
+            publisherConfig.ContactSupportUrl = basicConfig.ContactSupportUrl;
+            publisherConfig.HomePageUrl = basicConfig.HomePageUrl;
+            publisherConfig.PrivacyNoticePageUrl = basicConfig.PrivacyNoticePageUrl;
+            publisherConfig.PublisherName = basicConfig.PublisherName;
+            publisherConfig.TurnstileName = basicConfig.TurnstileName;
+
+            return publisherConfig;
+        }
+
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, MonaConfigurationViewModel monaConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(monaConfig, nameof(monaConfig));
+
+            publisherConfig.MonaBaseStorageUrl = monaConfig.MonaIntegrationBaseStorageUrl;
+            publisherConfig.DefaultMonaSubscriptionState = monaConfig.DefaultMonaSubscriptionState;
+            publisherConfig.MonaSubscriptionIsBeingConfigured = monaConfig.MonaSubscriptionIsBeingConfigured;
+
+            return publisherConfig;
+        }
+
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, RedirectConfigurationViewModel redirectConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(redirectConfig, nameof(redirectConfig));
+
+            publisherConfig.TurnstileConfiguration = new TurnstileConfiguration
+            {
+                OnNoSeatAvailableUrl = redirectConfig.OnNoSeatsAvailableUrl,
+                OnAccessDeniedUrl = redirectConfig.OnAccessDeniedUrl,
+                OnAccessGrantedUrl = redirectConfig.OnAccessGrantedUrl,
+                OnNoSubscriptionsFoundUrl = redirectConfig.OnNoSubscriptionsFoundUrl,
+                OnSubscriptionCanceledUrl = redirectConfig.OnSubscriptionCanceledUrl,
+                OnSubscriptionNotFoundUrl = redirectConfig.OnSubscriptionNotFoundUrl,
+                OnSubscriptionNotReadyUrl = redirectConfig.OnSubscriptionPurchasedUrl,
+                OnSubscriptionSuspendedUrl = redirectConfig.OnSubscriptionSuspendedUrl
+            };
+
+            return publisherConfig;
+        }
+
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, SeatingConfigurationViewModel seatingConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(seatingConfig, nameof(seatingConfig));
+
+            publisherConfig.SeatingConfiguration ??= new SeatingConfiguration();
+            publisherConfig.SeatingConfiguration.LimitedOverflowSeatingEnabled = seatingConfig.LimitedOverflowSeatingEnabled;
+            publisherConfig.SeatingConfiguration.SeatingStrategyName = seatingConfig.SeatingStrategyName;
+
+            return publisherConfig;
+        }
+
         public static IActionResult? CheckTurnstileSetupIsComplete(
             this PublisherConfiguration publisherConfig,
             ClaimsPrincipal principal,
@@ -32,9 +95,9 @@ namespace Turnstile.Web.Extensions
 
                     logger.LogWarning(
                         "Unable to service request. Turnstile not yet set up. " +
-                        $"Redirecting turnstile administrator to route [{PublisherConfigurationController.RouteNames.GetPublisherConfiguration}].");
+                        $"Redirecting turnstile administrator to route [{PublisherConfigurationController.RouteNames.ConfigureBasics}].");
 
-                    return new RedirectToRouteResult(PublisherConfigurationController.RouteNames.GetPublisherConfiguration, null);
+                    return new RedirectToRouteResult(PublisherConfigurationController.RouteNames.ConfigureBasics, null);
                 }
                 else
                 {
