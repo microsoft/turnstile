@@ -11,6 +11,8 @@ namespace Turnstile.Web.Models
         {
             ArgumentNullException.ThrowIfNull(seat, nameof(seat));
 
+            DateCreatedUtc = seat.CreationDateTimeUtc;
+            ExpirationDateTimeUtc = seat.ExpirationDateTimeUtc;
             SeatId = seat.SeatId;
 
             if (seat.Occupant != null)
@@ -37,5 +39,8 @@ namespace Turnstile.Web.Models
 
         public bool IsLimited { get; set; } = false;
         public bool IsReserved { get; set; } = false;
+
+        public DateTime? DateCreatedUtc { get; set; }
+        public DateTime? ExpirationDateTimeUtc { get; set; }
     }
 }

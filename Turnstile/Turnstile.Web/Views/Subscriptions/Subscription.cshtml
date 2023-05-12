@@ -60,6 +60,29 @@
 
 
 <div id="subscriptionAlerts">
+    @if (Model.IsSubscriptionUpdated)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+            </svg>
+            <div>
+                <span>Subscription updated.</span>
+            </div>
+        </div>
+    }
+    else if (Model.HasValidationErrors)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-octagon-fill" viewBox="0 0 16 16">
+                <path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353L11.46.146zm-6.106 4.5L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708z" />
+            </svg>
+            <div>
+                <span>Unable to save subscription changes. Please review below.</span>
+            </div>
+        </div>
+    }
+
     @if (subContextModel.State == SubscriptionStates.Canceled)
     {
         <div class="alert alert-danger d-flex align-items-center" role="alert">
@@ -145,15 +168,21 @@
 
 <ul class="nav nav-tabs" id="tabs" role="tablist">
     <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-tab-pane" type="button" role="tab" aria-controls="basics-tab-pane" aria-selected="true">Basics</button>
+        <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-tab-pane" type="button" role="tab" aria-controls="basics-tab-pane" aria-selected="true">Subscription</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">Seating</button>
+        <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">Active seats</button>
     </li>
+    @if (subContextModel.CanUserAdministerSubscription && !seatingModel.SubscriptionHasNoMoreSeats)
+    {
+        <li class="nav-item">
+            <a class="nav-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = subContextModel.SubscriptionId })">Reserve seat</a>
+        </li>
+    }
     @if (subContextModel.ManagementLinks.Any())
     {
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More</a>
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More links</a>
             <ul class="dropdown-menu">
                 @foreach (var linkKey in subContextModel.ManagementLinks.Keys)
                 {
@@ -166,164 +195,204 @@
     }
 </ul>
 
-<form method="post">
-    <div class="mb-3">
-        <label asp-for="@Model.SubscriptionName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-        @if (CanUserEditSubscriptionName())
-        {
-            <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
-        }
-        else
-        {
-            <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" disabled />
-        }
-        <span asp-validation-for="@Model.SubscriptionName" class="text-danger"></span>
-        <div id="subNameHelp" class="form-text">The name of this subscription as it will appear in the UI.</div>
+<div class="tab-content" id="panes">
+    <div class="tab-pane fade show active" id="basics-tab-pane" role="tabpanel" aria-labelledby="basics-tab" tabindex="0">
+        <form method="post">
+            <div class="mb-3">
+                <label asp-for="@Model.SubscriptionName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                @if (CanUserEditSubscriptionName())
+                {
+                    <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
+                }
+                else
+                {
+                    <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" disabled />
+                }
+                <span asp-validation-for="@Model.SubscriptionName" class="text-danger"></span>
+                <div id="subNameHelp" class="form-text">The name of this subscription as it will appear in the UI.</div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="@Model.TenantName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                @if (CanUserEditTenantName())
+                {
+                    <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
+                }
+                else
+                {
+                    <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" disabled />
+                }
+                <span asp-validation-for="@Model.TenantName" class="text-danger"></span>
+                <div id="tenantNameHelp" class="form-text">The name of the subscriber's organization as it will appear in the UI.</div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="@Model.TenantCountry" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                @if (CanUserEditTenantCountry())
+                {
+                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" />
+                }
+                else
+                {
+                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" disabled />
+                }
+                <span asp-validation-for="@Model.TenantCountry" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="@Model.AdminName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                @if (CanUserEditAdminName())
+                {
+                    <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
+                }
+                else
+                {
+                    <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" disabled />
+                }
+                <span asp-validation-for="@Model.AdminName" class="text-danger"></span>
+                <div id="adminRoleNameHelp" class="form-text">The name of this subscription's primary admin.</div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="@Model.AdminEmail" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                @if (CanUserEditAdminEmail())
+                {
+                    <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" />
+                }
+                else
+                {
+                    <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" disabled />
+                }
+                <span asp-validation-for="@Model.AdminEmail" class="text-danger"></span>
+                <div id="adminRoleNameHelp" class="form-text">The email address of this subscription's primary admin.</div>
+            </div>
+            <div class="mb-3">
+                <a data-bs-toggle="collapse" href="#moreOptions" aria-expanded="false" aria-controls="moreOptions">
+                    <p class="h6">More options</p>
+                </a>
+            </div>
+            <div class="collapse" id="moreOptions">
+                <div class="mb-3">
+                    <label asp-for="@Model.AdminRoleName" class="form-label"></label>
+                    @if (CanUserEditAdminRole())
+                    {
+                        <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" />
+                    }
+                    else
+                    {
+                        <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" disabled />
+                    }
+                    <span asp-validation-for="@Model.AdminRoleName" class="text-danger"></span>
+                    <div id="adminRoleNameHelp" class="form-text">If configured, users that belong to this role (in addition to the primary admin configured above) can <b>administer</b> this subscription.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.UserRoleName" class="form-label"></label>
+                    @if (CanUserEditUserRole())
+                    {
+                        <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" />
+                    }
+                    else
+                    {
+                        <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" disabled />
+                    }
+                    <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
+                    <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.State" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                    @if (CanUserEditState())
+                    {
+                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" />
+                    }
+                    else
+                    {
+                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" disabled />
+                    }
+                    <span asp-validation-for="@Model.State" class="text-danger"></span>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    @if (CanUserEditConfigurationState())
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" />
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" disabled />
+                    }
+                    <label asp-for="@Model.IsBeingConfigured" class="form-check-label" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.OfferId" class="form-label"></label>
+                    @if (CanUserEditOfferId())
+                    {
+                        <input asp-for="@Model.OfferId" class="form-control" type="text" />
+                    }
+                    else
+                    {
+                        <input asp-for="@Model.OfferId" class="form-control" type="text" disabled />
+                    }
+                    <span asp-validation-for="@Model.State" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.PlanId" class="form-label"></label>
+                    @if (CanUserEditPlanId())
+                    {
+                        <input asp-for="@Model.PlanId" class="form-control" type="text" />
+                    }
+                    else
+                    {
+                        <input asp-for="@Model.PlanId" class="form-control" type="text" disabled />
+                    }
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.SubscriptionId" class="form-label"></label>
+                    <input asp-for="@Model.SubscriptionId" class="form-control-plaintext" type="text" readonly />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@Model.TenantId" class="form-label"></label>
+                    <input asp-for="@Model.TenantId" class="form-control-plaintext" type="text" readonly />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@subContextModel.CreatedUtc" class="form-label"></label>
+                    <input asp-for="@subContextModel.CreatedUtc" class="form-control-plaintext" type="datetime" readonly />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="@subContextModel.StateLastUpdatedUtc" class="form-label"></label>
+                    <input asp-for="@subContextModel.StateLastUpdatedUtc" class="form-control-plaintext" type="datetime" readonly />
+                </div>
+            </div>
+            <hr />
+            <div style="margin-top: 20px; margin-bottom: 20px">
+                <button type="submit" class="btn btn-outline-primary">Save changes</button>
+            </div>
+        </form>
     </div>
-    <div class="mb-3">
-        <label asp-for="@Model.TenantName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-        @if (CanUserEditTenantName())
-        {
-            <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
+    <div class="tab-pane fade" id="seating-tab-pane" role="tabpanel" aria-labelledby="seating-tab" tabindex="0">
+        @{
+            string GetCardClass(SeatViewModel seat) =>
+                seat.IsReserved
+                ? "card text-bg-secondary"
+                : seat.IsLimited
+                  ? "card text-bg-warning"
+                  : "card text-bg-primary";
+
+            string GetCardHeader(SeatViewModel seat) =>
+                seat.IsReserved
+                ? "Reserved seat"
+                : seat.IsLimited
+                  ? "Limited seat"
+                  : "Standard seat";
+
+            foreach (var seat in seatingModel.Seats.OrderByDescending(s => s.DateCreatedUtc))
+            {
+                <div class="@GetCardClass(seat)">
+                    <div class="card-header">@GetCardHeader(seat)</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@seat.UserName</h5>
+                    </div>
+                    <a href="#" class="card-link">Release seat</a>
+                    @if (!string.IsNullOrEmpty(seat.UserEmail))
+                    {
+                        <a href="mailto:@seat.UserEmail">Contact user</a>
+                    }
+                </div>
+            }
         }
-        else
-        {
-            <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" disabled />
-        }
-        <span asp-validation-for="@Model.TenantName" class="text-danger"></span>
-        <div id="tenantNameHelp" class="form-text">The name of the subscriber's organization as it will appear in the UI.</div>
     </div>
-    <div class="mb-3">
-        <label asp-for="@Model.TenantCountry" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-        @if (CanUserEditTenantCountry())
-        {
-            <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" />
-        }
-        else
-        {
-            <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" disabled />
-        }
-        <span asp-validation-for="@Model.TenantCountry" class="text-danger"></span>
-    </div>
-    <div class="mb-3">
-        <label asp-for="@Model.AdminName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-        @if (CanUserEditAdminName())
-        {
-            <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
-        }
-        else
-        {
-            <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" disabled />
-        }
-        <span asp-validation-for="@Model.AdminName" class="text-danger"></span>
-        <div id="adminRoleNameHelp" class="form-text">The name of this subscription's primary admin.</div>
-    </div>
-    <div class="mb-3">
-        <label asp-for="@Model.AdminEmail" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-        @if (CanUserEditAdminEmail())
-        {
-            <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" />
-        }
-        else
-        {
-            <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" disabled />
-        }
-        <span asp-validation-for="@Model.AdminEmail" class="text-danger"></span>
-        <div id="adminRoleNameHelp" class="form-text">The email address of this subscription's primary admin.</div>
-    </div>
-    <div class="mb-3">
-        <a data-bs-toggle="collapse" href="#moreOptions" aria-expanded="false" aria-controls="moreOptions">
-            <p class="h6">More options</p>
-        </a>
-    </div>
-    <div class="collapse" id="moreOptions">
-        <div class="mb-3">
-            <label asp-for="@Model.AdminRoleName" class="form-label"></label>
-            @if (CanUserEditAdminRole())
-            {
-                <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" />
-            }
-            else
-            {
-                <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" disabled />
-            }
-            <span asp-validation-for="@Model.AdminRoleName" class="text-danger"></span>
-            <div id="adminRoleNameHelp" class="form-text">If configured, users that belong to this role (in addition to the primary admin configured above) can <b>administer</b> this subscription.</div>
-        </div>
-        <div class="mb-3">
-            <label asp-for="@Model.UserRoleName" class="form-label"></label>
-            @if (CanUserEditUserRole())
-            {
-                <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" />
-            }
-            else
-            {
-                <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" disabled />
-            }
-            <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
-            <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
-        </div>
-        <div class="mb-3">
-            <label asp-for="@Model.State" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-            @if (CanUserEditState())
-            {
-                <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" />
-            }
-            else
-            {
-                <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" disabled />
-            }
-            <span asp-validation-for="@Model.State" class="text-danger"></span>
-        </div>
-        <div class="mb-3 form-check form-switch">
-            @if (CanUserEditConfigurationState())
-            {
-                <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" />
-            }
-            else
-            {
-                <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" disabled />
-            }
-            <label asp-for="@Model.IsBeingConfigured" class="form-check-label" />
-        </div>
-        <div class="mb-3">
-            <label asp-for="@Model.OfferId" class="form-label"></label>
-            @if (CanUserEditOfferId())
-            {
-                <input asp-for="@Model.OfferId" class="form-control" type="text" />
-            }
-            else
-            {
-                <input asp-for="@Model.OfferId" class="form-control" type="text" disabled />
-            }
-            <span asp-validation-for="@Model.State" class="text-danger"></span>
-        </div>
-        <div class="mb-3">
-            <label asp-for="@Model.PlanId" class="form-label"></label>
-            @if (CanUserEditPlanId())
-            {
-                <input asp-for="@Model.PlanId" class="form-control" type="text" />
-            }
-            else
-            {
-                <input asp-for="@Model.PlanId" class="form-control" type="text" disabled />
-            }
-        </div>
-        <div class="mb-3">
-            <label asp-for="@Model.SubscriptionId" class="form-label"></label>
-            <input asp-for="@Model.SubscriptionId" class="form-control-plaintext" type="text" readonly />
-        </div>
-        <div class="mb-3">
-            <label asp-for="@Model.TenantId" class="form-label"></label>
-            <input asp-for="@Model.TenantId" class="form-control-plaintext" type="text" readonly />
-        </div>
-        <div class="mb-3">
-            <label asp-for="@subContextModel.CreatedUtc" class="form-label"></label>
-            <input asp-for="@subContextModel.CreatedUtc" class="form-control-plaintext" type="datetime" readonly />
-        </div>
-        <div class="mb-3">
-            <label asp-for="@subContextModel.StateLastUpdatedUtc" class="form-label"></label>
-            <input asp-for="@subContextModel.StateLastUpdatedUtc" class="form-control-plaintext" type="datetime" readonly />
-        </div>
-    </div>
-</form>
+</div>
