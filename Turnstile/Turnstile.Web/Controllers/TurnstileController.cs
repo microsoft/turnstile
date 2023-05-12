@@ -60,7 +60,7 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                if (!string.IsNullOrEmpty(returnTo) && 
+                if (!string.IsNullOrEmpty(returnTo) &&
                     !Uri.TryCreate(returnTo, UriKind.Absolute, out _))
                 {
                     // I don't know what you're trying to do here but, nice try, bad actor.
@@ -79,41 +79,42 @@ namespace Turnstile.Web.Controllers
 
                     return setupAction;
                 }
-
-                if (CheckForMsa(publisherConfig!) is var redirectAction && redirectAction != null)
-                {
-                    // We can't help them (yet). Bounce the user to the SaaS app...
-
-                    return redirectAction;
-                }
-
-                var user = User.ToCoreModel();
-
-                var availableSubs = (await subsClient.GetSubscriptions(user.TenantId))
-                    .Where(s => s.IsActive() && s.IsSetupComplete == true && User.CanUseSubscription(s))
-                    .ToList();
-
-                if (availableSubs.None())
-                {
-                    logger.LogWarning($"User [{user.TenantId}/{user.UserId}] has no available subscriptions.");
-
-                    return publisherConfig!.OnNoSubscriptionsFound();
-                }
-                else if (availableSubs.OnlyOne())
-                {
-                    return RedirectToRoute(
-                        RouteNames.SpecificTurnstile,
-                        returnTo == null ?
-                            new { subscriptionId = availableSubs[0].SubscriptionId } :
-                            new { subscriptionId = availableSubs[0].SubscriptionId, returnTo });
-                }
                 else
                 {
-                    this.ApplyLayout(publisherConfig!, User!);
+                    if (CheckForMsa(publisherConfig!) is var redirectAction && redirectAction != null)
+                    {
+                        // We can't help them (yet). Bounce the user to the SaaS app...
 
-                    return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(availableSubs, User, returnTo));
+                        return redirectAction;
+                    }
+
+                    var user = User.ToCoreModel();
+
+                    var availableSubs = (await subsClient.GetSubscriptions(user.TenantId))
+                        .Where(s => s.IsActive() && s.IsSetupComplete == true && User.CanUseSubscription(s))
+                        .ToList();
+
+                    if (availableSubs.None())
+                    {
+                        logger.LogWarning($"User [{user.TenantId}/{user.UserId}] has no available subscriptions.");
+
+                        return publisherConfig!.OnNoSubscriptionsFound();
+                    }
+                    else if (availableSubs.OnlyOne())
+                    {
+                        return RedirectToRoute(
+                            RouteNames.SpecificTurnstile,
+                            returnTo == null ?
+                                new { subscriptionId = availableSubs[0].SubscriptionId } :
+                                new { subscriptionId = availableSubs[0].SubscriptionId, returnTo });
+                    }
+                    else
+                    {
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+
+                        return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(publisherConfig!, availableSubs, User, returnTo));
+                    }
                 }
-
             }
             catch (Exception ex)
             {
@@ -129,7 +130,7 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                if (!string.IsNullOrEmpty(returnTo) && 
+                if (!string.IsNullOrEmpty(returnTo) &&
                     !Uri.TryCreate(returnTo, UriKind.Absolute, out _))
                 {
                     // I don't know what you're trying to do here but, nice try, bad actor.
@@ -164,8 +165,8 @@ namespace Turnstile.Web.Controllers
                     case SeatResultCodes.SubscriptionNotFound:
                         return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                     case SeatResultCodes.SeatProvided:
-                        return string.IsNullOrEmpty(returnTo) 
-                            ? publisherConfig!.OnAccessGranted(subscriptionId) 
+                        return string.IsNullOrEmpty(returnTo)
+                            ? publisherConfig!.OnAccessGranted(subscriptionId)
                             : Redirect(returnTo);
                     case SeatResultCodes.SubscriptionCanceled:
                         return publisherConfig!.OnSubscriptionCanceled(subscriptionId);
@@ -191,12 +192,11 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                var pubConfig = await GetPublisherConfiguration();
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!);
+                var publisherConfig = await GetPublisherConfiguration();
 
-                this.ApplyLayout(pubConfig!, User!);
+                ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                return View(messageModel);
+                return View();
             }
             catch (Exception ex)
             {
@@ -212,20 +212,20 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                var pubConfig = await GetPublisherConfiguration();
+                var publisherConfig = await GetPublisherConfiguration();
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
                 {
-                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId });
                 }
+                else
+                {
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
 
-                var subUser = User.ToCoreModel();
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
-
-                this.ApplyLayout(pubConfig!, User!);
-
-                return View(messageModel);
+                    return View();
+                }
             }
             catch (Exception ex)
             {
@@ -241,20 +241,20 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                var pubConfig = await GetPublisherConfiguration();
+                var publisherConfig = await GetPublisherConfiguration();
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
                 {
-                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId });
                 }
+                else
+                {
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
 
-                var subUser = User.ToCoreModel();
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
-
-                this.ApplyLayout(pubConfig!, User!);
-
-                return View(messageModel);
+                    return View();
+                }
             }
             catch (Exception ex)
             {
@@ -270,21 +270,20 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                var pubConfig = await GetPublisherConfiguration();
+                var publisherConfig = await GetPublisherConfiguration();
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
                 {
-                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId });
                 }
+                else
+                {
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
 
-                var subUser = User.ToCoreModel();
-
-                this.ApplyLayout(pubConfig!, User!);
-
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
-
-                return View(messageModel);
+                    return View();
+                }
             }
             catch (Exception ex)
             {
@@ -299,15 +298,12 @@ namespace Turnstile.Web.Controllers
         public async Task<IActionResult> OnSubscriptionNotFound(string subscriptionId)
         {
             try
-            { 
-                var pubConfig = await GetPublisherConfiguration();
-                var subUser = User.ToCoreModel();
+            {
+                var publisherConfig = await GetPublisherConfiguration();
 
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, false);
+                ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                this.ApplyLayout(pubConfig!, User!);
-
-                return View(messageModel);
+                return View();
             }
             catch (Exception ex)
             {
@@ -322,20 +318,20 @@ namespace Turnstile.Web.Controllers
         {
             try
             {
-                var pubConfig = await GetPublisherConfiguration();
+                var publisherConfig = await GetPublisherConfiguration();
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
                 {
-                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId = subscriptionId });
+                    return RedirectToRoute(RouteNames.OnSubscriptionNotFound, new { subscriptionId });
                 }
+                else
+                {
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
 
-                var subUser = User.ToCoreModel();
-                var messageModel = new SubscriptionMessageViewModel(pubConfig!, subscription, User.CanAdministerSubscription(subscription));
-
-                this.ApplyLayout(pubConfig!, User!);
-
-                return View(messageModel);
+                    return View();
+                }
             }
             catch (Exception ex)
             {

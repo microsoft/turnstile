@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Models;
 
@@ -12,12 +13,9 @@ namespace Turnstile.Web.Models
     {
         public SubscriptionDetailViewModel() { }
 
-        public SubscriptionDetailViewModel(Subscription subscription, IEnumerable<Seat> seats, 
-            bool userIsTurnstileAdmin = false, 
-            bool userIsSubscriberAdmin = false)
+        public SubscriptionDetailViewModel(Subscription subscription)
         {
             ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
-            ArgumentNullException.ThrowIfNull(seats, nameof(seats));
 
             SubscriptionId = subscription.SubscriptionId;
             SubscriptionName = subscription.SubscriptionName;
@@ -31,17 +29,6 @@ namespace Turnstile.Web.Models
             AdminName = subscription.AdminName;
             AdminEmail = subscription.AdminEmail;
 
-            IsBeingConfigured = subscription.IsBeingConfigured == true;
-            IsTestSubscription = subscription.IsTestSubscription;
-            IsFreeSubscription = subscription.IsFreeTrial;
-            UserIsTurnstileAdmin = userIsTurnstileAdmin;
-            UserIsSubscriberAdmin = userIsSubscriberAdmin;
-
-            CreatedDateTimeUtc = subscription.CreatedDateTimeUtc;
-            StateLastUpdatedDateTimeUtc = subscription.StateLastUpdatedDateTimeUtc;
-
-            ManagementUrls = subscription.ManagementUrls;
-
             AvailableStates = new List<SelectListItem>(GetAvailableStates(subscription));
         }
 
@@ -50,6 +37,10 @@ namespace Turnstile.Web.Models
 
         [Display(Name = "Subscription name")]
         public string? SubscriptionName { get; set; }
+
+        [Display(Name = "Country")]
+        [Required(ErrorMessage = "Country is required.")]
+        public string? TenantCountry { get; set; }
 
         [Display(Name = "Tenant ID")]
         public string? TenantId { get; set; }
@@ -82,24 +73,20 @@ namespace Turnstile.Web.Models
         [EmailAddress(ErrorMessage = "Subscription admin email is not a valid email address.")]
         public string? AdminEmail { get; set; }
 
-        public bool IsBeingConfigured { get; set; }
-        public bool IsTestSubscription { get; set; }
-        public bool IsFreeSubscription { get; set; }
-        public bool UserIsTurnstileAdmin { get; set; }
-        public bool UserIsSubscriberAdmin { get; set; }
         public bool IsSubscriptionUpdated { get; set; }
         public bool HasValidationErrors { get; set; }
 
         public List<SelectListItem> AvailableStates { get; set; } = new List<SelectListItem>();
 
-        [Display(Name = "Management link(s)")]
-        public Dictionary<string, string>? ManagementUrls { get; set; }
+        // TODO: This probably isn't the most reliable way of getting country names. Revisit...
 
-        [Display(Name = "Subscription created (UTC)")]
-        public DateTime? CreatedDateTimeUtc { get; set; }
-
-        [Display(Name = "Subscription last updated (UTC)")]
-        public DateTime? StateLastUpdatedDateTimeUtc { get; set; }
+        public List<SelectListItem> Countries { get; set; } = CultureInfo.GetCultures(CultureTypes.SpecificCultures)
+            .Select(ci => new RegionInfo(ci.LCID))
+            .Select(ri => new { ri.EnglishName, ri.TwoLetterISORegionName })
+            .DistinctBy(c => c.EnglishName)
+            .OrderBy(c => c.EnglishName)
+            .Select(c => new SelectListItem(c.EnglishName, c.TwoLetterISORegionName))
+            .ToList();
 
         private IEnumerable<SelectListItem> GetAvailableStates(Subscription subscription) => subscription.State switch
         {

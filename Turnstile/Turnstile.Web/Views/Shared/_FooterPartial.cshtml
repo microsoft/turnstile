@@ -1,9 +1,9 @@
 ﻿<footer class="border-top footer text-muted">
     <div class="container clearfix">
         <div class="float-start">
-            @if (ViewData.ContainsKey(nameof(LayoutViewModel)))
+            @if (ViewData.ContainsKey(nameof(BaseViewModel)))
             {
-                var footerModel = ViewData[nameof(LayoutViewModel)] as LayoutViewModel;
+                var footerModel = ViewData[nameof(BaseViewModel)] as BaseViewModel;
 
                 if (!string.IsNullOrEmpty(footerModel!.PublisherName))
                 {

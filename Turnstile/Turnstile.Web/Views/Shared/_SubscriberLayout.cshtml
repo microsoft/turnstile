@@ -66,30 +66,34 @@
         </main>
         <footer class="pt-5 my-5 text-muted border-top">
             <div class="float-start">
-                @if (ViewData.ContainsKey(nameof(LayoutViewModel)))
-                {
-                    var footerModel = ViewData[nameof(LayoutViewModel)] as LayoutViewModel;
+                @{
+                    const string layoutDataKey = "Layout";
 
-                    if (!string.IsNullOrEmpty(footerModel!.PublisherName))
+                    if (ViewData.ContainsKey(layoutDataKey))
                     {
-                        if (string.IsNullOrEmpty(footerModel.HomePageUrl))
+                        var footerModel = (ViewData[layoutDataKey] as LayoutViewModel)!;
+
+                        if (!string.IsNullOrEmpty(footerModel.PublisherName))
                         {
-                            <span>&copy; @DateTime.UtcNow.Year @footerModel.PublisherName </span>
-                        }
-                        else
-                        {
-                            <span>&copy; @DateTime.UtcNow.Year <a href="@footerModel.HomePageUrl">@footerModel.PublisherName</a> </span>
+                            if (string.IsNullOrEmpty(footerModel.HomePageUrl))
+                            {
+                                <span>&copy; @DateTime.UtcNow.Year @footerModel.PublisherName </span>
+                            }
+                            else
+                            {
+                                <span>&copy; @DateTime.UtcNow.Year <a href="@footerModel.HomePageUrl">@footerModel.PublisherName</a> </span>
+                            }
+
+                            if (!string.IsNullOrEmpty(footerModel.ContactPageUrl))
+                            {
+                                <span>&middot; <a href="@footerModel.ContactPageUrl">Contact</a></span>
+                            }
                         }
 
-                        if (!string.IsNullOrEmpty(footerModel.ContactPageUrl))
+                        if (!string.IsNullOrEmpty(footerModel.PrivacyNoticePageUrl))
                         {
-                            <span>&middot; <a href="@footerModel.ContactPageUrl">Contact</a></span>
+                            <span>&middot; <a href="@footerModel.PrivacyNoticePageUrl">Privacy</a></span>
                         }
-                    }
-
-                    if (!string.IsNullOrEmpty(footerModel.PrivacyNoticePageUrl))
-                    {
-                        <span>&middot; <a href="@footerModel.PrivacyNoticePageUrl">Privacy</a></span>
                     }
                 }
             </div>

@@ -14,6 +14,10 @@
         (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
         (Model.State != SubscriptionStates.Canceled);
 
+    bool CanUserEditTenantCountry() =>
+        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
+        (Model.State != SubscriptionStates.Canceled);
+
     bool CanUserEditAdminName() =>
         (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
         (Model.State != SubscriptionStates.Canceled);
@@ -37,11 +41,45 @@
     bool CanUserEditConfigurationState() =>
         Model.UserIsTurnstileAdmin &&
         Model.State != SubscriptionStates.Canceled;
+
+    bool CanUserEditOfferId() =>
+        Model.UserIsTurnstileAdmin &&
+        Model.State != SubscriptionStates.Canceled;
+
+    bool CanUserEditPlanId() =>
+        Model.UserIsTurnstileAdmin &&
+        Model.State != SubscriptionStates.Canceled;
 }
 
 <h1>Manage subscription</h1>
 <hr />
 
+
+<div id="subscriptionAlerts">
+    @if (Model.State == SubscriptionStates.Canceled)
+    {
+        <div class="alert alert-danger" role="alert">
+            <span>This subscription has been canceled.</span>
+        </div>
+    }
+    else
+    {
+        if (Model.State == SubscriptionStates.Suspended)
+        {
+            <div class="alert alert-warning" role="alert">
+                <span>This subscription has been temporarily suspended.</span>
+            </div>
+        }
+        else if (Model.State == SubscriptionStates.Purchased || Model.IsBeingConfigured)
+        {
+            <div class="alert alert-warning" role="alert">
+                <span>This subscription is being configured and is temporarily unavailable.</span>
+            </div>
+        }
+
+
+    }
+</div>
 <form method="post">
     <div class="mb-3">
         <label asp-for="@Model.SubscriptionName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
@@ -70,6 +108,18 @@
         <div id="tenantNameHelp" class="form-text">The name of the subscriber's organization as it will appear in the UI.</div>
     </div>
     <div class="mb-3">
+        <label asp-for="@Model.TenantCountry" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+        @if (CanUserEditTenantCountry())
+        {
+            <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" />
+        }
+        else
+        {
+            <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" disabled />
+        }
+        <span asp-validation-for="@Model.TenantCountry" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
         <label asp-for="@Model.AdminName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
         @if (CanUserEditAdminName())
         {
@@ -96,43 +146,99 @@
         <div id="adminRoleNameHelp" class="form-text">The email address of this subscription's primary admin.</div>
     </div>
     <div class="mb-3">
-        <label asp-for="@Model.AdminRoleName" class="form-label"></label>
-        @if (CanUserEditAdminRole())
-        {
-            <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" />
-        }
-        else
-        {
-            <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" disabled />
-        }
-        <span asp-validation-for="@Model.AdminRoleName" class="text-danger"></span>
-        <div id="adminRoleNameHelp" class="form-text">If configured, users that belong to this role (in addition to the primary admin) can <b>administer</b> this subscription.</div>
+        <a data-bs-toggle="collapse" href="#moreOptions" aria-expanded="false" aria-controls="moreOptions">
+            <p class="h6">More options</p>
+        </a>
     </div>
-    <div class="mb-3">
-        <label asp-for="@Model.UserRoleName" class="form-label"></label>
-        @if (CanUserEditUserRole())
-        {
-            <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" />
-        }
-        else
-        {
-            <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" disabled />
-        }
-        <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
-        <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
-    </div>
-    <div class="mb-3">
-        <label asp-for="@Model.State" class="form-label"></label>
-        @if (CanUserEditState())
-        {
-            <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" aria-describedBy="stateHelp" />
-        }
-        else
-        {
-            <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" aria-describedBy="stateHelp" disabled />
-        }
-        <span asp-validation-for="@Model.State" class="text-danger"></span>
-        <div id="userRoleNameHelp" class="form-text">The current state of this subscription.</div>
+    <div class="collapse" id="moreOptions">
+        <div class="mb-3">
+            <label asp-for="@Model.AdminRoleName" class="form-label"></label>
+            @if (CanUserEditAdminRole())
+            {
+                <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" />
+            }
+            else
+            {
+                <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" disabled />
+            }
+            <span asp-validation-for="@Model.AdminRoleName" class="text-danger"></span>
+            <div id="adminRoleNameHelp" class="form-text">If configured, users that belong to this role (in addition to the primary admin configured above) can <b>administer</b> this subscription.</div>
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.UserRoleName" class="form-label"></label>
+            @if (CanUserEditUserRole())
+            {
+                <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" />
+            }
+            else
+            {
+                <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" disabled />
+            }
+            <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
+            <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.State" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+            @if (CanUserEditState())
+            {
+                <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" />
+            }
+            else
+            {
+                <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" disabled />
+            }
+            <span asp-validation-for="@Model.State" class="text-danger"></span>
+        </div>
+        <div class="mb-3 form-check form-switch">
+            @if (CanUserEditConfigurationState())
+            {
+                <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" />
+            }
+            else
+            {
+                <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" disabled />
+            }
+            <label asp-for="@Model.IsBeingConfigured" class="form-check-label" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.OfferId" class="form-label"></label>
+            @if (CanUserEditOfferId())
+            {
+                <input asp-for="@Model.OfferId" class="form-control" type="text" />
+            }
+            else
+            {
+                <input asp-for="@Model.OfferId" class="form-control" type="text" disabled />
+            }
+            <span asp-validation-for="@Model.State" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.PlanId" class="form-label"></label>
+            @if (CanUserEditPlanId())
+            {
+                <input asp-for="@Model.PlanId" class="form-control" type="text" />
+            }
+            else
+            {
+                <input asp-for="@Model.PlanId" class="form-control" type="text" disabled />
+            }
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.SubscriptionId" class="form-label"></label>
+            <input asp-for="@Model.SubscriptionId" class="form-control" type="text" disabled />
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.TenantId" class="form-label"></label>
+            <input asp-for="@Model.TenantId" class="form-control" type="text" disabled />
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.CreatedDateTimeUtc" class="form-label"></label>
+            <input asp-for="@Model.CreatedDateTimeUtc" class="form-control" type="datetime" disabled />
+        </div>
+        <div class="mb-3">
+            <label asp-for="@Model.StateLastUpdatedDateTimeUtc" class="form-label"></label>
+            <input asp-for="@Model.StateLastUpdatedDateTimeUtc" class="form-control" type="datetime" disabled />
+        </div>
     </div>
 </form>
 

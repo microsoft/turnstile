@@ -9,6 +9,11 @@ namespace Turnstile.Core.Models
 {
     public class SubscriberInfo
     {
+        public SubscriberInfo() { }
+
+        public SubscriberInfo(string? tenantCountry) =>
+            TenantCountry = tenantCountry;
+
         [JsonProperty("tenant_country")]
         [JsonPropertyName("tenant_country")]
         [OpenApiProperty(Nullable = true, Description = "The subscriber's country")]

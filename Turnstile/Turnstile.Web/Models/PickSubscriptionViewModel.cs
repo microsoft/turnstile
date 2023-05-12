@@ -1,23 +1,17 @@
-﻿// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Turnstile.Core.Models;
+using Turnstile.Core.Models.Configuration;
 
 namespace Turnstile.Web.Models
 {
-    public class PickSubscriptionViewModel
+    public class PickSubscriptionViewModel : SubscriptionsViewModel
     {
         public PickSubscriptionViewModel() { }
 
-        public PickSubscriptionViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal forPrincipal, string? returnTo = null)
-        {
-            ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
-            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
+        public PickSubscriptionViewModel(PublisherConfiguration publisherConfig, IEnumerable<Subscription> subscriptions, ClaimsPrincipal userPrincipal, string? returnTo = null)
+            : base(publisherConfig, subscriptions, userPrincipal) =>
+            ReturnToUrl = returnTo;
 
-            Subscriptions = subscriptions.Select(s => new SubscriptionIdentityViewModel(s, forPrincipal, returnTo)).ToList();
-        }
-
-        public List<SubscriptionIdentityViewModel> Subscriptions { get; set; } = new List<SubscriptionIdentityViewModel>(); 
+        public string? ReturnToUrl { get; set; }
     }
 }

@@ -44,35 +44,23 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                if (publisherConfig?.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
                     setupAction != null)
                 {
                     return setupAction;
                 }
-
-                this.ApplyLayout(publisherConfig!, User!);
-
-                var subUser = User.ToCoreModel();
-                var subscriptions = new List<Subscription>();
-
-                if (User.CanAdministerTurnstile())
-                {
-                    subscriptions.AddRange(await subsClient.GetSubscriptions());
-                }
                 else
                 {
-                    var tenantSubs = await subsClient.GetSubscriptions(subUser.TenantId!);
-                    subscriptions.AddRange(tenantSubs.Where(s => User.CanAdministerSubscription(s)));
-                }
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                if (subscriptions.Any())
+                    var subUser = User.ToCoreModel();
 
-                {
-                    return View(new SubscriptionsViewModel(subscriptions));
-                }
-                else
-                {
-                    return RedirectToRoute(TurnstileController.RouteNames.OnNoSubscriptions);
+                    var subscriptions = (User.CanAdministerTurnstile()
+                        ? (await subsClient.GetSubscriptions())
+                        : (await subsClient.GetSubscriptions(subUser.TenantId)).Where(s => User.CanAdministerSubscription(s)))
+                        .ToList();
+
+                    return View(new SubscriptionsViewModel(publisherConfig!, subscriptions, User));
                 }
             }
             catch (Exception ex)
@@ -96,28 +84,29 @@ namespace Turnstile.Web.Controllers
                 {
                     return setupAction;
                 }
-
-                var subscription = await subsClient.GetSubscription(subscriptionId);
-
-                if (subscription == null)
-                {
-                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                }
-
-                var isTurnstileAdmin = User.CanAdministerTurnstile();
-                var isSubscriberAdmin = User.CanAdministerSubscription(subscription);
-
-                if (isTurnstileAdmin || isSubscriberAdmin)
-                {
-                    this.ApplyLayout(publisherConfig!, User!);
-
-                    var seats = await seatsClient.GetSeats(subscriptionId);
-
-                    return View(new SubscriptionDetailViewModel(subscription, seats, isTurnstileAdmin, isSubscriberAdmin));
-                }
                 else
                 {
-                    return Forbid();
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+
+                    var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                    if (subscription == null)
+                    {
+                        return NotFound();
+                    }
+                    else if (User.CanAdministerTurnstile() || User.CanAdministerSubscription(subscription))
+                    {
+                        var seats = await seatsClient.GetSeats(subscriptionId);
+
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription, User));
+                        ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
+
+                        return View(new SubscriptionDetailViewModel(subscription));
+                    }
+                    else
+                    {
+                        return Forbid();
+                    }
                 }
             }
             catch (Exception ex)
@@ -141,36 +130,44 @@ namespace Turnstile.Web.Controllers
                 {
                     return setupAction;
                 }
-
-                var subscription = await subsClient.GetSubscription(subscriptionId);
-
-                if (subscription == null)
+                else
                 {
-                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                }
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                if (User.CanAdministerSubscription(subscription))
-                {
-                    if (ModelState.IsValid)
+                    var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                    if (subscription == null)
                     {
-                        subscription.ApplyUpdate(subscriptionDetail);
+                        return NotFound();
+                    }
+                    else if (User.CanAdministerSubscription(subscription))
+                    {
+                        if (ModelState.IsValid)
+                        {
+                            subscription.ApplyUpdate(subscriptionDetail);
 
-                        await subsClient.UpdateSubscription(subscription);
+                            subscription = await subsClient.UpdateSubscription(subscription);
 
-                        subscriptionDetail.IsSubscriptionUpdated = true;
-                        subscriptionDetail.HasValidationErrors = false;
+                            subscriptionDetail.IsSubscriptionUpdated = true;
+                            subscriptionDetail.HasValidationErrors = false;
+                        }
+                        else
+                        {
+                            subscriptionDetail.IsSubscriptionUpdated = false;
+                            subscriptionDetail.HasValidationErrors = true;
+                        }
+
+                        var seats = await seatsClient.GetSeats(subscriptionId);
+
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
+                        ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription!, seats));
+
+                        return View(subscriptionDetail);
                     }
                     else
                     {
-                        subscriptionDetail.IsSubscriptionUpdated = false;
-                        subscriptionDetail.HasValidationErrors = true;
+                        return Forbid();
                     }
-
-                    return View(subscriptionDetail);
-                }
-                else
-                {
-                    return Forbid();
                 }
             }
             catch (Exception ex)
@@ -194,28 +191,28 @@ namespace Turnstile.Web.Controllers
                 {
                     return setupAction;
                 }
-
-                var subscription = await subsClient.GetSubscription(subscriptionId);
-
-                if (subscription == null)
-                {
-                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                }
-
-                if (subscription.State != SubscriptionStates.Active) // Seats can be reserved only in active subscriptions.
-                {
-                    return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId });
-                }
-
-                if (User.CanAdministerSubscription(subscription))
-                {
-                    this.ApplyLayout(publisherConfig!, User!);
-
-                    return View(new ReserveSeatViewModel(subscription));
-                }
                 else
                 {
-                    return Forbid();
+                    var subscription = await subsClient.GetSubscription(subscriptionId);
+
+                    if (subscription?.State != SubscriptionStates.Active)
+                    {
+                        // Either the subscription doesn't exist or it isn't active.
+                        // In either case, you can't reserve a seat in this subscription right now.
+
+                        return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId });
+                    }
+                    else if (User.CanAdministerSubscription(subscription))
+                    {
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription, User));
+
+                        return View(new ReserveSeatViewModel(subscription));
+                    }
+                    else
+                    {
+                        return Forbid();
+                    }
                 }
             }
             catch (Exception ex)
@@ -239,56 +236,59 @@ namespace Turnstile.Web.Controllers
                 {
                     return setupAction;
                 }
-
-                var subscription = await subsClient.GetSubscription(subscriptionId);
-
-                if (subscription == null)
+                else
                 {
-                    return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
-                }
+                    var subscription = await subsClient.GetSubscription(subscriptionId);
 
-                if (User.CanAdministerSubscription(subscription))
-                {
-                    if (!string.IsNullOrEmpty(model.ForEmail))
+                    if (subscription == null)
                     {
-                        var existingSeat = await seatsClient.GetSeatByEmail(subscriptionId, model.ForEmail!);
-
-                        if (existingSeat != null)
+                        return NotFound();
+                    }
+                    else if (User.CanAdministerSubscription(subscription))
+                    {
+                        if (!string.IsNullOrEmpty(model.ForEmail))
                         {
-                            ModelState.AddModelError(nameof(model.ForEmail), $"[{model.ForEmail!}] already has a seat in this subscription.");
+                            var existingSeat = await seatsClient.GetSeatByEmail(subscriptionId, model.ForEmail!);
+
+                            if (existingSeat != null)
+                            {
+                                ModelState.AddModelError(nameof(model.ForEmail), $"[{model.ForEmail!}] already has a seat in this subscription.");
+                            }
+                            else
+                            {
+                                var seat = await seatsClient.ReserveSeat(subscriptionId, new Reservation
+                                {
+                                    Email = model.ForEmail!,
+                                    InvitationUrl = CreateInvitationLink(subscriptionId, model.ForEmail!)
+                                });
+
+                                if (seat == null)
+                                {
+                                    ModelState.AddModelError(nameof(model.ForEmail), "No seats available to reserve in this subscription.");
+                                }
+                            }
+                        }
+
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+
+                        if (ModelState.IsValid)
+                        {
+                            return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId });
                         }
                         else
                         {
-                            var seat = await seatsClient.ReserveSeat(subscriptionId, new Reservation 
-                            { 
-                                Email = model.ForEmail!,
-                                InvitationUrl = CreateInvitationLink(subscriptionId, model.ForEmail!)
-                            });
+                            ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription, User));
 
-                            if (seat == null)
-                            {
-                                ModelState.AddModelError(nameof(model.ForEmail), "No seats available to reserve in this subscription.");
-                            }
+                            return View(model);
                         }
-                    }
-
-                    if (ModelState.IsValid)
-                    {
-                        return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId });
                     }
                     else
                     {
-                        this.ApplyLayout(publisherConfig!, User!);
+                        // Only the customer -- the subscription admin -- is allowed to reserve seats.
+                        // Not even the turnstile admin can reserve seats.
 
-                        return View(nameof(ReserveSeat), model);
+                        return Forbid();
                     }
-                }
-                else
-                {
-                    // Only the customer -- the subscription admin -- is allowed to reserve seats.
-                    // Not even the turnstile admin can reserve seats.
-
-                    return Forbid();
                 }
             }
             catch (Exception ex)

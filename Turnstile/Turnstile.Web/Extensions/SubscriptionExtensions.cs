@@ -1,4 +1,5 @@
-﻿using Turnstile.Core.Models;
+﻿using Newtonsoft.Json.Linq;
+using Turnstile.Core.Models;
 using Turnstile.Web.Models;
 
 namespace Turnstile.Web.Extensions
@@ -20,7 +21,8 @@ namespace Turnstile.Web.Extensions
             subscription.SubscriptionName = subscriptionDetail.SubscriptionName;
             subscription.TenantName = subscriptionDetail.TenantName;
             subscription.UserRoleName = subscriptionDetail.UserRoleName;
-            subscription.StateLastUpdatedDateTimeUtc = DateTime.UtcNow;
+
+            subscription.SubscriberInfo = new JObject(new SubscriberInfo(subscriptionDetail.TenantCountry));
 
             return subscription;
         }

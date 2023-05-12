@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.Identity.Web;
 using System.Security.Claims;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Extensions;
@@ -12,10 +11,9 @@ namespace Turnstile.Web.Models
     {
         public LayoutViewModel() { }
 
-        public LayoutViewModel(PublisherConfiguration publisherConfig, ClaimsPrincipal forPrincipal)
+        public LayoutViewModel(PublisherConfiguration publisherConfig, ClaimsPrincipal? forPrincipal)
         {
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
-            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
 
             TurnstileName = publisherConfig.TurnstileName;
             PublisherName = publisherConfig.PublisherName;
@@ -24,7 +22,7 @@ namespace Turnstile.Web.Models
             PrivacyNoticePageUrl = publisherConfig.PrivacyNoticePageUrl;
             ContactSalesUrl = publisherConfig.ContactSalesUrl;
             ContactSupportUrl = publisherConfig.ContactSupportUrl;
-            IsTurnstileAdmin = forPrincipal.CanAdministerTurnstile();
+            IsTurnstileAdmin = (forPrincipal?.CanAdministerTurnstile() == true);
         }
 
         public string? TurnstileName { get; set; }

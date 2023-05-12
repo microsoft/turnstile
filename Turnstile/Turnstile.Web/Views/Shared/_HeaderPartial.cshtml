@@ -3,11 +3,11 @@
 @using Turnstile.Web.Extensions
 
 @{
-    LayoutViewModel? headerModel = null;
+    BaseViewModel? headerModel = null;
 
-    if (ViewData.ContainsKey(nameof(LayoutViewModel)))
+    if (ViewData.ContainsKey(nameof(BaseViewModel)))
     {
-        headerModel = ViewData[nameof(LayoutViewModel)] as LayoutViewModel;
+        headerModel = ViewData[nameof(BaseViewModel)] as BaseViewModel;
     }
 }
 

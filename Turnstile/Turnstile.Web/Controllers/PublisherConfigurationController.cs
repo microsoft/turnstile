@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Turnstile.Core.Interfaces;
 using Turnstile.Web.Extensions;
+using Turnstile.Web.Models;
 using Turnstile.Web.Models.PublisherConfig;
 
 namespace Turnstile.Web.Controllers
@@ -46,7 +47,7 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
-                        this.ApplyLayout(publisherConfig, User!);
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                         return View(new BasicConfigurationViewModel(publisherConfig));
                     }
@@ -92,7 +93,7 @@ namespace Turnstile.Web.Controllers
                         basicConfig.HasValidationErrors = true;
                     }
 
-                    this.ApplyLayout(publisherConfig, User!);
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                     return View(basicConfig);
                 }
@@ -124,7 +125,7 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
-                        this.ApplyLayout(publisherConfig, User!);
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                         return View(new RedirectConfigurationViewModel(publisherConfig));
                     }
@@ -170,7 +171,7 @@ namespace Turnstile.Web.Controllers
                         redirectConfig.HasValidationErrors = true;
                     }
 
-                    this.ApplyLayout(publisherConfig, User!);
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                     return View(redirectConfig);
                 }
@@ -202,7 +203,7 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
-                        this.ApplyLayout(publisherConfig, User!);
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                         return View(new MonaConfigurationViewModel(publisherConfig));
                     }
@@ -249,7 +250,7 @@ namespace Turnstile.Web.Controllers
                         monaConfig.HasValidationErrors = true;
                     }
 
-                    this.ApplyLayout(publisherConfig, User!);
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                     return View(monaConfig);
                 }
@@ -281,7 +282,7 @@ namespace Turnstile.Web.Controllers
                     }
                     else
                     {
-                        this.ApplyLayout(publisherConfig, User!);
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                         return View(new SeatingConfigurationViewModel(publisherConfig));
                     }
@@ -327,7 +328,7 @@ namespace Turnstile.Web.Controllers
                         seatingConfig.HasValidationErrors = true;
                     }
 
-                    this.ApplyLayout(publisherConfig, User!);
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
 
                     return View(seatingConfig);
                 }
