@@ -1,54 +1,58 @@
 ﻿@using Turnstile.Core.Constants;
 @using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions;
+
 @model SubscriptionDetailViewModel
 
 @{
-    ViewData["Title"] = $"No seats available | {Model.SubscriptionName ?? Model.SubscriptionId} | Turnstile";
-    Layout = "_SubscriberLayout";
+    var seatingModel = ViewData.GetSeatingModel()!;
+    var subContextModel = ViewData.GetSubscriptionContextModel()!;
+
+    ViewData["Title"] = $"Manage subscription | Turnstile";
 
     bool CanUserEditSubscriptionName() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditTenantName() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditTenantCountry() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditAdminName() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditAdminEmail() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditAdminRole() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditUserRole() =>
-        (Model.UserIsSubscriberAdmin || Model.UserIsTurnstileAdmin) &&
-        (Model.State != SubscriptionStates.Canceled);
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditState() =>
-        Model.UserIsTurnstileAdmin &&
-        Model.State != SubscriptionStates.Canceled;
+        subContextModel.CanUserAdministerTurnstile &&
+        subContextModel.State != SubscriptionStates.Canceled;
 
     bool CanUserEditConfigurationState() =>
-        Model.UserIsTurnstileAdmin &&
-        Model.State != SubscriptionStates.Canceled;
+        subContextModel.CanUserAdministerTurnstile &&
+        subContextModel.State != SubscriptionStates.Canceled;
 
     bool CanUserEditOfferId() =>
-        Model.UserIsTurnstileAdmin &&
-        Model.State != SubscriptionStates.Canceled;
+        subContextModel.CanUserAdministerTurnstile &&
+        subContextModel.State != SubscriptionStates.Canceled;
 
     bool CanUserEditPlanId() =>
-        Model.UserIsTurnstileAdmin &&
-        Model.State != SubscriptionStates.Canceled;
+        subContextModel.CanUserAdministerTurnstile &&
+        subContextModel.State != SubscriptionStates.Canceled;
 }
 
 <h1>Manage subscription</h1>
@@ -56,30 +60,112 @@
 
 
 <div id="subscriptionAlerts">
-    @if (Model.State == SubscriptionStates.Canceled)
+    @if (subContextModel.State == SubscriptionStates.Canceled)
     {
-        <div class="alert alert-danger" role="alert">
-            <span>This subscription has been canceled.</span>
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-octagon-fill" viewBox="0 0 16 16">
+                <path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353L11.46.146zm-6.106 4.5L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708z" />
+            </svg>
+            <div>
+                <span>This subscription has been canceled.</span>
+                @if (subContextModel.CanUserAdministerSubscription)
+                {
+                    <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to purchase a new subscription or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                }
+            </div>
         </div>
     }
     else
     {
-        if (Model.State == SubscriptionStates.Suspended)
+        if (subContextModel.State == SubscriptionStates.Suspended)
         {
-            <div class="alert alert-warning" role="alert">
-                <span>This subscription has been temporarily suspended.</span>
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-exclamation-triangle-fill" viewBox="0 0 16 16">
+                    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+                </svg>
+                <div>
+                    <span>This subscription has been temporarily suspended.</span>
+                    @if (subContextModel.CanUserAdministerSubscription)
+                    {
+                        <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to reactivate your subscription or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                    }
+                </div>
             </div>
         }
-        else if (Model.State == SubscriptionStates.Purchased || Model.IsBeingConfigured)
+        else if (subContextModel.State == SubscriptionStates.Purchased || subContextModel.IsBeingConfigured)
         {
-            <div class="alert alert-warning" role="alert">
-                <span>This subscription is being configured and is temporarily unavailable.</span>
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hourglass-split" viewBox="0 0 16 16">
+                    <path d="M2.5 15a.5.5 0 1 1 0-1h1v-1a4.5 4.5 0 0 1 2.557-4.06c.29-.139.443-.377.443-.59v-.7c0-.213-.154-.451-.443-.59A4.5 4.5 0 0 1 3.5 3V2h-1a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-1v1a4.5 4.5 0 0 1-2.557 4.06c-.29.139-.443.377-.443.59v.7c0 .213.154.451.443.59A4.5 4.5 0 0 1 12.5 13v1h1a.5.5 0 0 1 0 1h-11zm2-13v1c0 .537.12 1.045.337 1.5h6.326c.216-.455.337-.963.337-1.5V2h-7zm3 6.35c0 .701-.478 1.236-1.011 1.492A3.5 3.5 0 0 0 4.5 13s.866-1.299 3-1.48V8.35zm1 0v3.17c2.134.181 3 1.48 3 1.48a3.5 3.5 0 0 0-1.989-3.158C8.978 9.586 8.5 9.052 8.5 8.351z" />
+                </svg>
+                <div>
+                    <span>This subscription is being configured and is temporarily unavailable.</span>
+                    @if (subContextModel.CanUserAdministerSubscription)
+                    {
+                        <span> Please try again later or @Html.Raw(subContextModel.ContactSupportHtml) if needed.</span>
+                    }
+                </div>
             </div>
         }
 
-
+        if (seatingModel.SubscriptionHasNoMoreSeats)
+        {
+            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-x" viewBox="0 0 16 16">
+                    <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm.256 7a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z" />
+                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-.646-4.854.646.647.646-.647a.5.5 0 0 1 .708.708l-.647.646.647.646a.5.5 0 0 1-.708.708l-.646-.647-.646.647a.5.5 0 0 1-.708-.708l.647-.646-.647-.646a.5.5 0 0 1 .708-.708Z" />
+                </svg>
+                <div>
+                    <span>This subscription has no more seats available.</span>
+                    @if (subContextModel.CanUserAdministerSubscription)
+                    {
+                        <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to purchase more seats or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                    }
+                </div>
+            </div>
+        }
+        else if (seatingModel.SubscriptionHasLimitedSeats)
+        {
+            <div class="alert alert-warning" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-exclamation" viewBox="0 0 16 16">
+                    <path d="M11 5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm.256 7a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z" />
+                    <path d="M16 12.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-3.5-2a.5.5 0 0 0-.5.5v1.5a.5.5 0 0 0 1 0V11a.5.5 0 0 0-.5-.5Zm0 4a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1Z" />
+                </svg>
+                <div>
+                    <span>This subscription is running out of seats. More than 75% of this subscription's seats are occupied.</span>
+                    @if (subContextModel.CanUserAdministerSubscription)
+                    {
+                        <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to purchase more seats or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                    }
+                </div>
+            </div>
+        }
     }
 </div>
+
+<ul class="nav nav-tabs" id="tabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-tab-pane" type="button" role="tab" aria-controls="basics-tab-pane" aria-selected="true">Basics</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">Seating</button>
+    </li>
+    @if (subContextModel.ManagementLinks.Any())
+    {
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More</a>
+            <ul class="dropdown-menu">
+                @foreach (var linkKey in subContextModel.ManagementLinks.Keys)
+                {
+                    <li>
+                        <a class="dropdown-item" href="@subContextModel.ManagementLinks[linkKey]">@linkKey</a>
+                    </li>
+                }
+            </ul>
+        </li>
+    }
+</ul>
+
 <form method="post">
     <div class="mb-3">
         <label asp-for="@Model.SubscriptionName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
@@ -225,32 +311,19 @@
         </div>
         <div class="mb-3">
             <label asp-for="@Model.SubscriptionId" class="form-label"></label>
-            <input asp-for="@Model.SubscriptionId" class="form-control" type="text" disabled />
+            <input asp-for="@Model.SubscriptionId" class="form-control-plaintext" type="text" readonly />
         </div>
         <div class="mb-3">
             <label asp-for="@Model.TenantId" class="form-label"></label>
-            <input asp-for="@Model.TenantId" class="form-control" type="text" disabled />
+            <input asp-for="@Model.TenantId" class="form-control-plaintext" type="text" readonly />
         </div>
         <div class="mb-3">
-            <label asp-for="@Model.CreatedDateTimeUtc" class="form-label"></label>
-            <input asp-for="@Model.CreatedDateTimeUtc" class="form-control" type="datetime" disabled />
+            <label asp-for="@subContextModel.CreatedUtc" class="form-label"></label>
+            <input asp-for="@subContextModel.CreatedUtc" class="form-control-plaintext" type="datetime" readonly />
         </div>
         <div class="mb-3">
-            <label asp-for="@Model.StateLastUpdatedDateTimeUtc" class="form-label"></label>
-            <input asp-for="@Model.StateLastUpdatedDateTimeUtc" class="form-control" type="datetime" disabled />
+            <label asp-for="@subContextModel.StateLastUpdatedUtc" class="form-label"></label>
+            <input asp-for="@subContextModel.StateLastUpdatedUtc" class="form-control-plaintext" type="datetime" readonly />
         </div>
     </div>
 </form>
-
-@*@if (Model.IsSubscriptionAdministrator)
-{
-    <lead>No more seats available. To purchase additional seats, @Html.Raw(Model.SalesContactHtml).</lead>
-}
-else
-{
-    <lead>No more seats available. For assistance, @Html.Raw(Model.SubscriptionAdminContactHtml).</lead>
-}*@
-
-<div style="margin-top: 20px">
-    <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
-</div>

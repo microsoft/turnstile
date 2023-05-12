@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Html;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
@@ -34,10 +35,19 @@ namespace Turnstile.Web.Models
             StateLastUpdatedUtc = subscription.StateLastUpdatedDateTimeUtc;
         }
 
+        [Display(Name = "Subscription ID")]
         public string? SubscriptionId { get; set; }
+
+        [Display(Name = "Subscription name")]
         public string? SubscriptionName { get; set; }
+
+        [Display(Name = "Subscription state")]
         public string? State { get; set; }
+
+        [Display(Name = "Tenant ID")]
         public string? TenantId { get; set; }
+
+        [Display(Name = "Tenant name")]
         public string? TenantName { get; set; }
 
         public bool IsBeingConfigured { get; set; } = false;
@@ -48,7 +58,10 @@ namespace Turnstile.Web.Models
         public HtmlString? ContactSupportHtml { get; set; }
         public HtmlString? ContactSubscriptionAdminHtml { get; set; }
 
+        [Display(Name = "Subscription created date/time (UTC)")]
         public DateTime? CreatedUtc { get; set; }
+
+        [Display(Name = "Subscription state last updated date/time (UTC)")]
         public DateTime? StateLastUpdatedUtc { get; set; }
 
         public Dictionary<string, string> ManagementLinks { get; set; } = new Dictionary<string, string>();

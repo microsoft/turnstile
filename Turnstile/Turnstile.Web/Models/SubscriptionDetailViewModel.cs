@@ -28,6 +28,7 @@ namespace Turnstile.Web.Models
             UserRoleName = subscription.UserRoleName;
             AdminName = subscription.AdminName;
             AdminEmail = subscription.AdminEmail;
+            IsBeingConfigured = (subscription.IsBeingConfigured == true);
 
             AvailableStates = new List<SelectListItem>(GetAvailableStates(subscription));
         }
@@ -72,6 +73,9 @@ namespace Turnstile.Web.Models
         [Display(Name = "Primary admin email")]
         [EmailAddress(ErrorMessage = "Subscription admin email is not a valid email address.")]
         public string? AdminEmail { get; set; }
+
+        [Display(Name = "Subscription is currently being configured")]
+        public bool IsBeingConfigured { get; set; }
 
         public bool IsSubscriptionUpdated { get; set; }
         public bool HasValidationErrors { get; set; }
