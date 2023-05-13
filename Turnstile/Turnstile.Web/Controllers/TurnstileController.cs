@@ -100,8 +100,8 @@ namespace Turnstile.Web.Controllers
 
                         return publisherConfig!.OnNoSubscriptionsFound();
                     }
-                    else if (availableSubs.OnlyOne())
-                    {
+                    else if (availableSubs.OnlyOne() && !User.CanAdministerSubscription(availableSubs.Single()))
+                    { 
                         return RedirectToRoute(
                             RouteNames.SpecificTurnstile,
                             returnTo == null ?
@@ -112,7 +112,7 @@ namespace Turnstile.Web.Controllers
                     {
                         ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                        return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(publisherConfig!, availableSubs, User, returnTo));
+                        return View(ViewNames.PickSubscription, new PickSubscriptionViewModel(availableSubs, User, returnTo));
                     }
                 }
             }
@@ -222,7 +222,7 @@ namespace Turnstile.Web.Controllers
                 else
                 {
                     ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(subscription!, User));
 
                     return View();
                 }
@@ -251,7 +251,7 @@ namespace Turnstile.Web.Controllers
                 else
                 {
                     ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(subscription!, User));
 
                     return View();
                 }
@@ -280,7 +280,7 @@ namespace Turnstile.Web.Controllers
                 else
                 {
                     ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(subscription!, User));
 
                     return View();
                 }
@@ -328,7 +328,7 @@ namespace Turnstile.Web.Controllers
                 else
                 {
                     ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                    ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
+                    ViewData.ApplyModel(new SubscriptionContextViewModel(subscription!, User));
 
                     return View();
                 }

@@ -1,8 +1,35 @@
-﻿@{
-    ViewData["Title"] = $"Reserve seat | {Model.SubscriptionName} | Turnstile";
+﻿@using Turnstile.Web.Controllers;
+
+@{
+    ViewData["Title"] = $"Reserve seat | Turnstile";
+
+    var urlBackToSubscriptions = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions);
+    var urlBackToSubscription = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+        new { subscriptionId = Model.SubscriptionId });
 }
 
 @model ReserveSeatViewModel
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@urlBackToSubscriptions">Subscriptions</a>
+        </li>
+        <li class="breadcrumb-item">
+            @if (string.IsNullOrEmpty(Model.SubscriptionName))
+            {
+                <a href="@urlBackToSubscription">Subscription</a>
+            }
+            else
+            {
+                <a href="@urlBackToSubscription">@Model.SubscriptionName</a>
+            }
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Reserve seat
+        </li>
+    </ol>
+</nav>
 
 <h1>Reserve seat</h1>
 <hr />
@@ -15,5 +42,8 @@
         <span asp-validation-for="@Model.ForEmail" class="text-danger"></span>
         <div id="forEmailHelp" class="form-text">The email address of the user you're reserving a seat for.</div>
     </div>
-    <button class="btn btn-primary" type="submit" style="margin-top: 20px">Reserve seat</button>
+    <span>
+        <button class="btn btn-primary" type="submit" style="margin-top: 20px">Reserve seat</button>
+        <a class="btn btn-light" href="@urlBackToSubscription">Cancel</a>
+    </span>
 </form>

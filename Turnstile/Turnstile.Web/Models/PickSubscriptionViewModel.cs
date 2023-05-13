@@ -8,8 +8,8 @@ namespace Turnstile.Web.Models
     {
         public PickSubscriptionViewModel() { }
 
-        public PickSubscriptionViewModel(PublisherConfiguration publisherConfig, IEnumerable<Subscription> subscriptions, ClaimsPrincipal userPrincipal, string? returnTo = null)
-            : base(publisherConfig, subscriptions, userPrincipal) =>
+        public PickSubscriptionViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal userPrincipal, string? returnTo = null)
+            : base(subscriptions, userPrincipal) =>
             ReturnToUrl = returnTo;
 
         public string? ReturnToUrl { get; set; }

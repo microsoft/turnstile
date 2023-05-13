@@ -1,0 +1,48 @@
+﻿@using Turnstile.Web.Controllers;
+@using Turnstile.Web.Extensions;
+
+@{
+    ViewData["Title"] = $"Release {Model.UserName}'s seat? | Turnstile";
+
+    var subContext = ViewData.GetSubscriptionContextModel()!;
+    var urlBackToSubscriptions = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions);
+    var urlBackToSubscription = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+        new { subscriptionId = subContext.SubscriptionId });
+}
+
+@model SeatViewModel
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@urlBackToSubscriptions">Subscriptions</a>
+        </li>
+        <li class="breadcrumb-item">
+            @if (string.IsNullOrEmpty(subContext.SubscriptionName))
+            {
+                <a href="@urlBackToSubscription">Subscription</a>
+            }
+            else
+            {
+                <a href="@urlBackToSubscription">@subContext.SubscriptionName</a>
+            }
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Release seat
+        </li>
+    </ol>
+</nav>
+
+<h1>Release seat?</h1>
+
+<p class="lead">
+    Are you sure you want to release @Model.UserName's seat?
+</p>
+
+<form asp-action="ReserveSeat" method="post">
+    <hidden asp-for="@Model.SeatId" />
+    <span>
+        <button class="btn btn-danger" type="submit" style="margin-top: 20px">Release seat</button>
+        <a class="btn btn-light" href="@urlBackToSubscription">Cancel</a>
+    </span>
+</form>

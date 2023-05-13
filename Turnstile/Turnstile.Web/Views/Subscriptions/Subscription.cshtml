@@ -5,10 +5,20 @@
 @model SubscriptionDetailViewModel
 
 @{
+    var layoutModel = ViewData.GetLayoutModel()!;
     var seatingModel = ViewData.GetSeatingModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
 
-    ViewData["Title"] = $"Manage subscription | Turnstile";
+    var allSubscriptionsUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions);
+
+    var reserveSeatUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, 
+        new { subscriptionId = subContextModel.SubscriptionId });
+
+    var subTitle = string.IsNullOrEmpty(subContextModel.SubscriptionName)
+        ? "Manage subscription | Turnstile"
+        : $"Manage {subContextModel.SubscriptionName} | Turnstile";
+
+    ViewData["Title"] = subTitle;
 
     bool CanUserEditSubscriptionName() =>
         (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
@@ -55,9 +65,26 @@
         subContextModel.State != SubscriptionStates.Canceled;
 }
 
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="@allSubscriptionsUrl">Subscriptions</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            @if (string.IsNullOrEmpty(subContextModel.SubscriptionName))
+            {
+                <span>Subscription</span>
+            }
+            else
+            {
+                <span>@subContextModel.SubscriptionName</span>
+            }
+        </li>
+    </ol>
+</nav>
+
 <h1>Manage subscription</h1>
 <hr />
-
 
 <div id="subscriptionAlerts">
     @if (Model.IsSubscriptionUpdated)
@@ -93,7 +120,7 @@
                 <span>This subscription has been canceled.</span>
                 @if (subContextModel.CanUserAdministerSubscription)
                 {
-                    <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to purchase a new subscription or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                    <span> Please @Html.Raw(layoutModel.ContactSalesHtml) to purchase a new subscription or @Html.Raw(layoutModel.ContactSupportHtml) for assistance.</span>
                 }
             </div>
         </div>
@@ -110,7 +137,7 @@
                     <span>This subscription has been temporarily suspended.</span>
                     @if (subContextModel.CanUserAdministerSubscription)
                     {
-                        <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to reactivate your subscription or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                        <span> Please @Html.Raw(layoutModel.ContactSalesHtml) to reactivate your subscription or @Html.Raw(layoutModel.ContactSupportHtml) for assistance.</span>
                     }
                 </div>
             </div>
@@ -125,7 +152,7 @@
                     <span>This subscription is being configured and is temporarily unavailable.</span>
                     @if (subContextModel.CanUserAdministerSubscription)
                     {
-                        <span> Please try again later or @Html.Raw(subContextModel.ContactSupportHtml) if needed.</span>
+                        <span> Please try again later or @Html.Raw(layoutModel.ContactSupportHtml) if needed.</span>
                     }
                 </div>
             </div>
@@ -142,7 +169,7 @@
                     <span>This subscription has no more seats available.</span>
                     @if (subContextModel.CanUserAdministerSubscription)
                     {
-                        <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to purchase more seats or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                        <span> Please @Html.Raw(layoutModel.ContactSalesHtml) to purchase more seats or @Html.Raw(layoutModel.ContactSupportHtml) for assistance.</span>
                     }
                 </div>
             </div>
@@ -158,7 +185,7 @@
                     <span>This subscription is running out of seats. More than 75% of this subscription's seats are occupied.</span>
                     @if (subContextModel.CanUserAdministerSubscription)
                     {
-                        <span> Please @Html.Raw(subContextModel.ContactSalesHtml) to purchase more seats or @Html.Raw(subContextModel.ContactSupportHtml) for assistance.</span>
+                        <span> Please @Html.Raw(layoutModel.ContactSalesHtml) to purchase more seats or @Html.Raw(layoutModel.ContactSupportHtml) for assistance.</span>
                     }
                 </div>
             </div>
@@ -175,14 +202,12 @@
     </li>
     @if (subContextModel.CanUserAdministerSubscription && !seatingModel.SubscriptionHasNoMoreSeats)
     {
-        <li class="nav-item">
-            <a class="nav-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = subContextModel.SubscriptionId })">Reserve seat</a>
-        </li>
+        <li class="nav-item"><a class="nav-link" href="@reserveSeatUrl">Reserve seat</a></li>
     }
     @if (subContextModel.ManagementLinks.Any())
     {
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More links</a>
+            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">More</a>
             <ul class="dropdown-menu">
                 @foreach (var linkKey in subContextModel.ManagementLinks.Keys)
                 {
@@ -364,35 +389,38 @@
         </form>
     </div>
     <div class="tab-pane fade" id="seating-tab-pane" role="tabpanel" aria-labelledby="seating-tab" tabindex="0">
-        @{
-            string GetCardClass(SeatViewModel seat) =>
-                seat.IsReserved
-                ? "card text-bg-secondary"
-                : seat.IsLimited
-                  ? "card text-bg-warning"
-                  : "card text-bg-primary";
-
-            string GetCardHeader(SeatViewModel seat) =>
-                seat.IsReserved
-                ? "Reserved seat"
-                : seat.IsLimited
-                  ? "Limited seat"
-                  : "Standard seat";
-
-            foreach (var seat in seatingModel.Seats.OrderByDescending(s => s.DateCreatedUtc))
-            {
-                <div class="@GetCardClass(seat)">
-                    <div class="card-header">@GetCardHeader(seat)</div>
-                    <div class="card-body">
-                        <h5 class="card-title">@seat.UserName</h5>
-                    </div>
-                    <a href="#" class="card-link">Release seat</a>
-                    @if (!string.IsNullOrEmpty(seat.UserEmail))
-                    {
-                        <a href="mailto:@seat.UserEmail">Contact user</a>
-                    }
-                </div>
-            }
-        }
+       <table class="table">
+           <tbody>
+                @foreach (var seat in seatingModel.Seats)
+                {
+                    <tr>
+                        <td>
+                            @seat.UserName <br />
+                            <small>@seat.SeatId</small>
+                        </td>
+                        <td>
+                            @if (seat.IsReserved)
+                            {
+                                <span class="badge text-bg-secondary">Reserved</span>
+                            }
+                            else if (seat.IsLimited)
+                            {
+                                <span class="badge text-bg-warning">Limited</span>
+                            }
+                        </td>
+                        <td>
+                            <span>
+                                <a class="btn btn-primary" href="mailto:@seat.UserEmail">Contact user »</a>
+                            </span>
+                            <span>
+                                <a class="btn btn-danger" 
+                                   href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReleaseSeat, 
+                                                       new { subscriptionId = subContextModel.SubscriptionId, seatId = seat.SeatId })">Release seat »</a>
+                            </span>
+                        </td>
+                    </tr>
+                }
+           </tbody>
+       </table>
     </div>
 </div>

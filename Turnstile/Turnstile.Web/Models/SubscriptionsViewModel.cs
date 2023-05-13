@@ -11,13 +11,12 @@ namespace Turnstile.Web.Models
     {
         public SubscriptionsViewModel() { }
 
-        public SubscriptionsViewModel(PublisherConfiguration publisherConfig, IEnumerable<Subscription> subscriptions, ClaimsPrincipal userPrincipal)
+        public SubscriptionsViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal userPrincipal)
         {
-            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
             ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
             ArgumentNullException.ThrowIfNull(userPrincipal, nameof(userPrincipal));
 
-            Subscriptions = subscriptions.Select(s => new SubscriptionContextViewModel(publisherConfig, s, userPrincipal)).ToList();
+            Subscriptions = subscriptions.Select(s => new SubscriptionContextViewModel(s, userPrincipal)).ToList();
         }
 
         public List<SubscriptionContextViewModel> Subscriptions { get; set; } = new List<SubscriptionContextViewModel>();

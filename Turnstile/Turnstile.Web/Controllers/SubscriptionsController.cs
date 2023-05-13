@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow.Layouts;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
@@ -16,6 +17,7 @@ namespace Turnstile.Web.Controllers
         {
             public const string GetSubscription = "subscription";
             public const string GetSubscriptions = "subscriptions";
+            public const string GetReleaseSeat = "release_seat";
             public const string GetReserveSeat = "reserve_seat";
         }
 
@@ -60,7 +62,7 @@ namespace Turnstile.Web.Controllers
                         : (await subsClient.GetSubscriptions(subUser.TenantId)).Where(s => User.CanAdministerSubscription(s)))
                         .ToList();
 
-                    return View(new SubscriptionsViewModel(publisherConfig!, subscriptions, User));
+                    return View(new SubscriptionsViewModel(subscriptions, User));
                 }
             }
             catch (Exception ex)
@@ -98,7 +100,7 @@ namespace Turnstile.Web.Controllers
                     {
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription, User));
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
                         ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
 
                         return View(new SubscriptionDetailViewModel(subscription));
@@ -159,7 +161,7 @@ namespace Turnstile.Web.Controllers
 
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription!, User));
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription!, User));
                         ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription!, seats));
 
                         return View(subscriptionDetail);
@@ -173,6 +175,91 @@ namespace Turnstile.Web.Controllers
             catch (Exception ex)
             {
                 logger.LogError($"Exception @ POST [{nameof(Subscription)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
+        [HttpGet]
+        [Route("subscriptions/{subscriptionId}/seats/{seatId}/release", Name = RouteNames.GetReleaseSeat)]
+        public async Task<IActionResult> ReleaseSeat(string subscriptionId, string seatId)
+        {
+            try
+            {
+                var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+                else
+                {
+                    var subscription = await subsClient.GetSubscription(subscriptionId);
+                    var seat = await seatsClient.GetSeat(subscriptionId, seatId);
+
+                    if (subscription == null || seat == null)
+                    {
+                        return NotFound();
+                    }
+                    else if (User.CanAdministerSubscription(subscription))
+                    {
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
+
+                        return View(new SeatViewModel(seat));
+                    }
+                    else
+                    {
+                        return Forbid();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ GET [{nameof(ReleaseSeat)}]: [{ex.Message}]");
+
+                throw;
+            }
+        }
+
+        [HttpPost]
+        [Route("subscriptions/{subscriptionId}/seats/{seatId}/release")]
+        public async Task<IActionResult> ReleaseSeat(string subscriptionId, string seatId, [FromBody] SeatViewModel model)
+        {
+            try
+            {
+                var publisherConfig = await publisherConfigClient.GetConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+                else
+                {
+                    var subscription = await subsClient.GetSubscription(subscriptionId);
+                    var seat = await seatsClient.GetSeat(subscriptionId, seatId);
+
+                    if (subscription == null || seat == null)
+                    {
+                        return NotFound();
+                    }
+                    else if (User.CanAdministerSubscription(subscription))
+                    {
+                        await seatsClient.ReleaseSeat(subscriptionId, seatId);
+
+                        return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId });
+                    }
+                    else
+                    {
+                        return Forbid();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Exception @ POST [{nameof(ReleaseSeat)}]: [{ex.Message}]");
 
                 throw;
             }
@@ -200,12 +287,12 @@ namespace Turnstile.Web.Controllers
                         // Either the subscription doesn't exist or it isn't active.
                         // In either case, you can't reserve a seat in this subscription right now.
 
-                        return RedirectToRoute(RouteNames.GetSubscription, new { subscriptionId });
+                        return NotFound();
                     }
                     else if (User.CanAdministerSubscription(subscription))
                     {
                         ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription, User));
+                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
 
                         return View(new ReserveSeatViewModel(subscription));
                     }
@@ -277,7 +364,7 @@ namespace Turnstile.Web.Controllers
                         }
                         else
                         {
-                            ViewData.ApplyModel(new SubscriptionContextViewModel(publisherConfig!, subscription, User));
+                            ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
 
                             return View(model);
                         }

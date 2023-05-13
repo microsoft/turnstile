@@ -1,75 +1,247 @@
 ﻿@using Turnstile.Core.Constants
 @using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions;
 
 @{
-    ViewData["Title"] = "Subscriptions | Turnstile";
-
-    string ChooseRowClass(SubscriptionRowViewModel subscription)
-    {
-        return subscription.State switch
-        {
-            SubscriptionStates.Canceled => "table-danger",
-            SubscriptionStates.Suspended => "table-warning",
-            SubscriptionStates.Purchased => "table-success",
-            _ => string.Empty
-        };
-    }
-
-    string DescribeState(SubscriptionRowViewModel subscription)
-    {
-        return subscription.State switch
-        {
-            SubscriptionStates.Active => "Active",
-            SubscriptionStates.Canceled => "Canceled",
-            SubscriptionStates.Suspended => "Suspended",
-            SubscriptionStates.Purchased => "Provisioning",
-            _ => throw new InvalidOperationException($"Subscription state [{subscription.State}] not supported.")
-        };
-    }
+    ViewData["Title"] = "Manage subscriptions | Turnstile";
 }
 
 @model SubscriptionsViewModel
 
-<h1>Subscriptions</h1>
+<h1>Manage subscriptions</h1>
 <hr />
 
-<table class="table">
-    <thead>
-        <tr>
-            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.SubscriptionName})">Name</a></th>
-            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.TenantName})">Tenant Name</a></th>
-            <th colspan="2"><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.State})">State</a></th>
-            <th><a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions, new { sort = SubscriptionsController.SortableFields.CreatedDate})">Created</a></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var subscription in @Model.Subscriptions)
+@{
+    var layoutModel = ViewData.GetLayoutModel()!;
+
+    var activeSubscriptions = Model.Subscriptions
+        .Where(s => s.State == SubscriptionStates.Active ||
+                    s.State == SubscriptionStates.Purchased)
+        .ToList();
+
+    var suspendedSubscriptions = Model.Subscriptions
+        .Where(s => s.State == SubscriptionStates.Suspended)
+        .ToList();
+
+    var canceledSubscriptions = Model.Subscriptions
+        .Where(s => s.State == SubscriptionStates.Canceled)
+        .ToList();
+}
+
+<ul class="nav nav-tabs" id="subTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-tab-pane" type="button" role="tab" aria-controls="active-tab-pane" aria-selected="true">
+            Active
+            @if (activeSubscriptions.Any())
+            {
+                <span>&nbsp;<span class="badge text-bg-danger">@activeSubscriptions.Count</span></span>
+            }
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="suspended-tab" data-bs-toggle="tab" data-bs-target="#suspended-tab-pane" type="button" role="tab" aria-controls="active-tab-pane" aria-selected="false">
+            Suspended
+            @if (suspendedSubscriptions.Any())
+            {
+                <span>&nbsp;<span class="badge text-bg-danger">@suspendedSubscriptions.Count</span></span>
+            }
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="canceled-tab" data-bs-toggle="tab" data-bs-target="#canceled-tab-pane" type="button" role="tab" aria-controls="canceled-tab-pane" aria-selected="false">
+            Canceled
+            @if (canceledSubscriptions.Any())
+            {
+                <span>&nbsp;<span class="badge text-bg-danger">@canceledSubscriptions.Count</span></span>
+            }
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="subPanes">
+    <div class="tab-pane fade show active" id="active-tab-pane" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
+        @if (activeSubscriptions.Any())
         {
-            <tr class="@ChooseRowClass(subscription)">
-                <td>
-                    <a class="dark-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId })">@subscription.SubscriptionName</a> <br />
-                    <small class="text-muted">@subscription.SubscriptionId</small>
-                </td>
-                <td>
-                    @(subscription.TenantName ?? subscription.TenantId) <br />
-                    <small class="text-muted">@subscription.TenantId</small>
-                </td>
-                <td>
-                    @DescribeState(subscription) <br />
-                    <small class="text-muted">as of @subscription.StateLastUpdatedDateTimeUtc!.Value.ToString("g") UTC</small>
-                </td>
-                <td>
-                    @if (subscription.IsBeingConfigured == true)
+            <table class="table">
+                <thead>
+                    <tr>
+                        @if (layoutModel.IsTurnstileAdmin)
+                        {
+                            <th>Tenant</th>
+                        }
+                        <th colspan="2">Subscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in activeSubscriptions)
                     {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
-                            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
-                        </svg>
+                        var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
+                        var canUse = (!isBeingConfigured && sub.CanUserAdministerSubscription);
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = sub.SubscriptionId });
+                        var useUrl = Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile, new { subscriptionId = sub.SubscriptionId });
+
+                        <tr>
+                            @if (sub.CanUserAdministerTurnstile)
+                            {
+                                <td>
+                                    <span>@sub.TenantName</span> <br />
+                                    <small>@sub.TenantId</small>
+                                </td>
+                            }
+                            <td>
+                                @if (string.IsNullOrEmpty(sub.SubscriptionName))
+                                {
+                                    <span>@sub.SubscriptionId</span>
+                                }
+                                else
+                                {
+                                    <span>@sub.SubscriptionName</span> <br />
+                                    <small>@sub.SubscriptionId</small>
+                                }
+                            </td>
+                            <td>
+                                @if (isBeingConfigured)
+                                {
+                                    <span title="This subscription is being configured is temporarily unavailable.">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                                            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                                        </svg>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span>
+                                    <a class="btn btn-primary" href="@manageUrl" role="button">Manage</a>
+                                    @if (canUse)
+                                    {
+                                        <a class="btn btn-secondary" href="@useUrl" role="button">Use</a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-secondary" href="#" role="button" disabled>Use</a>
+                                    }
+                                </span>
+                            </td>
+                        </tr>
                     }
-                </td>
-                <td>
-                    @subscription.CreatedDateTimeUtc!.Value.ToString("g") UTC
-                </td>
-            </tr>
+                </tbody>
+            </table>
         }
-    </tbody>
-</table>
+        else
+        {
+            <div class="alert alert-secondary" role="alert">
+                No active subscriptions.
+                @if (!layoutModel.IsTurnstileAdmin)
+                {
+                    <span> To buy one, <span>@layoutModel.ContactSalesHtml</span>.</span>
+                }
+            </div>
+        }
+    </div>
+    <div class="tab-pane fade" id="suspended-tab-pane" role="tabpanel" aria-labelledby="suspended-tab" tabindex="0">
+        @if (suspendedSubscriptions.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        @if (layoutModel.IsTurnstileAdmin)
+                        {
+                            <th>Tenant</th>
+                        }
+                        <th colspan="2">Subscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in suspendedSubscriptions)
+                    {
+                        var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = sub.SubscriptionId });
+
+                        <tr>
+                            @if (sub.CanUserAdministerTurnstile)
+                            {
+                                <td>
+                                    <span>@sub.TenantName</span> <br />
+                                    <small>@sub.TenantId</small>
+                                </td>
+                            }
+                            <td>
+                                @if (string.IsNullOrEmpty(sub.SubscriptionName))
+                                {
+                                    <span>@sub.SubscriptionId</span>
+                                }
+                                else
+                                {
+                                    <span>@sub.SubscriptionName</span> <br />
+                                    <small>@sub.SubscriptionId</small>
+                                }
+                            </td>
+                            <td>
+                                <span>
+                                    <a class="btn btn-primary" href="@manageUrl" role="button">Manage</a>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-secondary" role="alert">No suspended subscriptions. That's good!</div>
+        }
+    </div>
+    <div class="tab-pane fade" id="canceled-tab-pane" role="tabpanel" aria-labelledby="canceled-tab" tabindex="0">
+        @if (suspendedSubscriptions.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        @if (layoutModel.IsTurnstileAdmin)
+                        {
+                            <th>Tenant</th>
+                        }
+                        <th colspan="2">Subscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in suspendedSubscriptions)
+                    {
+                        var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = sub.SubscriptionId });
+
+                        <tr>
+                            @if (sub.CanUserAdministerTurnstile)
+                            {
+                                <td>
+                                    <span>@sub.TenantName</span> <br />
+                                    <small>@sub.TenantId</small>
+                                </td>
+                            }
+                            <td>
+                                @if (string.IsNullOrEmpty(sub.SubscriptionName))
+                                {
+                                    <span>@sub.SubscriptionId</span>
+                                }
+                                else
+                                {
+                                    <span>@sub.SubscriptionName</span> <br />
+                                    <small>@sub.SubscriptionId</small>
+                                }
+                            </td>
+                            <td>
+                                <span>
+                                    <a class="btn btn-primary" href="@manageUrl" role="button">Manage</a>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-secondary" role="alert">No canceled subscriptions. That's good!</div>
+        }
+    </div>
+</div>

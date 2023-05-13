@@ -1,20 +1,22 @@
 ﻿@using Turnstile.Web.Controllers
-@model SubscriptionMessageViewModel
+@using Turnstile.Web.Extensions;
 
 @{
-    ViewData["Title"] = $"Subscription suspended | {Model.SubscriptionName ?? Model.SubscriptionId} | Turnstile";
-    Layout = "_SubscriberLayout";
+    var layoutModel = ViewData.GetLayoutModel()!;
+    var subContextModel = ViewData.GetSubscriptionContextModel()!;
+
+    ViewData["Title"] = "Subscription suspended | Turnstile";
 }
 
 <h1>Subscription suspended</h1>
 
 @if (Model.IsSubscriptionAdministrator)
 {
-    <lead>This subscription has been suspended. For assistance, @Html.Raw(Model.SupportContactHtml).</lead>
+    <lead>This subscription has been suspended. For assistance, @Html.Raw(layoutModel.ContactSupportHtml).</lead>
 }
 else
 {
-    <lead>This subscription has been suspended. For assistance, @Html.Raw(Model.SubscriptionAdminContactHtml).</lead>
+    <lead>This subscription has been suspended. For assistance, @Html.Raw(subContextModel.ContactSubscriptionAdminHtml).</lead>
 }
 
 <div style="margin-top: 20px">

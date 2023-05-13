@@ -1,13 +1,14 @@
 ﻿@using Turnstile.Web.Controllers
-@model SubscriptionMessageViewModel
+@using Turnstile.Web.Extensions;
 
 @{
+    var layoutModel = ViewData.GetLayoutModel()!;
+
     ViewData["Title"] = "No subscriptions available | Turnstile";
-    Layout = "_SubscriberLayout";
 }
 
 <h1>No subscriptions available</h1>
-<lead>But that can change! To subscribe, @Html.Raw(Model.SalesContactHtml).</lead>
+<lead>But that can change! To subscribe, @Html.Raw(layoutModel.ContactSalesHtml).</lead>
 
 <div style="margin-top: 20px">
     <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
