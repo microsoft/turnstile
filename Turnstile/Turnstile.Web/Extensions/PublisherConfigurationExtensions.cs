@@ -17,6 +17,7 @@ namespace Turnstile.Web.Extensions
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
             ArgumentNullException.ThrowIfNull(basicConfig, nameof(basicConfig));
 
+            publisherConfig.AppUrl = basicConfig.AppUrl;
             publisherConfig.ContactPageUrl = basicConfig.ContactPageUrl;
             publisherConfig.ContactSalesEmail = basicConfig.ContactSalesEmail;
             publisherConfig.ContactSalesUrl = basicConfig.ContactSalesUrl;
@@ -69,7 +70,6 @@ namespace Turnstile.Web.Extensions
 
             publisherConfig.SeatingConfiguration ??= new SeatingConfiguration();
             publisherConfig.SeatingConfiguration.LimitedOverflowSeatingEnabled = seatingConfig.LimitedOverflowSeatingEnabled;
-            publisherConfig.SeatingConfiguration.SeatingStrategyName = seatingConfig.SeatingStrategyName;
 
             return publisherConfig;
         }
@@ -131,7 +131,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionCanceled,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -150,7 +150,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionSuspended,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -169,7 +169,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionNotReady,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -188,7 +188,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionNotFound,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -224,7 +224,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnNoSeatsAvailable,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -239,9 +239,9 @@ namespace Turnstile.Web.Extensions
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
-            return new RedirectResult(MergeSubscriptionId(
-                publisherConfig.TurnstileConfiguration!.OnAccessGrantedUrl!,
-                subscriptionId));
+            var appUrl = publisherConfig.AppUrl ?? publisherConfig.TurnstileConfiguration?.OnAccessGrantedUrl;
+
+            return new RedirectResult(MergeSubscriptionId(appUrl!, subscriptionId));
         }
 
         private static string MergeSubscriptionId(string intoString, string subscriptionId) =>

@@ -42,6 +42,12 @@
         <div id="turnstileNameHelp" class="form-text">The name of the SaaS app that Turnstile will be managing seats for</div>
     </div>
     <div class="mb-3">
+        <label asp-for="@Model.AppUrl" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+        <input asp-for="@Model.AppUrl" class="form-control" type="url" aria-describedby="appUrlHelp" />
+        <span asp-validation-for="@Model.AppUrl" class="text-danger"></span>
+        <div id="appUrlHelp" class="form-text">The SaaS app's main URL</div>
+    </div>
+    <div class="mb-3">
         <label asp-for="@Model.PublisherName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
         <input asp-for="@Model.PublisherName" class="form-control" type="text" aria-describedby="publisherNameHelp" />
         <span asp-validation-for="@Model.PublisherName" class="text-danger"></span>
@@ -49,7 +55,7 @@
     </div>
     <div class="mb-3">
         <label asp-for="@Model.HomePageUrl" class="form-label">&nbsp;<span class="text-danger">*</span></label>
-        <input asp-for="@Model.HomePageUrl" class="form-control" type="text" aria-describedby="homePageHelp" />
+        <input asp-for="@Model.HomePageUrl" class="form-control" type="url" aria-describedby="homePageHelp" />
         <span asp-validation-for="@Model.HomePageUrl" class="text-danger"></span>
         <div id="homePageHelp" class="form-text">The URL of the SaaS app publisher's home page</div>
     </div>

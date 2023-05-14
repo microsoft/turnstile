@@ -161,7 +161,7 @@ namespace Turnstile.Web.Controllers
                     case SeatResultCodes.SubscriptionSuspended:
                         return publisherConfig!.OnSubscriptionSuspended(subscriptionId);
                     case SeatResultCodes.SubscriptionNotReady:
-                        return publisherConfig!.OnSubscriptionNotReady(subscriptionId); // TODO: Create default "not ready" page. The default route doesn't go anywhere yet.
+                        return publisherConfig!.OnSubscriptionNotReady(subscriptionId);
                     case SeatResultCodes.SubscriptionNotFound:
                         return publisherConfig!.OnSubscriptionNotFound(subscriptionId);
                     case SeatResultCodes.SeatProvided:

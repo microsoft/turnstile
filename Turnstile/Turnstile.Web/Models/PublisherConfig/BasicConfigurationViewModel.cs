@@ -13,6 +13,7 @@ namespace Turnstile.Web.Models.PublisherConfig
 
             TurnstileName = publisherConfig.TurnstileName;
             PublisherName = publisherConfig.PublisherName;
+            AppUrl = publisherConfig.AppUrl;
             HomePageUrl = publisherConfig.HomePageUrl;
             ContactPageUrl = publisherConfig.ContactPageUrl;
             PrivacyNoticePageUrl = publisherConfig.PrivacyNoticePageUrl;
@@ -25,6 +26,11 @@ namespace Turnstile.Web.Models.PublisherConfig
         [Display(Name = "App name")]
         [Required(ErrorMessage = "App name is required.")]
         public string? TurnstileName { get; set; }
+
+        [Display(Name = "Main app URL")]
+        [Required(ErrorMessage = "Main app URL is required.")]
+        [Url(ErrorMessage = "Main app URL is invalid.")]
+        public string? AppUrl { get; set; }
 
         [Display(Name = "Publisher name")]
         [Required(ErrorMessage = "Publisher name is required.")]

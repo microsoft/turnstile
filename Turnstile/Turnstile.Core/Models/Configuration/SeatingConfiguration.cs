@@ -14,7 +14,7 @@ namespace Turnstile.Core.Models.Configuration
         [JsonPropertyName("seating_strategy_name")]
         [JsonProperty("seating_strategy_name")]
         [OpenApiProperty(Nullable = false, Description = "The strategy used by this turnstile to provide seats; either [first_come_first_served] or [monthly_active_user]")]
-        public string? SeatingStrategyName { get; set; }
+        public string? SeatingStrategyName { get; set; } = SeatingStrategies.FirstComeFirstServed;
 
         [JsonPropertyName("low_seat_warning_level_pct")]
         [JsonProperty("low_seat_warning_level_pct")]

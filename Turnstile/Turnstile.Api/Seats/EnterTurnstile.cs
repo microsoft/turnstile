@@ -1,9 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Azure.Messaging.EventGrid;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -14,9 +16,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
+using Turnstile.Core.Models.Events.V_2022_03_18;
 using Turnstile.Services.Clients;
 using static System.Environment;
 using static Turnstile.Core.Constants.EnvironmentVariableNames;
@@ -26,9 +31,12 @@ namespace Turnstile.Api.Seats
     public class EnterTurnstile
     {
         private readonly HttpClient httpClient;
+        private readonly ITurnstileRepository turnstileRepo;
 
-        public EnterTurnstile()
+        public EnterTurnstile(ITurnstileRepository turnstileRepo)
         {
+            this.turnstileRepo = turnstileRepo;
+
             httpClient = new HttpClient();
 
             httpClient.BaseAddress = new Uri(
@@ -47,6 +55,7 @@ namespace Turnstile.Api.Seats
         [FunctionName("EnterTurnstile")]
         public async Task<IActionResult> RunEnterTurnstile(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "saas/subscriptions/{subscriptionId}/entry")] HttpRequest req,
+            [EventGrid(TopicEndpointUri = EventGrid.EndpointUrl, TopicKeySetting = EventGrid.AccessKey)] IAsyncCollector<EventGridEvent> events,
             string subscriptionId, ILogger log)
         {
             try
@@ -60,12 +69,11 @@ namespace Turnstile.Api.Seats
 
                 var seatRequest = JsonConvert.DeserializeObject<SeatRequest>(httpContent);
 
-                if (string.IsNullOrEmpty(seatRequest.RequestId) ||
-                    string.IsNullOrEmpty(seatRequest.UserId) ||
+                if (string.IsNullOrEmpty(seatRequest.UserId) ||
                     string.IsNullOrEmpty(seatRequest.TenantId) ||
                     seatRequest.EmailAddresses.None())
                 {
-                    return new BadRequestObjectResult("[request_id], [user_id], [tenant_id], and at least one [email(s)] are required.");
+                    return new BadRequestObjectResult("[user_id], [tenant_id], and at least one [email(s)] are required.");
                 }
 
                 log.LogInformation(
@@ -88,6 +96,8 @@ namespace Turnstile.Api.Seats
                         $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
                         $"for user [{seatRequest.UserId}]. User does not have access to this subscription.");
 
+                    await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.AccessDenied).ToEventGridEvent());
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.AccessDenied, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Purchased ||  // Is the subscription being configured?
@@ -97,6 +107,8 @@ namespace Turnstile.Api.Seats
                         $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
                         $"for user [{seatRequest.UserId}]. Subscription is not ready.");
 
+                    await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.SubscriptionNotReady).ToEventGridEvent());
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotReady, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Suspended)    // Is the subscription suspended?
@@ -104,6 +116,8 @@ namespace Turnstile.Api.Seats
                     log.LogInformation(
                        $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
                        $"for user [{seatRequest.UserId}]. Subscription is [{subscription.State}].");
+
+                    await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.SubscriptionSuspended).ToEventGridEvent());
 
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionSuspended, subscription));
                 }
@@ -113,6 +127,8 @@ namespace Turnstile.Api.Seats
                        $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
                        $"for user [{seatRequest.UserId}]. Subscription is [{subscription.State}].");
 
+                    await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.SubscriptionCanceled).ToEventGridEvent());
+
                     return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionCanceled, subscription));
                 }
                 else
@@ -120,7 +136,13 @@ namespace Turnstile.Api.Seats
                     // Alright, subscription looks good and we've confirmed that they have access to it.
                     // Let's try and get them a seat...
 
-                    return new OkObjectResult(await TryGetSeat(subscription, seatRequest, log));
+                    var seatResult = await TryGetSeat(subscription, seatRequest, log);
+
+                    await events.AddAsync(seatResult.ResultCode == SeatResultCodes.SeatProvided
+                        ? new AdmissionGranted(subscription, seatResult.Seat, seatRequest).ToEventGridEvent()
+                        : new AdmissionDenied(subscription, seatRequest, seatResult.ResultCode).ToEventGridEvent());
+
+                    return new OkObjectResult(seatResult);
                 }
             }
             catch (Exception ex)
@@ -140,7 +162,7 @@ namespace Turnstile.Api.Seats
                 UserId = seatRequest.UserId,
                 Email = seatRequest.EmailAddresses.First(),
                 TenantId = seatRequest.TenantId,
-                UserName = seatRequest.EmailAddresses.First()
+                UserName = seatRequest.UserName ?? seatRequest.EmailAddresses.First()
             };
 
             var seat = await seatsClient.GetSeatByUserId(subscription.SubscriptionId!, user.UserId!);

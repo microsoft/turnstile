@@ -51,10 +51,7 @@ namespace Turnstile.Core.Models.Configuration
 
         public IEnumerable<string> Validate()
         {
-            if (string.IsNullOrEmpty(OnAccessGrantedUrl))
-            {
-                yield return "[on_access_granted_url] is required.";
-            }
+            yield break;
         }
     }
 }

@@ -9,6 +9,8 @@ namespace Turnstile.Core.Constants
         public const string SeatProvided = "seat_provided";
         public const string SeatReleased = "seat_released";
         public const string SeatReserved = "seat_reserved";
+        public const string AdmissionGranted = "admission_granted";
+        public const string AdmissionDenied = "admission_denied";
         public const string NoSeatsAvailable = "no_seats_available";
         public const string SeatingWarningLeavelReached = "seat_warning_level_reached";
         public const string SubscriptionUpdated = "subscription_updated";
