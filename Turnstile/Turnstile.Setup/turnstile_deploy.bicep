@@ -179,9 +179,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   }
 }
 
-resource configStorageContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
-  name: '${storageAccount.name}/default/${configStorageContainerName}'
-}
+resource configStorageContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = { parent: storageAccount, name: 'default/${configStorageContainerName}' }
 
 resource eventStoreContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
   name: '${storageAccount.name}/default/${eventStoreContainerName}'
@@ -300,6 +298,14 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
     serverFarmId: appServicePlan.id
     siteConfig: {
       appSettings: [
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: appInsights.properties.InstrumentationKey
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: 'InstrumentationKey=${appInsights.properties.InstrumentationKey}'
+        }
         {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
