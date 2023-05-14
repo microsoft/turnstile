@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs;
 using System;
 using System.Threading.Tasks;
 using Turnstile.Core.Extensions;
+using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Events.V_2022_03_18;
 
