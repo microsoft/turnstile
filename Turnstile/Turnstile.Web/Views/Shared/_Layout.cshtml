@@ -2,6 +2,10 @@
 @using Turnstile.Web.Controllers
 @using Turnstile.Web.Extensions
 
+@{
+    var layoutModel = ViewData.GetLayoutModel();
+}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,50 +51,85 @@
             overflow-y: hidden;
         }
 
-        .nav-scroller .nav {
-            display: flex;
-            flex-wrap: nowrap;
-            padding-bottom: 1rem;
-            margin-top: -1px;
-            overflow-x: auto;
-            white-space: nowrap;
-            text-align: center;
-            -webkit-overflow-scrolling: touch;
-        }
+            .nav-scroller .nav {
+                display: flex;
+                flex-wrap: nowrap;
+                padding-bottom: 1rem;
+                margin-top: -1px;
+                overflow-x: auto;
+                white-space: nowrap;
+                text-align: center;
+                -webkit-overflow-scrolling: touch;
+            }
     </style>
 </head>
 <body>
     <div class="col-lg-8 mx-auto p-4 py-md-5">
+        @if (layoutModel?.IsTurnstileAdmin == true)
+        {
+            <nav class="navbar navbar-expand-lg bg-body-tertiary">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Turnstile</a>
+                </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navItems" aria-controls="navItems" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navItems">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions)">Subscriptions</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Settings
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="@Url.RouteUrl(PublisherConfigurationController.RouteNames.ConfigureBasics)">Basic setup</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.RouteUrl(PublisherConfigurationController.RouteNames.ConfigureSeatingStrategy)">Seating strategy</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.RouteUrl(PublisherConfigurationController.RouteNames.ConfigureUserRedirection)">User redirection</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.RouteUrl(PublisherConfigurationController.RouteNames.ConfigureMonaIntegration)">Mona integration</a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        }
         <main>
             @RenderBody()
         </main>
         <footer class="pt-5 my-5 text-muted border-top">
             <div class="float-start">
                 @{
-                    var footerModel = ViewData.GetLayoutModel();
-
-                    if (footerModel != null)
+                    if (layoutModel != null)
                     {
-                        if (!string.IsNullOrEmpty(footerModel.PublisherName))
+                        if (!string.IsNullOrEmpty(layoutModel.PublisherName))
                         {
-                            if (string.IsNullOrEmpty(footerModel.HomePageUrl))
+                            if (string.IsNullOrEmpty(layoutModel.HomePageUrl))
                             {
-                                <span>&copy; @DateTime.UtcNow.Year @footerModel.PublisherName </span>
+                                <span>&copy; @DateTime.UtcNow.Year @layoutModel.PublisherName </span>
                             }
                             else
                             {
-                                <span>&copy; @DateTime.UtcNow.Year <a href="@footerModel.HomePageUrl">@footerModel.PublisherName</a> </span>
+                                <span>&copy; @DateTime.UtcNow.Year <a href="@layoutModel.HomePageUrl">@layoutModel.PublisherName</a> </span>
                             }
 
-                            if (!string.IsNullOrEmpty(footerModel.ContactPageUrl))
+                            if (!string.IsNullOrEmpty(layoutModel.ContactPageUrl))
                             {
-                                <span>&middot; <a href="@footerModel.ContactPageUrl">Contact</a></span>
+                                <span>&middot; <a href="@layoutModel.ContactPageUrl">Contact</a></span>
                             }
                         }
 
-                        if (!string.IsNullOrEmpty(footerModel.PrivacyNoticePageUrl))
+                        if (!string.IsNullOrEmpty(layoutModel.PrivacyNoticePageUrl))
                         {
-                            <span>&middot; <a href="@footerModel.PrivacyNoticePageUrl">Privacy</a></span>
+                            <span>&middot; <a href="@layoutModel.PrivacyNoticePageUrl">Privacy</a></span>
                         }
                     }
                 }

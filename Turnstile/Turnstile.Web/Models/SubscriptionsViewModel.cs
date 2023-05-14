@@ -3,7 +3,6 @@
 
 using System.Security.Claims;
 using Turnstile.Core.Models;
-using Turnstile.Core.Models.Configuration;
 
 namespace Turnstile.Web.Models
 {

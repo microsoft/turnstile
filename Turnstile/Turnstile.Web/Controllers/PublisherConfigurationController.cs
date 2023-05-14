@@ -33,7 +33,7 @@ namespace Turnstile.Web.Controllers
         }
 
         [HttpGet, Route("config/basics", Name = RouteNames.ConfigureBasics)]
-        public async Task<IActionResult> GetConfigureBasics()
+        public async Task<IActionResult> ConfigureBasics()
         {
             try
             {
@@ -59,14 +59,14 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ GET [{nameof(GetConfigureBasics)}]: [{ex.Message}].");
+                logger.LogError($"Exception @ GET [{nameof(ConfigureBasics)}]: [{ex.Message}].");
 
                 throw;
             }
         }
 
         [HttpPost, Route("config/basics")]
-        public async Task<IActionResult> PostConfigureBasics([FromForm] BasicConfigurationViewModel basicConfig)
+        public async Task<IActionResult> ConfigureBasics([FromForm] BasicConfigurationViewModel basicConfig)
         {
             try
             {
@@ -81,6 +81,8 @@ namespace Turnstile.Web.Controllers
                     else if (ModelState.IsValid)
                     {
                         publisherConfig.Apply(basicConfig);
+
+                        publisherConfig.IsSetupComplete = true; // The basics are all we need to get started.
 
                         await publisherConfigClient.UpdateConfiguration(publisherConfig);
 
@@ -104,14 +106,14 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ POST [{nameof(PostConfigureBasics)}: [{ex.Message}]");
+                logger.LogError($"Exception @ POST [{nameof(ConfigureBasics)}: [{ex.Message}]");
 
                 throw;
             }
         }
 
         [HttpGet, Route("config/redirection", Name = RouteNames.ConfigureUserRedirection)]
-        public async Task<IActionResult> GetConfigureUserRedirection()
+        public async Task<IActionResult> ConfigureUserRedirection()
         {
             try
             {
@@ -137,14 +139,14 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ GET [{nameof(GetConfigureBasics)}]: [{ex.Message}].");
+                logger.LogError($"Exception @ GET [{nameof(ConfigureUserRedirection)}]: [{ex.Message}].");
 
                 throw;
             }
         }
 
         [HttpPost, Route("config/redirection")]
-        public async Task<IActionResult> PostConfigureUserRedirection([FromForm] RedirectConfigurationViewModel redirectConfig)
+        public async Task<IActionResult> ConfigureUserRedirection([FromForm] RedirectConfigurationViewModel redirectConfig)
         {
             try
             {
@@ -182,14 +184,14 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ POST [{nameof(PostConfigureUserRedirection)}: [{ex.Message}]");
+                logger.LogError($"Exception @ POST [{nameof(ConfigureUserRedirection)}: [{ex.Message}]");
 
                 throw;
             }
         }
 
         [HttpGet, Route("config/mona", Name = RouteNames.ConfigureMonaIntegration)]
-        public async Task<IActionResult> GetConfigureMonaIntegration()
+        public async Task<IActionResult> ConfigureMonaIntegration()
         {
             try
             {
@@ -215,7 +217,7 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ GET [{nameof(GetConfigureMonaIntegration)}]: [{ex.Message}].");
+                logger.LogError($"Exception @ GET [{nameof(ConfigureMonaIntegration)}]: [{ex.Message}].");
 
                 throw;
             }
@@ -223,7 +225,7 @@ namespace Turnstile.Web.Controllers
 
 
         [HttpPost, Route("config/redirection")]
-        public async Task<IActionResult> PostConfigureMonaIntegration([FromForm] MonaConfigurationViewModel monaConfig)
+        public async Task<IActionResult> ConfigureMonaIntegration([FromForm] MonaConfigurationViewModel monaConfig)
         {
             try
             {
@@ -261,14 +263,14 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ POST [{nameof(PostConfigureMonaIntegration)}: [{ex.Message}]");
+                logger.LogError($"Exception @ POST [{nameof(ConfigureMonaIntegration)}: [{ex.Message}]");
 
                 throw;
             }
         }
 
         [HttpGet, Route("config/seating", Name = RouteNames.ConfigureSeatingStrategy)]
-        public async Task<IActionResult> GetConfigureSeatingStrategy()
+        public async Task<IActionResult> ConfigureSeatingStrategy()
         {
             try
             {
@@ -294,14 +296,14 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ GET [{nameof(GetConfigureSeatingStrategy)}]: [{ex.Message}].");
+                logger.LogError($"Exception @ GET [{nameof(ConfigureSeatingStrategy)}]: [{ex.Message}].");
 
                 throw;
             }
         }
 
         [HttpPost, Route("config/redirection")]
-        public async Task<IActionResult> PostConfigureSeatingStrategy([FromForm] SeatingConfigurationViewModel seatingConfig)
+        public async Task<IActionResult> ConfigureSeatingStrategy([FromForm] SeatingConfigurationViewModel seatingConfig)
         {
             try
             {
@@ -339,7 +341,7 @@ namespace Turnstile.Web.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError($"Exception @ POST [{nameof(PostConfigureSeatingStrategy)}: [{ex.Message}]");
+                logger.LogError($"Exception @ POST [{nameof(ConfigureSeatingStrategy)}: [{ex.Message}]");
 
                 throw;
             }

@@ -1,0 +1,79 @@
+﻿@using Turnstile.Web.Models.PublisherConfig;
+
+@{
+    ViewData["Title"] = "User redirection | Turnstile";
+}
+
+@model RedirectConfigurationViewModel
+
+<h1>Seating strategy</h1>
+<lead>Depending on the outcome of a user trying to obtain a seat in a subscription, the turnstile will redirect them to an appropriate endpoint. These settings allow you to configure what those endpoints are.</lead>
+<hr />
+
+<div id="configAlerts">
+    @if (Model.IsConfigurationSaved)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+            </svg>
+            <div>
+                <span>Mona integration settings saved.</span>
+            </div>
+        </div>
+    }
+    else if (Model.HasValidationErrors)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-octagon-fill" viewBox="0 0 16 16">
+                <path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353L11.46.146zm-6.106 4.5L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708z" />
+            </svg>
+            <div>
+                <span>Please review errors below.</span>
+            </div>
+        </div>
+    }
+</div>
+
+<form method="post">
+    <div class="mb-3">
+        <label class="form-label">On <b>no seats available</b> URL</label>
+        <input asp-for="@Model.OnNoSeatsAvailableUrl" type="url" class="form-control" aria-describedBy="onNoSeatsHelp" />
+        <span asp-validation-for="@Model.OnNoSeatsAvailableUrl" class="text-danger"></span>
+        <div id="onAccessGrantedHelp" class="form-text">If no seats are available, where should the user be redirected to?</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">On <b>subscription not ready</b> URL</label>
+        <input asp-for="@Model.OnSubscriptionPurchasedUrl" type="url" class="form-control" aria-describedBy="onNotReadyHelp" />
+        <span asp-validation-for="@Model.OnSubscriptionPurchasedUrl" class="text-danger"></span>
+        <div id="onNotReadyHelp" class="form-text">If the subscription isn't currently ready (e.g., it's being configured), where should the user be redirected to?</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">On <b>subscription suspended</b> URL</label>
+        <input asp-for="@Model.OnSubscriptionSuspendedUrl" type="url" class="form-control" aria-describedBy="onSuspendedHelp" />
+        <span asp-validation-for="@Model.OnSubscriptionSuspendedUrl" class="text-danger"></span>
+        <div id="onSuspendedHelp" class="form-text">If the subscription has been suspended (e.g., for non-payment), where should the user be redirected to?</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">On <b>subscription canceled</b> URL</label>
+        <input asp-for="@Model.OnSubscriptionCanceledUrl" type="url" class="form-control" aria-describedBy="onCanceledHelp" />
+        <span asp-validation-for="@Model.OnSubscriptionCanceledUrl" class="text-danger"></span>
+        <div id="onCanceledHelp" class="form-text">If the subscription has been canceled, where should the user be redirected to?</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">On <b>subscription not found</b> URL</label>
+        <input asp-for="@Model.OnSubscriptionNotFoundUrl" type="url" class="form-control" aria-describedBy="onNotFoundHelp" />
+        <span asp-validation-for="@Model.OnSubscriptionNotFoundUrl" class="text-danger"></span>
+        <div id="onCanceledHelp" class="form-text">If the requested subscription can't be found, where should the user be redirected to?</div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">On <b>no subscriptions available</b> URL</label>
+        <input asp-for="@Model.OnNoSubscriptionsFoundUrl" type="url" class="form-control" aria-describedBy="onNoSubsHelp" />
+        <span asp-validation-for="@Model.OnNoSubscriptionsFoundUrl" class="text-danger"></span>
+        <div id="onNoSubsHelp" class="form-text">If the user doesn't have any available subscriptions, where should they be redirected to?</div>
+    </div>
+    <hr />
+    <div style="margin-top: 20px; margin-bottom: 20px">
+        <button type="submit" class="btn btn-outline-primary">Save settings</button>
+    </div>
+</form>

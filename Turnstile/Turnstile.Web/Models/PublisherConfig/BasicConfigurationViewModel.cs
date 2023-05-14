@@ -22,8 +22,8 @@ namespace Turnstile.Web.Models.PublisherConfig
             ContactSupportEmail = publisherConfig.ContactSupportEmail;
         }
 
-        [Display(Name = "Turnstile name")]
-        [Required(ErrorMessage = "Turnstile name is required.")]
+        [Display(Name = "App name")]
+        [Required(ErrorMessage = "App name is required.")]
         public string? TurnstileName { get; set; }
 
         [Display(Name = "Publisher name")]

@@ -1,0 +1,59 @@
+﻿@using Turnstile.Web.Models.PublisherConfig;
+
+@{
+    ViewData["Title"] = "Mona integration | Turnstile";
+}
+
+@model MonaConfigurationViewModel
+
+<h1>Mona integration</h1>
+<hr />
+
+<div id="configAlerts">
+    @if (Model.IsConfigurationSaved)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle-fill" viewBox="0 0 16 16">
+                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+            </svg>
+            <div>
+                <span>Mona integration settings saved.</span>
+            </div>
+        </div>
+    }
+    else if (Model.HasValidationErrors)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-octagon-fill" viewBox="0 0 16 16">
+                <path d="M11.46.146A.5.5 0 0 0 11.107 0H4.893a.5.5 0 0 0-.353.146L.146 4.54A.5.5 0 0 0 0 4.893v6.214a.5.5 0 0 0 .146.353l4.394 4.394a.5.5 0 0 0 .353.146h6.214a.5.5 0 0 0 .353-.146l4.394-4.394a.5.5 0 0 0 .146-.353V4.893a.5.5 0 0 0-.146-.353L11.46.146zm-6.106 4.5L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708z" />
+            </svg>
+            <div>
+                <span>Please review errors below.</span>
+            </div>
+        </div>
+    }
+</div>
+
+<form method="post">
+    <div class="mb-3">
+        <label asp-for="@Model.MonaIntegrationBaseStorageUrl" class="form-label"></label>
+        <input asp-for="@Model.MonaIntegrationBaseStorageUrl" class="form-control" type="url" aria-describedby="monaStorageUrlHelp" />
+        <span asp-validation-for="@Model.MonaIntegrationBaseStorageUrl" class="text-danger"></span>
+        <div id="monaStorageUrlHelp" class="form-text">The Mona storage account's base URL</div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="@Model.DefaultMonaSubscriptionState" class="form-label"></label>
+        <select asp-for="@Model.DefaultMonaSubscriptionState" asp-items="@Model.DefaultMonaSubscriptionStates" class="form-select" aria-describedby="monaStateHelp" />
+        <span asp-validation-for="@Model.DefaultMonaSubscriptionState" class="text-danger"></span>
+        <div id="publisherNameHelp" class="form-text">The default state of a subscription forwarded from Mona</div>
+    </div>
+    <div class="mb-3 form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.MonaSubscriptionIsBeingConfigured" aria-described-by="monaSubscriptionIsBeingConfiguredHelp" />
+        <label asp-for="@Model.MonaSubscriptionIsBeingConfigured" class="form-check-label"></label>
+        <div id="monaSubscriptionIsBeingConfiguredHelp" class="form-text">Indicates whether or not a subscription forwarded from Mona is currently being configured</div>
+    </div>
+    <hr />
+    <div style="margin-top: 20px; margin-bottom: 20px">
+        <button type="submit" class="btn btn-outline-primary">Save settings</button>
+    </div>
+</form>
