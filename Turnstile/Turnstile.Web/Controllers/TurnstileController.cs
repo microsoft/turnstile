@@ -100,7 +100,9 @@ namespace Turnstile.Web.Controllers
 
                         return publisherConfig!.OnNoSubscriptionsFound();
                     }
-                    else if (availableSubs.OnlyOne() && !User.CanAdministerSubscription(availableSubs.Single()))
+                    else if (availableSubs.OnlyOne(s => !User.CanAdministerSubscription(s))) // If there's only one subscription and the user
+                                                                                             // can administer it, we redirect them to the subscription
+                                                                                             // picker page so they can choose to either use or manage it.
                     { 
                         return RedirectToRoute(
                             RouteNames.SpecificTurnstile,
@@ -352,7 +354,7 @@ namespace Turnstile.Web.Controllers
                 // to support different kinds of accounts (including B2C, et al.) but, for right now, we just do organizational accounts. If we happen to get an MSA,
                 // we just redirect them to the front door of the customer's SaaS app to let them handle them.
 
-                return Redirect(publisherConfig!.TurnstileConfiguration!.OnAccessGrantedUrl!);
+                return Redirect(publisherConfig!.AppUrl ?? publisherConfig!.TurnstileConfiguration!.OnAccessGrantedUrl!);
             }
 
             return null;
