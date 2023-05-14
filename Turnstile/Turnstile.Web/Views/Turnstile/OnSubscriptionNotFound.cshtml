@@ -4,7 +4,7 @@
 @{
     var layoutModel = ViewData.GetLayoutModel()!;
 
-    ViewData["Title"] = "Subscription not found | Turnstile";
+    ViewData["Title"] = $"Subscription not found | {layoutModel.TurnstileName}";
 }
 
 <h1>Subscription not found</h1>

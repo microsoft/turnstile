@@ -5,7 +5,7 @@
     var layoutModel = ViewData.GetLayoutModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
 
-    ViewData["Title"] = "Subscription suspended | Turnstile";
+    ViewData["Title"] = $"Subscription suspended | {layoutModel.TurnstileName}";
 }
 
 <h1>Subscription suspended</h1>

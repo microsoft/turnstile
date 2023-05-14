@@ -16,7 +16,7 @@ namespace Turnstile.Web.Models
         {
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
 
-            TurnstileName = publisherConfig.TurnstileName;
+            TurnstileName = publisherConfig.TurnstileName ?? "Turnstile";
             PublisherName = publisherConfig.PublisherName;
             HomePageUrl = publisherConfig.HomePageUrl;
             ContactPageUrl = publisherConfig.ContactPageUrl;

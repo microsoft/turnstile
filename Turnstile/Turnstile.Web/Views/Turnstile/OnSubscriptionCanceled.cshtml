@@ -1,11 +1,11 @@
 ﻿@using Turnstile.Web.Controllers
-@using Turnstile.Web.Extensions;
+@using Turnstile.Web.Extensions
 
 @{
     var layoutModel = ViewData.GetLayoutModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
 
-    ViewData["Title"] = "Subscription canceled | Turnstile";
+    ViewData["Title"] = $"Subscription canceled | {layoutModel.TurnstileName}";
 }
 
 <h1>Subscription canceled</h1>

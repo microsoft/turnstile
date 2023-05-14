@@ -105,7 +105,7 @@ namespace Turnstile.Api.Utilities
                 }
                 else
                 {
-                    log.LogWarning($"Publisher configuration blob not found. Health check failed.");
+                    log.LogWarning($"Publisher configuration container not found. Health check failed.");
 
                     return false;
                 }

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Serialization.HybridRow.Layouts;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;

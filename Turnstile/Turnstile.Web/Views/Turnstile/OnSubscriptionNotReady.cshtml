@@ -4,7 +4,7 @@
 @{
     var layoutModel = ViewData.GetLayoutModel()!;
 
-    ViewData["Title"] = "Subscription not ready | Turnstile";
+    ViewData["Title"] = $"Subscription not ready | {layoutModel.TurnstileName}";
 }
 
 <h1>Subscription not ready</h1>

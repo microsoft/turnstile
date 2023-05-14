@@ -5,7 +5,7 @@
     var layoutModel = ViewData.GetLayoutModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
 
-    ViewData["Title"] = "No seats available | Turnstile";
+    ViewData["Title"] = $"No seats available | {layoutModel.TurnstileName}";
 }
 
 <h1>No seats available</h1>

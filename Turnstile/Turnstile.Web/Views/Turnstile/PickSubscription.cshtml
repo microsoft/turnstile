@@ -1,10 +1,13 @@
 ﻿@using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions
+
 @model PickSubscriptionViewModel
 
 @{
-    ViewData["Title"] = "Choose subscription | Turnstile";
-
+    var layoutModel = ViewData.GetLayoutModel()!;
     var manageableSubs = Model.Subscriptions.Where(s => s.CanUserAdministerSubscription).ToList();
+
+    ViewData["Title"] = $"Choose subscription | {layoutModel.TurnstileName}";
 }
 
 <h1>Please choose a subscription</h1>
@@ -48,11 +51,11 @@
                 @foreach (var subscription in manageableSubs)
                 {
                     var manageSubUrl = Url.RouteUrl(
-                    SubscriptionsController.RouteNames.GetSubscription,
-                    new { subscriptionId = subscription.SubscriptionId });
+                        SubscriptionsController.RouteNames.GetSubscription,
+                        new { subscriptionId = subscription.SubscriptionId });
 
                     <a href="@manageSubUrl" class="list-group-item list-group-item-action">
-                        <span><b>Manage</b> @subscription.SubscriptionName</span>
+                        <span><b>Manage</b> @subscription.SubscriptionName </span>
                         <br /><small class="text-muted">@subscription.SubscriptionId</small>
                     </a>
                 }

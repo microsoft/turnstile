@@ -1,4 +1,5 @@
-﻿@using Turnstile.Web.Models.PublisherConfig;
+﻿@using Turnstile.Web.Controllers;
+@using Turnstile.Web.Models.PublisherConfig;
 
 @{
     ViewData["Title"] = "User redirection | Turnstile";
@@ -38,37 +39,43 @@
 <form method="post">
     <div class="mb-3">
         <label class="form-label">On <b>no seats available</b> URL</label>
-        <input asp-for="@Model.OnNoSeatsAvailableUrl" type="url" class="form-control" aria-describedBy="onNoSeatsHelp" />
+        <input asp-for="@Model.OnNoSeatsAvailableUrl" type="url" class="form-control" aria-describedBy="onNoSeatsHelp"
+               placeholder="@Url.RouteUrl(TurnstileController.RouteNames.OnNoSeatsAvailable, new { subscriptionId = "subscription-id" })" />
         <span asp-validation-for="@Model.OnNoSeatsAvailableUrl" class="text-danger"></span>
         <div id="onAccessGrantedHelp" class="form-text">If no seats are available, where should the user be redirected to?</div>
     </div>
     <div class="mb-3">
         <label class="form-label">On <b>subscription not ready</b> URL</label>
-        <input asp-for="@Model.OnSubscriptionPurchasedUrl" type="url" class="form-control" aria-describedBy="onNotReadyHelp" />
+        <input asp-for="@Model.OnSubscriptionPurchasedUrl" type="url" class="form-control" aria-describedBy="onNotReadyHelp"
+               placeholder="@Url.RouteUrl(TurnstileController.RouteNames.OnSubscriptionNotReady, new { subscriptionId = "subscription-id" })" />
         <span asp-validation-for="@Model.OnSubscriptionPurchasedUrl" class="text-danger"></span>
         <div id="onNotReadyHelp" class="form-text">If the subscription isn't currently ready (e.g., it's being configured), where should the user be redirected to?</div>
     </div>
     <div class="mb-3">
         <label class="form-label">On <b>subscription suspended</b> URL</label>
-        <input asp-for="@Model.OnSubscriptionSuspendedUrl" type="url" class="form-control" aria-describedBy="onSuspendedHelp" />
+        <input asp-for="@Model.OnSubscriptionSuspendedUrl" type="url" class="form-control" aria-describedBy="onSuspendedHelp"
+               placeholder="@Url.RouteUrl(TurnstileController.RouteNames.OnSubscriptionSuspended, new { subscriptionId = "subscription-id" })" />
         <span asp-validation-for="@Model.OnSubscriptionSuspendedUrl" class="text-danger"></span>
         <div id="onSuspendedHelp" class="form-text">If the subscription has been suspended (e.g., for non-payment), where should the user be redirected to?</div>
     </div>
     <div class="mb-3">
         <label class="form-label">On <b>subscription canceled</b> URL</label>
-        <input asp-for="@Model.OnSubscriptionCanceledUrl" type="url" class="form-control" aria-describedBy="onCanceledHelp" />
+        <input asp-for="@Model.OnSubscriptionCanceledUrl" type="url" class="form-control" aria-describedBy="onCanceledHelp"
+               placeholder="@Url.RouteUrl(TurnstileController.RouteNames.OnSubscriptionCanceled, new { subscriptionId = "subscription-id" })" />
         <span asp-validation-for="@Model.OnSubscriptionCanceledUrl" class="text-danger"></span>
         <div id="onCanceledHelp" class="form-text">If the subscription has been canceled, where should the user be redirected to?</div>
     </div>
     <div class="mb-3">
         <label class="form-label">On <b>subscription not found</b> URL</label>
-        <input asp-for="@Model.OnSubscriptionNotFoundUrl" type="url" class="form-control" aria-describedBy="onNotFoundHelp" />
+        <input asp-for="@Model.OnSubscriptionNotFoundUrl" type="url" class="form-control" aria-describedBy="onNotFoundHelp"
+               placeholder="@Url.RouteUrl(TurnstileController.RouteNames.OnSubscriptionNotFound, new { subscriptionId = "subscription-id" })" />
         <span asp-validation-for="@Model.OnSubscriptionNotFoundUrl" class="text-danger"></span>
         <div id="onCanceledHelp" class="form-text">If the requested subscription can't be found, where should the user be redirected to?</div>
     </div>
     <div class="mb-3">
         <label class="form-label">On <b>no subscriptions available</b> URL</label>
-        <input asp-for="@Model.OnNoSubscriptionsFoundUrl" type="url" class="form-control" aria-describedBy="onNoSubsHelp" />
+        <input asp-for="@Model.OnNoSubscriptionsFoundUrl" type="url" class="form-control" aria-describedBy="onNoSubsHelp"
+               placeholder="@Url.RouteUrl(TurnstileController.RouteNames.OnNoSubscriptions)" />
         <span asp-validation-for="@Model.OnNoSubscriptionsFoundUrl" class="text-danger"></span>
         <div id="onNoSubsHelp" class="form-text">If the user doesn't have any available subscriptions, where should they be redirected to?</div>
     </div>
