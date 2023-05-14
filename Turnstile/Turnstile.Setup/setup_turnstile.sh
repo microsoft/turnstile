@@ -40,10 +40,10 @@ readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() {
     echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
-    echo "          [-i integration_pack] [-H flag: headless]"
+    echo "         [-i integration_pack] [-H flag: headless]"
     echo 
     echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
-    echo "            -i \"default\" -H" 
+    echo "         -i \"default\" -H" 
 }
 
 check_az() {
