@@ -66,16 +66,24 @@ check_dotnet() {
 check_deployment_region() {
     region=$1
 
-    region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
-
-    if [[ -z $region_display_name ]]; then
-        echo "❌   [$region] is not a valid Azure region, but these are..."
+    if [[ -z $region ]]; then
+        echo "❌   Deployment region <-r> is required. Please choose a region and try again..."
         echo
         az account list-locations --output table --query "[].name"
         echo
         return 1
     else
-        echo "✔   [$region] is a valid Azure region ($region_display_name)."
+        region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
+
+        if [[ -z $region_display_name ]]; then
+            echo "❌   [$region] is not a valid Azure region, but these are..."
+            echo
+            az account list-locations --output table --query "[].name"
+            echo
+            return 1
+        else
+            echo "✔   [$region] is a valid Azure region ($region_display_name)."
+        fi
     fi
 }
 
@@ -112,6 +120,7 @@ check_turnstile_health() {
 
 splash() {
     echo "Turnstile | $turnstile_version"
+    echo "Your SaaS app's friendly automated usher."
     echo "https://github.com/microsoft/turnstile"
     echo
     echo "🧪   End-to-end test runner"

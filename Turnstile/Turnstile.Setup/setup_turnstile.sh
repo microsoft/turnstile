@@ -38,7 +38,13 @@ readonly APP_SERVICE_SKUS=(
 
 readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
-usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
+usage() {
+    echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
+    echo "          [-i integration_pack] [-H flag: headless]"
+    echo 
+    echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
+    echo "            -i \"default\" -H" 
+}
 
 check_az() {
     az version >/dev/null
@@ -118,16 +124,24 @@ check_app_service_sku() {
 check_deployment_region() {
     region=$1
 
-    region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
-
-    if [[ -z $region_display_name ]]; then
-        echo "❌   [$region] is not a valid Azure region, but these are..."
-        echo
-        az account list-locations --output table --query "[].name"
-        echo
-        return 1
+    if [[ -z $region ]]; then
+         echo "❌   Deployment region <-r> is required. Please choose a region and try again..."
+            echo
+            az account list-locations --output table --query "[].name"
+            echo
+            return 1
     else
-        echo "✔   [$region] is a valid Azure region ($region_display_name)."
+        region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
+
+        if [[ -z $region_display_name ]]; then
+            echo "❌   [$region] is not a valid Azure region, but these are..."
+            echo
+            az account list-locations --output table --query "[].name"
+            echo
+            return 1
+        else
+            echo "✔   [$region] is a valid Azure region ($region_display_name)."
+        fi
     fi
 }
 
@@ -136,6 +150,10 @@ check_deployment_name() {
 
     if [[ $name =~ ^[a-z0-9]{5,13}$ ]]; then
         echo "✔   [$name] is a valid Turnstile deployment name."
+        return 0
+    elif [[ -z $name ]]; then
+        echo "❌   Turnstile deployment name is required. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
+        return 1
     else
         echo "❌   [$name] is not a valid Turnstile deployment name. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
         return 1
@@ -144,6 +162,7 @@ check_deployment_name() {
 
 splash() {
     echo "Turnstile | $TURNSTILE_VERSION"
+    echo "Your SaaS app's friendly automated usher."
     echo "https://github.com/microsoft/turnstile"
     echo
     echo "Copyright (c) Microsoft Corporation. All rights reserved."
@@ -233,6 +252,8 @@ if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
 else
     echo "❌   Parameter validation failed. Please review and try again."
+    echo
+    usage
     exit 1
 fi
 
@@ -383,6 +404,8 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
         exit 1
     fi
 fi
+
+az bicep upgrade
 
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
