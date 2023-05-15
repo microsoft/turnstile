@@ -30,8 +30,8 @@ namespace Turnstile.Web.Extensions
                 TenantId = principal.GetHomeTenantId(),
                 UserId = principal.GetHomeObjectId(),
                 UserName = principal.GetDisplayName(), 
-                EmailAddresses = principal.Claims.Where(c => c.Type == ClaimTypes.Email).Select(c => c.Value.ToLower()).ToList(),
-                Roles = principal.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value.ToLower()).ToList()
+                EmailAddresses = principal.FindAll(ClaimTypes.Email).Select(c => c.Value.ToLower()).ToList(),
+                Roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value.ToLower()).ToList()
             };
 
         public static User ToCoreModel(this ClaimsPrincipal principal)

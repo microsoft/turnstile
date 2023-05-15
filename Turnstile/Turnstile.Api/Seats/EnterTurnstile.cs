@@ -212,10 +212,6 @@ namespace Turnstile.Api.Seats
 
                     return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
                 }
-                else
-                {
-                    log.LogDebug($"No seat found for [{email}].");
-                }
             }
 
             seat = await seatsClient.RequestSeat(subscription.SubscriptionId!, user);   // Try to create a dynamic seat for this user.

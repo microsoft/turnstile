@@ -70,12 +70,6 @@
     <div class="col-lg-8 mx-auto p-4 py-md-5">
         @if (layoutModel?.IsTurnstileAdmin == true)
         {
-            <ul id="your-emails">
-                @foreach (var email in User.Claims.Where(c => c.Type == ClaimTypes.Email))
-                {
-                    <li>email</li>
-                }
-            </ul>
             <nav class="navbar navbar-expand-lg bg-body-tertiary">
                 <div class="container-fluid ">
                     <a class="navbar-brand" href="#">Turnstile</a>
