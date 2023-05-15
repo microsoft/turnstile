@@ -73,11 +73,11 @@ namespace Turnstile.Web.Models
             if (!string.IsNullOrEmpty(subscription.AdminName) &&
                 !string.IsNullOrEmpty(subscription.AdminEmail))
             {
-                return new HtmlString($@"contact <a href=""mailto:{subscription.AdminEmail}"">{subscription.AdminName}</a>");
+                return new HtmlString($@"contact <a href=""mailto:{subscription.AdminEmail}"" class=""alert-link"">{subscription.AdminName}</a>");
             }
             else if (!string.IsNullOrEmpty(subscription.AdminEmail))
             {
-                return new HtmlString($@"contact <a href=""mailto:{subscription.AdminEmail}"">your subscription administrator</a>");
+                return new HtmlString($@"contact <a href=""mailto:{subscription.AdminEmail}"" class=""alert-link"">your subscription administrator</a>");
             }
             else if (!string.IsNullOrEmpty(subscription.AdminName))
             {

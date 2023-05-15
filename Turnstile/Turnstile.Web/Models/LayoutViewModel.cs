@@ -46,11 +46,11 @@ namespace Turnstile.Web.Models
         {
             if (!string.IsNullOrEmpty(publisherConfig.ContactSalesUrl))
             {
-                return new HtmlString($@"<a href=""{publisherConfig.ContactSalesUrl}"">visit our sales page</a>");
+                return new HtmlString($@"<a href=""{publisherConfig.ContactSalesUrl}"" class=""alert-link"">visit our sales page</a>");
             }
             else if (!string.IsNullOrEmpty(publisherConfig.ContactSalesEmail))
             {
-                return new HtmlString($@"<a href=""mailto:{publisherConfig.ContactSalesEmail}"">contact sales</a>");
+                return new HtmlString($@"<a href=""mailto:{publisherConfig.ContactSalesEmail}"" class=""alert-link"">contact sales</a>");
             }
             else
             {
@@ -62,11 +62,11 @@ namespace Turnstile.Web.Models
         {
             if (!string.IsNullOrEmpty(publisherConfig.ContactSupportUrl))
             {
-                return new HtmlString($@"<a href=""{publisherConfig.ContactSupportUrl}"">visit our support page</a>");
+                return new HtmlString($@"<a href=""{publisherConfig.ContactSupportUrl}"" class=""alert-link"">visit our support page</a>");
             }
             else if (!string.IsNullOrEmpty(publisherConfig.ContactSupportEmail))
             {
-                return new HtmlString($@"<a href=""mailto:{publisherConfig.ContactSupportEmail}"">contact support</a>");
+                return new HtmlString($@"<a href=""mailto:{publisherConfig.ContactSupportEmail}"" class=""alert-link"">contact support</a>");
             }
             else
             {

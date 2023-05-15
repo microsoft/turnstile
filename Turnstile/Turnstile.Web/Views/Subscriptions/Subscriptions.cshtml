@@ -95,7 +95,16 @@
                                 }
                                 else
                                 {
-                                    <span>@sub.SubscriptionName</span> <br />
+                                    <span>@sub.SubscriptionName</span>
+                                    @if (sub.IsFreeTrialSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                                    }
+                                    @if (sub.IsTestSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                                    }
+                                    <br />
                                     <small>@sub.SubscriptionId</small>
                                 }
                             </td>
@@ -161,7 +170,16 @@
                             @if (layoutModel.IsTurnstileAdmin)
                             {
                                 <td>
-                                    <span>@sub.TenantName</span> <br />
+                                    <span>@sub.TenantName</span>
+                                    @if (sub.IsFreeTrialSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                                    }
+                                    @if (sub.IsTestSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                                    }
+                                    <br />
                                     <small>@sub.TenantId</small>
                                 </td>
                             }
@@ -225,7 +243,16 @@
                                 }
                                 else
                                 {
-                                    <span>@sub.SubscriptionName</span> <br />
+                                    <span>@sub.SubscriptionName</span>
+                                    @if (sub.IsFreeTrialSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                                    }
+                                    @if (sub.IsTestSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                                    }
+                                    <br />
                                     <small>@sub.SubscriptionId</small>
                                 }
                             </td>
