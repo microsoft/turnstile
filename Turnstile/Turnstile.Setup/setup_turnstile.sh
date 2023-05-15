@@ -725,7 +725,7 @@ fi
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
 
 if [[ "$p_headless" == "$FALSE" ]]; then
-    echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+    echo "➡️   Please go to [ $web_app_base_url/config/basics ] to complete setup."
 fi
 
 echo
