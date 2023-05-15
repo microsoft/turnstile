@@ -210,7 +210,7 @@
         }
     </div>
     <div class="tab-pane fade" id="canceled-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="canceled-tab" tabindex="0">
-        @if (suspendedSubscriptions.Any())
+        @if (canceledSubscriptions.Any())
         {
             <table class="table">
                 <thead>
@@ -223,7 +223,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var sub in suspendedSubscriptions)
+                    @foreach (var sub in canceledSubscriptions)
                     {
                         var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
                         new { subscriptionId = sub.SubscriptionId });
