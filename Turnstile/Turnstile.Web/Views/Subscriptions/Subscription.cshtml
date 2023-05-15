@@ -25,31 +25,31 @@
     ViewData["Title"] = subTitle;
 
     bool CanUserEditSubscriptionName() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditTenantName() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditTenantCountry() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditAdminName() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditAdminEmail() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditAdminRole() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditUserRole() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerSubscription) &&
+        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
         (subContextModel.State != SubscriptionStates.Canceled);
 
     bool CanUserEditState() =>
@@ -89,7 +89,8 @@
             }
             @if (subContextModel.IsBeingConfigured || subContextModel.State == SubscriptionStates.Purchased)
             {
-                <span title="This subscription is being configured and is temporarily unavailable.">&nbsp;
+                <span title="This subscription is being configured and is temporarily unavailable.">
+                    &nbsp;
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
                         <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
                     </svg>
@@ -258,7 +259,7 @@
                 }
                 else
                 {
-                    <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" disabled />
+                    <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" readonly />
                 }
                 <span asp-validation-for="@Model.SubscriptionName" class="text-danger"></span>
                 <div id="subNameHelp" class="form-text">The name of this subscription as it will appear in the UI.</div>
@@ -271,7 +272,7 @@
                 }
                 else
                 {
-                    <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" disabled />
+                    <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" readonly />
                 }
                 <span asp-validation-for="@Model.TenantName" class="text-danger"></span>
                 <div id="tenantNameHelp" class="form-text">The name of the subscriber's organization as it will appear in the UI.</div>
@@ -284,7 +285,7 @@
                 }
                 else
                 {
-                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-select" disabled></select>
+                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-select" readonly></select>
                 }
                 <span asp-validation-for="@Model.TenantCountry" class="text-danger"></span>
             </div>
@@ -296,7 +297,7 @@
                 }
                 else
                 {
-                    <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" disabled />
+                    <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" readonly />
                 }
                 <span asp-validation-for="@Model.AdminName" class="text-danger"></span>
                 <div id="adminRoleNameHelp" class="form-text">The name of this subscription's primary admin.</div>
@@ -309,7 +310,7 @@
                 }
                 else
                 {
-                    <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" disabled />
+                    <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" readonly />
                 }
                 <span asp-validation-for="@Model.AdminEmail" class="text-danger"></span>
                 <div id="adminRoleNameHelp" class="form-text">The email address of this subscription's primary admin.</div>
@@ -328,7 +329,7 @@
                     }
                     else
                     {
-                        <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" disabled />
+                        <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" readonly />
                     }
                     <span asp-validation-for="@Model.AdminRoleName" class="text-danger"></span>
                     <div id="adminRoleNameHelp" class="form-text">If configured, users that belong to this role (in addition to the primary admin configured above) can <b>administer</b> this subscription.</div>
@@ -341,34 +342,34 @@
                     }
                     else
                     {
-                        <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" disabled />
+                        <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" readonly />
                     }
                     <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
                     <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
                 </div>
-                <div class="mb-3">
-                    <label asp-for="@Model.State" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                    @if (CanUserEditState())
-                    {
+                @if (CanUserEditState())
+                {
+                    <div class="mb-3">
+                        <label asp-for="@Model.State" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                         <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select"></select>
-                    }
-                    else
-                    {
-                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" disabled></select>
-                    }
-                    <span asp-validation-for="@Model.State" class="text-danger"></span>
-                </div>
-                <div class="mb-3 form-check form-switch">
-                    @if (CanUserEditConfigurationState())
-                    {
+                        <span asp-validation-for="@Model.State" class="text-danger"></span>
+                    </div>
+                }
+                else
+                {
+                    <hidden asp-for="@Model.State" />
+                }
+                @if (CanUserEditConfigurationState())
+                {
+                    <div class="mb-3 form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" />
-                    }
-                    else
-                    {
-                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" disabled />
-                    }
-                    <label asp-for="@Model.IsBeingConfigured" class="form-check-label"></label>
-                </div>
+                        <label asp-for="@Model.IsBeingConfigured" class="form-check-label"></label>
+                    </div>
+                }
+                else
+                {
+                    <hidden asp-for="@Model.IsBeingConfigured" />
+                }
                 <div class="mb-3">
                     <label asp-for="@Model.OfferId" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                     @if (CanUserEditOfferId())
@@ -377,7 +378,7 @@
                     }
                     else
                     {
-                        <input asp-for="@Model.OfferId" class="form-control" type="text" disabled />
+                        <input asp-for="@Model.OfferId" class="form-control-plaintext" type="text" readonly />
                     }
                     <span asp-validation-for="@Model.State" class="text-danger"></span>
                 </div>
@@ -389,7 +390,7 @@
                     }
                     else
                     {
-                        <input asp-for="@Model.PlanId" class="form-control" type="text" disabled />
+                        <input asp-for="@Model.PlanId" class="form-control-plaintext" type="text" readonly />
                     }
                 </div>
             </div>

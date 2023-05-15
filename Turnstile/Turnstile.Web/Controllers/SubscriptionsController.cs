@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
@@ -10,6 +11,7 @@ using Turnstile.Web.Models;
 
 namespace Turnstile.Web.Controllers
 {
+    [Authorize]
     public class SubscriptionsController : Controller
     {
         public static class RouteNames
@@ -141,7 +143,7 @@ namespace Turnstile.Web.Controllers
                     {
                         return NotFound();
                     }
-                    else if (User.CanAdministerSubscription(subscription))
+                    else if (User.CanAdministerSubscription(subscription) || User.CanAdministerTurnstile())
                     {
                         if (ModelState.IsValid)
                         {
