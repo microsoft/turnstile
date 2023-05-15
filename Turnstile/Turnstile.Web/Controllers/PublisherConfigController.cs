@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Turnstile.Core.Interfaces;
+using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Extensions;
 using Turnstile.Web.Models;
 using Turnstile.Web.Models.PublisherConfig;
@@ -11,7 +12,7 @@ using Turnstile.Web.Models.PublisherConfig;
 namespace Turnstile.Web.Controllers
 {
     [Authorize]
-    public class PublisherConfigurationController : Controller
+    public class PublisherConfigController : Controller
     {
         public static class RouteNames
         {
@@ -24,8 +25,8 @@ namespace Turnstile.Web.Controllers
         private readonly ILogger logger;
         private readonly IPublisherConfigurationClient publisherConfigClient;
 
-        public PublisherConfigurationController(
-            ILogger<PublisherConfigurationController> logger,
+        public PublisherConfigController(
+            ILogger<PublisherConfigController> logger,
             IPublisherConfigurationClient publisherConfigClient)
         {
             this.logger = logger;
@@ -72,19 +73,15 @@ namespace Turnstile.Web.Controllers
             {
                 if (User.CanAdministerTurnstile())
                 {
-                    var publisherConfig = await publisherConfigClient.GetConfiguration();
+                    var publisherConfig = await publisherConfigClient.GetConfiguration() ?? new PublisherConfiguration();
 
-                    if (publisherConfig == null)
+                    if (ModelState.IsValid)
                     {
-                        return View(new BasicConfigurationViewModel());
-                    }
-                    else if (ModelState.IsValid)
-                    {
-                        publisherConfig.Apply(basicConfig);
+                        publisherConfig!.Apply(basicConfig);
 
-                        publisherConfig.IsSetupComplete = true; // The basics are all we need to get started.
+                        publisherConfig!.IsSetupComplete = true; // The basics are all we need to get started.
 
-                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig!);
 
                         basicConfig.IsConfigurationSaved = true;
                         basicConfig.HasValidationErrors = false;
@@ -95,7 +92,7 @@ namespace Turnstile.Web.Controllers
                         basicConfig.HasValidationErrors = true;
                     }
 
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
                     return View(basicConfig);
                 }
@@ -121,15 +118,16 @@ namespace Turnstile.Web.Controllers
                 {
                     var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (publisherConfig == null)
+                    if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                        setupAction != null)
                     {
-                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                        return setupAction;
                     }
                     else
                     {
-                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                        return View(new RedirectConfigurationViewModel(publisherConfig));
+                        return View(new RedirectConfigurationViewModel(publisherConfig!));
                     }
                 }
                 else
@@ -154,15 +152,16 @@ namespace Turnstile.Web.Controllers
                 {
                     var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (publisherConfig == null)
+                    if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                        setupAction != null)
                     {
-                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                        return setupAction;
                     }
                     else if (ModelState.IsValid)
                     {
-                        publisherConfig.Apply(redirectConfig);
+                        publisherConfig!.Apply(redirectConfig);
 
-                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig!);
 
                         redirectConfig.IsConfigurationSaved = true;
                         redirectConfig.HasValidationErrors = false;
@@ -173,7 +172,7 @@ namespace Turnstile.Web.Controllers
                         redirectConfig.HasValidationErrors = true;
                     }
 
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
                     return View(redirectConfig);
                 }
@@ -199,15 +198,16 @@ namespace Turnstile.Web.Controllers
                 {
                     var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (publisherConfig == null)
+                    if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                        setupAction != null)
                     {
-                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                        return setupAction;
                     }
                     else
                     {
-                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                        return View(new MonaConfigurationViewModel(publisherConfig));
+                        return View(new MonaConfigurationViewModel(publisherConfig!));
                     }
                 }
                 else
@@ -224,7 +224,7 @@ namespace Turnstile.Web.Controllers
         }
 
 
-        [HttpPost, Route("config/redirection")]
+        [HttpPost, Route("config/mona")]
         public async Task<IActionResult> ConfigureMonaIntegration([FromForm] MonaConfigurationViewModel monaConfig)
         {
             try
@@ -233,15 +233,16 @@ namespace Turnstile.Web.Controllers
                 {
                     var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (publisherConfig == null)
+                    if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                        setupAction != null)
                     {
-                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                        return setupAction;
                     }
                     else if (ModelState.IsValid)
                     {
-                        publisherConfig.Apply(monaConfig);
+                        publisherConfig!.Apply(monaConfig);
 
-                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig!);
 
                         monaConfig.IsConfigurationSaved = true;
                         monaConfig.HasValidationErrors = false;
@@ -252,7 +253,7 @@ namespace Turnstile.Web.Controllers
                         monaConfig.HasValidationErrors = true;
                     }
 
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
                     return View(monaConfig);
                 }
@@ -278,15 +279,16 @@ namespace Turnstile.Web.Controllers
                 {
                     var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (publisherConfig == null)
+                    if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                        setupAction != null)
                     {
-                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                        return setupAction;
                     }
                     else
                     {
-                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
-                        return View(new SeatingConfigurationViewModel(publisherConfig));
+                        return View(new SeatingConfigurationViewModel(publisherConfig!));
                     }
                 }
                 else
@@ -302,7 +304,7 @@ namespace Turnstile.Web.Controllers
             }
         }
 
-        [HttpPost, Route("config/redirection")]
+        [HttpPost, Route("config/seating")]
         public async Task<IActionResult> ConfigureSeatingStrategy([FromForm] SeatingConfigurationViewModel seatingConfig)
         {
             try
@@ -311,15 +313,16 @@ namespace Turnstile.Web.Controllers
                 {
                     var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                    if (publisherConfig == null)
+                    if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                        setupAction != null)
                     {
-                        return RedirectToRoute(RouteNames.ConfigureBasics);
+                        return setupAction;
                     }
                     else if (ModelState.IsValid)
                     {
-                        publisherConfig.Apply(seatingConfig);
+                        publisherConfig!.Apply(seatingConfig);
 
-                        await publisherConfigClient.UpdateConfiguration(publisherConfig);
+                        await publisherConfigClient.UpdateConfiguration(publisherConfig!);
 
                         seatingConfig.IsConfigurationSaved = true;
                         seatingConfig.HasValidationErrors = false;
@@ -330,7 +333,7 @@ namespace Turnstile.Web.Controllers
                         seatingConfig.HasValidationErrors = true;
                     }
 
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig, User));
+                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
                     return View(seatingConfig);
                 }

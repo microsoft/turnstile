@@ -25,8 +25,8 @@ namespace Turnstile.Web.Models.PublisherConfig
         public SeatingConfiguration ToCoreModel() =>
             new SeatingConfiguration
             {
-                SeatingStrategyName = this.SeatingStrategyName, // The [this] is unnecessary but for readability's sake...
-                LimitedOverflowSeatingEnabled = this.LimitedOverflowSeatingEnabled
+                SeatingStrategyName = SeatingStrategyName, // The [this] is unnecessary but for readability's sake...
+                LimitedOverflowSeatingEnabled = LimitedOverflowSeatingEnabled
             };
 
         [Display(Name = "Default seating strategy")]

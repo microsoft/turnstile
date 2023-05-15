@@ -22,7 +22,6 @@ namespace Turnstile.Web.Models.PublisherConfig
                 OnSubscriptionCanceledUrl = turnstileConfig.OnSubscriptionCanceledUrl;
                 OnSubscriptionNotFoundUrl = turnstileConfig.OnSubscriptionNotFoundUrl;
                 OnNoSubscriptionsFoundUrl = turnstileConfig.OnNoSubscriptionsFoundUrl;
-                OnAccessGrantedUrl = turnstileConfig.OnAccessGrantedUrl;
             }
         }
 
@@ -35,8 +34,7 @@ namespace Turnstile.Web.Models.PublisherConfig
                 OnSubscriptionSuspendedUrl = OnSubscriptionSuspendedUrl,
                 OnSubscriptionCanceledUrl = OnSubscriptionCanceledUrl,
                 OnSubscriptionNotFoundUrl = OnSubscriptionNotFoundUrl,
-                OnNoSubscriptionsFoundUrl = OnNoSubscriptionsFoundUrl,
-                OnAccessGrantedUrl = OnAccessGrantedUrl
+                OnNoSubscriptionsFoundUrl = OnNoSubscriptionsFoundUrl
             };
 
         [Url(ErrorMessage = "Redirect URL is invalid.")]
@@ -59,9 +57,5 @@ namespace Turnstile.Web.Models.PublisherConfig
 
         [Url(ErrorMessage = "Redirect URL is invalid.")]
         public string? OnNoSubscriptionsFoundUrl { get; set; }
-
-        [Required(ErrorMessage = "Redirect URL is required.")]
-        [Url(ErrorMessage = "Redirect URL is invalid.")]
-        public string? OnAccessGrantedUrl { get; set; }
     }
 }

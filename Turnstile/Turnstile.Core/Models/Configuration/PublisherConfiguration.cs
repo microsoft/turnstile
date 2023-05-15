@@ -81,11 +81,11 @@ namespace Turnstile.Core.Models.Configuration
 
         [JsonProperty("default_seating_config")]
         [JsonPropertyName("default_seating_config")]
-        public SeatingConfiguration? SeatingConfiguration { get; set; }
+        public SeatingConfiguration? SeatingConfiguration { get; set; } = new SeatingConfiguration();
 
         [JsonProperty("turnstile_config")]
         [JsonPropertyName("turnstile_config")]
-        public TurnstileConfiguration? TurnstileConfiguration { get; set; }
+        public TurnstileConfiguration? TurnstileConfiguration { get; set; } = new TurnstileConfiguration();
 
         public IEnumerable<string> Validate()
         {

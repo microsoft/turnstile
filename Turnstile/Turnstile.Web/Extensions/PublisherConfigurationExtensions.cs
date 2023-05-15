@@ -27,6 +27,8 @@ namespace Turnstile.Web.Extensions
             publisherConfig.PrivacyNoticePageUrl = basicConfig.PrivacyNoticePageUrl;
             publisherConfig.PublisherName = basicConfig.PublisherName;
             publisherConfig.TurnstileName = basicConfig.TurnstileName;
+            publisherConfig.TurnstileConfiguration ??= new TurnstileConfiguration(); // Default redirection configuration
+            publisherConfig.SeatingConfiguration ??= new SeatingConfiguration();     // Default seating configuration
 
             return publisherConfig;
         }
@@ -52,7 +54,6 @@ namespace Turnstile.Web.Extensions
             {
                 OnNoSeatAvailableUrl = redirectConfig.OnNoSeatsAvailableUrl,
                 OnAccessDeniedUrl = redirectConfig.OnAccessDeniedUrl,
-                OnAccessGrantedUrl = redirectConfig.OnAccessGrantedUrl,
                 OnNoSubscriptionsFoundUrl = redirectConfig.OnNoSubscriptionsFoundUrl,
                 OnSubscriptionCanceledUrl = redirectConfig.OnSubscriptionCanceledUrl,
                 OnSubscriptionNotFoundUrl = redirectConfig.OnSubscriptionNotFoundUrl,
@@ -95,9 +96,9 @@ namespace Turnstile.Web.Extensions
 
                     logger.LogWarning(
                         "Unable to service request. Turnstile not yet set up. " +
-                        $"Redirecting turnstile administrator to route [{PublisherConfigurationController.RouteNames.ConfigureBasics}].");
+                        $"Redirecting turnstile administrator to route [{PublisherConfigController.RouteNames.ConfigureBasics}].");
 
-                    return new RedirectToRouteResult(PublisherConfigurationController.RouteNames.ConfigureBasics, null);
+                    return new RedirectToRouteResult(PublisherConfigController.RouteNames.ConfigureBasics, null);
                 }
                 else
                 {

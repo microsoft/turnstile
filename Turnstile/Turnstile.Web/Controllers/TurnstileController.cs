@@ -196,6 +196,12 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await GetPublisherConfiguration();
 
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
                 ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
                 return View();
@@ -215,6 +221,13 @@ namespace Turnstile.Web.Controllers
             try
             {
                 var publisherConfig = await GetPublisherConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
@@ -244,6 +257,13 @@ namespace Turnstile.Web.Controllers
             try
             {
                 var publisherConfig = await GetPublisherConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
@@ -273,6 +293,13 @@ namespace Turnstile.Web.Controllers
             try
             {
                 var publisherConfig = await GetPublisherConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)
@@ -303,6 +330,12 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await GetPublisherConfiguration();
 
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
                 ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
 
                 return View();
@@ -321,6 +354,13 @@ namespace Turnstile.Web.Controllers
             try
             {
                 var publisherConfig = await GetPublisherConfiguration();
+
+                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
+                    setupAction != null)
+                {
+                    return setupAction;
+                }
+
                 var subscription = await subsClient.GetSubscription(subscriptionId);
 
                 if (subscription == null)

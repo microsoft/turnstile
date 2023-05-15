@@ -46,6 +46,9 @@ builder.Services.AddRazorPages()
 
 builder.Services.AddApiClients();
 
+builder.Services.AddApplicationInsightsTelemetry(options =>
+    options.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

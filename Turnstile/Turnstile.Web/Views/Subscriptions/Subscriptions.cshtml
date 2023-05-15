@@ -12,53 +12,49 @@
 <hr />
 
 @{
+    const string noSubsTabBadgeClass = "badge text-bg-secondary";
+    const string subsTabBadgeClass = "badge text-bg-danger";
+
     var layoutModel = ViewData.GetLayoutModel()!;
 
     var activeSubscriptions = Model.Subscriptions
-        .Where(s => s.State == SubscriptionStates.Active || s.State == SubscriptionStates.Purchased)
-        .ToList();
+        .Where(s => s.State == SubscriptionStates.Active || s.State == SubscriptionStates.Purchased).ToList();
 
     var suspendedSubscriptions = Model.Subscriptions
-        .Where(s => s.State == SubscriptionStates.Suspended)
-        .ToList();
+        .Where(s => s.State == SubscriptionStates.Suspended).ToList();
 
     var canceledSubscriptions = Model.Subscriptions
-        .Where(s => s.State == SubscriptionStates.Canceled)
-        .ToList();
+        .Where(s => s.State == SubscriptionStates.Canceled).ToList();
+
+    var activeSubsBadgeClass = activeSubscriptions.Any() ? subsTabBadgeClass : noSubsTabBadgeClass;
+    var suspendedSubsBadgeClass = suspendedSubscriptions.Any() ? subsTabBadgeClass : noSubsTabBadgeClass;
+    var canceledSubsBadgeClass = canceledSubscriptions.Any() ? subsTabBadgeClass : noSubsTabBadgeClass;
+
 }
 
 <ul class="nav nav-tabs" id="subTabs" role="tablist">
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-tab-pane" type="button" role="tab" aria-controls="active-tab-pane" aria-selected="true">
             Active
-            @if (activeSubscriptions.Any())
-            {
-                <span>&nbsp;<span class="badge text-bg-danger">@activeSubscriptions.Count</span></span>
-            }
+            <span>&nbsp;<span class="@activeSubsBadgeClass">@activeSubscriptions.Count</span></span>
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="suspended-tab" data-bs-toggle="tab" data-bs-target="#suspended-tab-pane" type="button" role="tab" aria-controls="active-tab-pane" aria-selected="false">
             Suspended
-            @if (suspendedSubscriptions.Any())
-            {
-                <span>&nbsp;<span class="badge text-bg-danger">@suspendedSubscriptions.Count</span></span>
-            }
+            <span>&nbsp;<span class="@suspendedSubsBadgeClass">@suspendedSubscriptions.Count</span></span>
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link" id="canceled-tab" data-bs-toggle="tab" data-bs-target="#canceled-tab-pane" type="button" role="tab" aria-controls="canceled-tab-pane" aria-selected="false">
             Canceled
-            @if (canceledSubscriptions.Any())
-            {
-                <span>&nbsp;<span class="badge text-bg-danger">@canceledSubscriptions.Count</span></span>
-            }
+            <span>&nbsp;<span class="@canceledSubsBadgeClass">@canceledSubscriptions.Count</span></span>
         </button>
     </li>
 </ul>
 
 <div class="tab-content" id="subPanes">
-    <div class="tab-pane fade show active" id="active-tab-pane" role="tabpanel" aria-labelledby="active-tab" tabindex="0">
+    <div class="tab-pane fade show active" id="active-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="active-tab" tabindex="0">
         @if (activeSubscriptions.Any())
         {
             <table class="table">
@@ -77,11 +73,11 @@
                         var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
                         var canUse = (!isBeingConfigured && sub.CanUserAdministerSubscription);
 
-                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, 
-                            new { subscriptionId = sub.SubscriptionId });
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+                        new { subscriptionId = sub.SubscriptionId });
 
-                        var useUrl = Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile, 
-                            new { subscriptionId = sub.SubscriptionId });
+                        var useUrl = Url.RouteUrl(TurnstileController.RouteNames.SpecificTurnstile,
+                        new { subscriptionId = sub.SubscriptionId });
 
                         <tr>
                             @if (layoutModel.IsTurnstileAdmin)
@@ -141,7 +137,7 @@
             </div>
         }
     </div>
-    <div class="tab-pane fade" id="suspended-tab-pane" role="tabpanel" aria-labelledby="suspended-tab" tabindex="0">
+    <div class="tab-pane fade" id="suspended-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="suspended-tab" tabindex="0">
         @if (suspendedSubscriptions.Any())
         {
             <table class="table">
@@ -157,8 +153,8 @@
                 <tbody>
                     @foreach (var sub in suspendedSubscriptions)
                     {
-                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, 
-                            new { subscriptionId = sub.SubscriptionId });
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+                        new { subscriptionId = sub.SubscriptionId });
 
                         <tr>
                             @if (layoutModel.IsTurnstileAdmin)
@@ -194,7 +190,7 @@
             <div class="alert alert-secondary" role="alert">No suspended subscriptions. That's good!</div>
         }
     </div>
-    <div class="tab-pane fade" id="canceled-tab-pane" role="tabpanel" aria-labelledby="canceled-tab" tabindex="0">
+    <div class="tab-pane fade" id="canceled-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="canceled-tab" tabindex="0">
         @if (suspendedSubscriptions.Any())
         {
             <table class="table">
@@ -210,8 +206,8 @@
                 <tbody>
                     @foreach (var sub in suspendedSubscriptions)
                     {
-                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, 
-                            new { subscriptionId = sub.SubscriptionId });
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+                        new { subscriptionId = sub.SubscriptionId });
 
                         <tr>
                             @if (layoutModel.IsTurnstileAdmin)
