@@ -179,7 +179,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-08-01' = {
   }
 }
 
-resource configStorageContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = { parent: storageAccount, name: 'default/${configStorageContainerName}' }
+resource configStorageContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
+  name: '${storageAccount.name}/default/${configStorageContainerName}'
+}
 
 resource eventStoreContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
   name: '${storageAccount.name}/default/${eventStoreContainerName}'
