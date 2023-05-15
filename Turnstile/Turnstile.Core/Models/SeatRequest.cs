@@ -21,6 +21,11 @@ namespace Turnstile.Core.Models
         [OpenApiProperty(Nullable = false, Description = "User (tenant ID) that a seat is being requested for")]
         public string? TenantId { get; set; }
 
+        [JsonProperty("user_name")]
+        [JsonPropertyName("user_name")]
+        [OpenApiProperty(Nullable = true, Description = "User (name) that a seat is being requested for")]
+        public string? UserName { get; set; }
+
         [JsonProperty("emails")]
         [JsonPropertyName("emails")]
         [OpenApiProperty(Nullable = true, Description = "Email addresses associated with the user this seat is being requested for")]

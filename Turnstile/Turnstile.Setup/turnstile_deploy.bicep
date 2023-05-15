@@ -10,24 +10,24 @@ Deployment name __must__:
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
 @allowed([
-  'D1'    // Shared
-  'F1'    // Free
-  'B1'    // Basic
+  'D1' // Shared
+  'F1' // Free
+  'B1' // Basic
   'B2'
   'B3'
-  'S1'    // Standard (S1 is Default)
+  'S1' // Standard (S1 is Default)
   'S2'
   'S3'
-  'P1'    // Premium v1
+  'P1' // Premium v1
   'P2'
   'P3'
-  'P1V2'  // Premium v2
+  'P1V2' // Premium v2
   'P2V2'
   'P3V2'
-  'I1'    // Isolated (ASE)
+  'I1' // Isolated (ASE)
   'I2'
   'I3'
-  'Y1'    // Consumption/Dynamic (supported only for headless/API-only deployments)
+  'Y1' // Consumption/Dynamic (supported only for headless/API-only deployments)
 ])
 @description('''
 Note: Y1 (consumption/dynamic) is supported __only__ for headless/API-only deployments. 
@@ -46,6 +46,8 @@ The web app is not deployed in headless mode.
 ''')
 param headless bool = false
 
+param useCosmosProvisionedThroughput bool = false
+
 @secure()
 param webAppAadClientSecret string = ''
 
@@ -55,7 +57,8 @@ var cleanDeploymentName = toLower(deploymentName)
 var cosmosDbAccountName = 'turn-cosmos-${cleanDeploymentName}'
 var cosmosDbName = 'turnstiledb'
 var cosmosContainerName = 'turnstilecontainer'
-var storageAccountName = take('turnstor${cleanDeploymentName}', 24)
+var uniqueDeploymentName = toLower(uniqueString(resourceGroup().id, deployment().name, cleanDeploymentName))
+var storageAccountName = take('turnstor${uniqueDeploymentName}', 24)
 var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
 var eventStoreContainerName = 'event-store'
@@ -69,6 +72,8 @@ var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
 var midName = 'turn-id-${cleanDeploymentName}'
+
+var cosmosCapabilities = useCosmosProvisionedThroughput ? [] : [ { name: 'EnableServerless' } ]
 
 resource mid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: midName
@@ -127,11 +132,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-11-15-previ
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
-    capabilities: [
-      {
-        name: 'EnableServerless'
-      }
-    ]
+    capabilities: cosmosCapabilities
     databaseAccountOfferType: 'Standard'
     locations: [
       {
@@ -200,7 +201,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   sku: {
     name: appServicePlanSku
   }
-  properties: { }
+  properties: {}
 }
 
 resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
@@ -300,6 +301,14 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
     siteConfig: {
       appSettings: [
         {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: appInsights.properties.InstrumentationKey
+        }
+        {
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: 'InstrumentationKey=${appInsights.properties.InstrumentationKey}'
+        }
+        {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
         }
@@ -341,4 +350,3 @@ output eventGridTopicName string = eventGridTopic.name
 
 output webAppName string = headless ? '' : webApp.name
 output webAppBaseUrl string = headless ? '' : 'https://${webApp.properties.defaultHostName}'
-

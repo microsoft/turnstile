@@ -11,17 +11,15 @@ namespace Turnstile.Core.Models.Configuration
 {
     public class SeatingConfiguration
     {
-        public const double DefaultLowSeatWarningLevelPercent = .25;
-
         [JsonPropertyName("seating_strategy_name")]
         [JsonProperty("seating_strategy_name")]
         [OpenApiProperty(Nullable = false, Description = "The strategy used by this turnstile to provide seats; either [first_come_first_served] or [monthly_active_user]")]
-        public string? SeatingStrategyName { get; set; }
+        public string? SeatingStrategyName { get; set; } = SeatingStrategies.FirstComeFirstServed;
 
         [JsonPropertyName("low_seat_warning_level_pct")]
         [JsonProperty("low_seat_warning_level_pct")]
         [OpenApiProperty(Nullable = false, Description = "The percentage of available seats that must be reached in order to trigger the [seat_warning_level_reached] event; by default, 25% (.25)")]
-        public double? LowSeatWarningLevelPercent { get; set; }
+        public double? LowSeatWarningLevelPercent { get; set; } = .25;
 
         [JsonPropertyName("limited_overflow_seating_enabled")]
         [JsonProperty("limited_overflow_seating_enabled")]
@@ -31,12 +29,12 @@ namespace Turnstile.Core.Models.Configuration
         [JsonPropertyName("seat_reservation_expiry_in_days")]
         [JsonProperty("seat_reservation_expiry_in_days")]
         [OpenApiProperty(Nullable = false, Description = "The number of days that a seat will remain reserved until it is either redeemed or automatically released")]
-        public int? SeatReservationExpiryInDays { get; set; }
+        public int? SeatReservationExpiryInDays { get; set; } = 14;
 
         [JsonPropertyName("default_seat_expiry_in_days")]
         [JsonProperty("default_seat_expiry_in_days")]
         [OpenApiProperty(Nullable = false, Description = "The number of days that a seat will remain occupied (using the [first_come_first_served] seating strategy) before it is automatically released")]
-        public int? DefaultSeatExpiryInDays { get; set; }
+        public int? DefaultSeatExpiryInDays { get; set; } = 14;
 
         public IEnumerable<string> Validate()
         {

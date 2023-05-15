@@ -1,27 +1,28 @@
-﻿// Copyright (c) Microsoft Corporation.
-// Licensed under the MIT License.
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Turnstile.Core.Models.Configuration;
 
-namespace Turnstile.Web.Models
+namespace Turnstile.Web.Models.PublisherConfig
 {
-    public class TurnstileConfigurationViewModel
+    public class RedirectConfigurationViewModel : BaseConfigurationViewModel
     {
-        public TurnstileConfigurationViewModel() { }
+        public RedirectConfigurationViewModel() { }
 
-        public TurnstileConfigurationViewModel(TurnstileConfiguration turnstileConfig)
+        public RedirectConfigurationViewModel(PublisherConfiguration publisherConfig)
         {
-            ArgumentNullException.ThrowIfNull(turnstileConfig, nameof(turnstileConfig));
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
 
-            OnAccessDeniedUrl = turnstileConfig.OnAccessDeniedUrl;
-            OnNoSeatsAvailableUrl = turnstileConfig.OnNoSeatAvailableUrl;
-            OnSubscriptionPurchasedUrl = turnstileConfig.OnSubscriptionNotReadyUrl;
-            OnSubscriptionSuspendedUrl = turnstileConfig.OnSubscriptionSuspendedUrl;
-            OnSubscriptionCanceledUrl = turnstileConfig.OnSubscriptionCanceledUrl;
-            OnSubscriptionNotFoundUrl = turnstileConfig.OnSubscriptionNotFoundUrl;
-            OnNoSubscriptionsFoundUrl = turnstileConfig.OnNoSubscriptionsFoundUrl;
-            OnAccessGrantedUrl = turnstileConfig.OnAccessGrantedUrl;
+            if (publisherConfig.TurnstileConfiguration != null)
+            {
+                var turnstileConfig = publisherConfig.TurnstileConfiguration;
+
+                OnAccessDeniedUrl = turnstileConfig.OnAccessDeniedUrl;
+                OnNoSeatsAvailableUrl = turnstileConfig.OnNoSeatAvailableUrl;
+                OnSubscriptionPurchasedUrl = turnstileConfig.OnSubscriptionNotReadyUrl;
+                OnSubscriptionSuspendedUrl = turnstileConfig.OnSubscriptionSuspendedUrl;
+                OnSubscriptionCanceledUrl = turnstileConfig.OnSubscriptionCanceledUrl;
+                OnSubscriptionNotFoundUrl = turnstileConfig.OnSubscriptionNotFoundUrl;
+                OnNoSubscriptionsFoundUrl = turnstileConfig.OnNoSubscriptionsFoundUrl;
+            }
         }
 
         public TurnstileConfiguration ToCoreModel() =>
@@ -33,8 +34,7 @@ namespace Turnstile.Web.Models
                 OnSubscriptionSuspendedUrl = OnSubscriptionSuspendedUrl,
                 OnSubscriptionCanceledUrl = OnSubscriptionCanceledUrl,
                 OnSubscriptionNotFoundUrl = OnSubscriptionNotFoundUrl,
-                OnNoSubscriptionsFoundUrl = OnNoSubscriptionsFoundUrl,
-                OnAccessGrantedUrl = OnAccessGrantedUrl
+                OnNoSubscriptionsFoundUrl = OnNoSubscriptionsFoundUrl
             };
 
         [Url(ErrorMessage = "Redirect URL is invalid.")]
@@ -57,9 +57,5 @@ namespace Turnstile.Web.Models
 
         [Url(ErrorMessage = "Redirect URL is invalid.")]
         public string? OnNoSubscriptionsFoundUrl { get; set; }
-
-        [Required(ErrorMessage = "Redirect URL is required.")]
-        [Url(ErrorMessage = "Redirect URL is invalid.")]
-        public string? OnAccessGrantedUrl { get; set; }
     }
 }

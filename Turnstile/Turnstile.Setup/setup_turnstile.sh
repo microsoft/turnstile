@@ -38,7 +38,13 @@ readonly APP_SERVICE_SKUS=(
 
 readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
-usage() { echo "Usage: $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] [-i integration_pack] [-h flag: headless]"; }
+usage() {
+    echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
+    echo "         [-i integration_pack] [-H flag: headless] [-p flag: use_cosmos_provisioned_throughput]"
+    echo 
+    echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
+    echo "         -i \"default\" -H -p" 
+}
 
 check_az() {
     az version >/dev/null
@@ -118,16 +124,24 @@ check_app_service_sku() {
 check_deployment_region() {
     region=$1
 
-    region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
-
-    if [[ -z $region_display_name ]]; then
-        echo "❌   [$region] is not a valid Azure region, but these are..."
-        echo
-        az account list-locations --output table --query "[].name"
-        echo
-        return 1
+    if [[ -z $region ]]; then
+         echo "❌   Deployment region <-r> is required. Please choose a region and try again..."
+            echo
+            az account list-locations --output table --query "[].name"
+            echo
+            return 1
     else
-        echo "✔   [$region] is a valid Azure region ($region_display_name)."
+        region_display_name=$(az account list-locations -o tsv --query "[?name=='$region'].displayName")
+
+        if [[ -z $region_display_name ]]; then
+            echo "❌   [$region] is not a valid Azure region, but these are..."
+            echo
+            az account list-locations --output table --query "[].name"
+            echo
+            return 1
+        else
+            echo "✔   [$region] is a valid Azure region ($region_display_name)."
+        fi
     fi
 }
 
@@ -136,6 +150,10 @@ check_deployment_name() {
 
     if [[ $name =~ ^[a-z0-9]{5,13}$ ]]; then
         echo "✔   [$name] is a valid Turnstile deployment name."
+        return 0
+    elif [[ -z $name ]]; then
+        echo "❌   Turnstile deployment name is required. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
+        return 1
     else
         echo "❌   [$name] is not a valid Turnstile deployment name. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
         return 1
@@ -144,6 +162,7 @@ check_deployment_name() {
 
 splash() {
     echo "Turnstile | $TURNSTILE_VERSION"
+    echo "Your SaaS app's friendly automated usher."
     echo "https://github.com/microsoft/turnstile"
     echo
     echo "Copyright (c) Microsoft Corporation. All rights reserved."
@@ -186,8 +205,9 @@ done
 p_headless="$FALSE"
 p_app_service_sku="S1"
 p_integration_pack="default"
+p_use_cosmos_provisioned_throughput="$FALSE"
 
-while getopts "s:c:d:n:r:i:h" opt; do
+while getopts "s:c:d:n:r:i:Hp" opt; do
     case $opt in
         s)
             p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
@@ -207,12 +227,15 @@ while getopts "s:c:d:n:r:i:h" opt; do
         r)
             p_deployment_region=$OPTARG
         ;;
-        h)
+        H)
             p_headless="$TRUE"
 
             # This flag allows you to deploy Turnstile in "headless" mode. Headless mode deploys _only_
             # the API and supporting resources. It does not deploy the web app and, consequently, doesn't
             # do any AAD configuration.
+        ;;
+        p)
+            p_use_cosmos_provisioned_throughput="$TRUE"
         ;;
         \?)
             usage
@@ -233,6 +256,8 @@ if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
 else
     echo "❌   Parameter validation failed. Please review and try again."
+    echo
+    usage
     exit 1
 fi
 
@@ -384,6 +409,8 @@ if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) ==
     fi
 fi
 
+az bicep upgrade
+
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
 echo "🦾   Deploying core Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]. This may take a while..."
@@ -398,6 +425,7 @@ az deployment group create \
         webAppAadClientId="$aad_app_id" \
         webAppAadTenantId="$current_user_tid" \
         webAppAadClientSecret="$aad_app_secret" \
+        useCosmosProvisionedThroughput="$p_use_cosmos_provisioned_throughput" \
         headless="$p_headless" 2>/dev/null
 
 if [[ $? == 0 ]]; then
@@ -697,7 +725,7 @@ fi
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
 
 if [[ "$p_headless" == "$FALSE" ]]; then
-    echo "➡️   Please go to [ $web_app_base_url/publisher/setup ] to complete setup."
+    echo "➡️   Please go to [ $web_app_base_url/config/basics ] to complete setup."
 fi
 
 echo

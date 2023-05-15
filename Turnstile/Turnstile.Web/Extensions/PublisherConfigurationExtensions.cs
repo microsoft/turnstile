@@ -2,15 +2,80 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System.Net;
 using System.Security.Claims;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Controllers;
+using Turnstile.Web.Models.PublisherConfig;
 
 namespace Turnstile.Web.Extensions
 {
     public static class PublisherConfigurationExtensions
     {
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, BasicConfigurationViewModel basicConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(basicConfig, nameof(basicConfig));
+
+            publisherConfig.AppUrl = basicConfig.AppUrl;
+            publisherConfig.ContactPageUrl = basicConfig.ContactPageUrl;
+            publisherConfig.ContactSalesEmail = basicConfig.ContactSalesEmail;
+            publisherConfig.ContactSalesUrl = basicConfig.ContactSalesUrl;
+            publisherConfig.ContactSupportEmail = basicConfig.ContactSupportEmail;
+            publisherConfig.ContactSupportUrl = basicConfig.ContactSupportUrl;
+            publisherConfig.HomePageUrl = basicConfig.HomePageUrl;
+            publisherConfig.PrivacyNoticePageUrl = basicConfig.PrivacyNoticePageUrl;
+            publisherConfig.PublisherName = basicConfig.PublisherName;
+            publisherConfig.TurnstileName = basicConfig.TurnstileName;
+            publisherConfig.TurnstileConfiguration ??= new TurnstileConfiguration(); // Default redirection configuration
+            publisherConfig.SeatingConfiguration ??= new SeatingConfiguration();     // Default seating configuration
+
+            return publisherConfig;
+        }
+
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, MonaConfigurationViewModel monaConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(monaConfig, nameof(monaConfig));
+
+            publisherConfig.MonaBaseStorageUrl = monaConfig.MonaIntegrationBaseStorageUrl;
+            publisherConfig.DefaultMonaSubscriptionState = monaConfig.DefaultMonaSubscriptionState;
+            publisherConfig.MonaSubscriptionIsBeingConfigured = monaConfig.MonaSubscriptionIsBeingConfigured;
+
+            return publisherConfig;
+        }
+
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, RedirectConfigurationViewModel redirectConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(redirectConfig, nameof(redirectConfig));
+
+            publisherConfig.TurnstileConfiguration = new TurnstileConfiguration
+            {
+                OnNoSeatAvailableUrl = redirectConfig.OnNoSeatsAvailableUrl,
+                OnAccessDeniedUrl = redirectConfig.OnAccessDeniedUrl,
+                OnNoSubscriptionsFoundUrl = redirectConfig.OnNoSubscriptionsFoundUrl,
+                OnSubscriptionCanceledUrl = redirectConfig.OnSubscriptionCanceledUrl,
+                OnSubscriptionNotFoundUrl = redirectConfig.OnSubscriptionNotFoundUrl,
+                OnSubscriptionNotReadyUrl = redirectConfig.OnSubscriptionPurchasedUrl,
+                OnSubscriptionSuspendedUrl = redirectConfig.OnSubscriptionSuspendedUrl
+            };
+
+            return publisherConfig;
+        }
+
+        public static PublisherConfiguration Apply(this PublisherConfiguration publisherConfig, SeatingConfigurationViewModel seatingConfig)
+        {
+            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
+            ArgumentNullException.ThrowIfNull(seatingConfig, nameof(seatingConfig));
+
+            publisherConfig.SeatingConfiguration ??= new SeatingConfiguration();
+            publisherConfig.SeatingConfiguration.LimitedOverflowSeatingEnabled = seatingConfig.LimitedOverflowSeatingEnabled;
+
+            return publisherConfig;
+        }
+
         public static IActionResult? CheckTurnstileSetupIsComplete(
             this PublisherConfiguration publisherConfig,
             ClaimsPrincipal principal,
@@ -32,9 +97,9 @@ namespace Turnstile.Web.Extensions
 
                     logger.LogWarning(
                         "Unable to service request. Turnstile not yet set up. " +
-                        $"Redirecting turnstile administrator to route [{PublisherConfigurationController.RouteNames.GetPublisherConfiguration}].");
+                        $"Redirecting turnstile administrator to route [{PublisherConfigController.RouteNames.ConfigureBasics}].");
 
-                    return new RedirectToRouteResult(PublisherConfigurationController.RouteNames.GetPublisherConfiguration, null);
+                    return new RedirectToRouteResult(PublisherConfigController.RouteNames.ConfigureBasics, null);
                 }
                 else
                 {
@@ -68,7 +133,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionCanceled,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -87,7 +152,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionSuspended,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -106,7 +171,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionNotReady,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -125,7 +190,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnSubscriptionNotFound,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -142,7 +207,9 @@ namespace Turnstile.Web.Extensions
 
             if (string.IsNullOrEmpty(publisherConfig.TurnstileConfiguration?.OnAccessDeniedUrl))
             {
-                return new ForbidResult(); 
+                return new RedirectToRouteResult(
+                    TurnstileController.RouteNames.OnAccessDenied,
+                    new { subscriptionId });
             }
             else
             {
@@ -161,7 +228,7 @@ namespace Turnstile.Web.Extensions
             {
                 return new RedirectToRouteResult(
                     TurnstileController.RouteNames.OnNoSeatsAvailable,
-                    new { subscriptionId = subscriptionId });
+                    new { subscriptionId });
             }
             else
             {
@@ -176,9 +243,9 @@ namespace Turnstile.Web.Extensions
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
             ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
 
-            return new RedirectResult(MergeSubscriptionId(
-                publisherConfig.TurnstileConfiguration!.OnAccessGrantedUrl!,
-                subscriptionId));
+            var appUrl = publisherConfig.AppUrl ?? publisherConfig.TurnstileConfiguration?.OnAccessGrantedUrl;
+
+            return new RedirectResult(MergeSubscriptionId(appUrl!, subscriptionId));
         }
 
         private static string MergeSubscriptionId(string intoString, string subscriptionId) =>

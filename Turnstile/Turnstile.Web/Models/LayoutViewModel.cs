@@ -1,7 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
-using Microsoft.Identity.Web;
+using Microsoft.AspNetCore.Html;
 using System.Security.Claims;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Extensions;
@@ -12,19 +12,21 @@ namespace Turnstile.Web.Models
     {
         public LayoutViewModel() { }
 
-        public LayoutViewModel(PublisherConfiguration publisherConfig, ClaimsPrincipal forPrincipal)
+        public LayoutViewModel(PublisherConfiguration publisherConfig, ClaimsPrincipal? forPrincipal)
         {
             ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
-            ArgumentNullException.ThrowIfNull(forPrincipal, nameof(forPrincipal));
 
-            TurnstileName = publisherConfig.TurnstileName;
+            TurnstileName = publisherConfig.TurnstileName ?? "Turnstile";
             PublisherName = publisherConfig.PublisherName;
             HomePageUrl = publisherConfig.HomePageUrl;
             ContactPageUrl = publisherConfig.ContactPageUrl;
             PrivacyNoticePageUrl = publisherConfig.PrivacyNoticePageUrl;
             ContactSalesUrl = publisherConfig.ContactSalesUrl;
             ContactSupportUrl = publisherConfig.ContactSupportUrl;
-            IsTurnstileAdmin = forPrincipal.CanAdministerTurnstile();
+            IsTurnstileAdmin = (forPrincipal?.CanAdministerTurnstile() == true);
+
+            ContactSalesHtml = CreateContactSalesHtml(publisherConfig);
+            ContactSupportHtml = CreateContactSupportHtml(publisherConfig);
         }
 
         public string? TurnstileName { get; set; }
@@ -35,6 +37,41 @@ namespace Turnstile.Web.Models
         public string? ContactSupportUrl { get; set; }
         public string? PrivacyNoticePageUrl { get; set; }
 
+        public HtmlString? ContactSalesHtml { get; set; }
+        public HtmlString? ContactSupportHtml { get; set; }
+
         public bool IsTurnstileAdmin { get; set; } = false;
+
+        private HtmlString CreateContactSalesHtml(PublisherConfiguration publisherConfig)
+        {
+            if (!string.IsNullOrEmpty(publisherConfig.ContactSalesUrl))
+            {
+                return new HtmlString($@"<a href=""{publisherConfig.ContactSalesUrl}"" class=""alert-link"">visit our sales page</a>");
+            }
+            else if (!string.IsNullOrEmpty(publisherConfig.ContactSalesEmail))
+            {
+                return new HtmlString($@"<a href=""mailto:{publisherConfig.ContactSalesEmail}"" class=""alert-link"">contact sales</a>");
+            }
+            else
+            {
+                return new HtmlString("contact sales");
+            }
+        }
+
+        private HtmlString CreateContactSupportHtml(PublisherConfiguration publisherConfig)
+        {
+            if (!string.IsNullOrEmpty(publisherConfig.ContactSupportUrl))
+            {
+                return new HtmlString($@"<a href=""{publisherConfig.ContactSupportUrl}"" class=""alert-link"">visit our support page</a>");
+            }
+            else if (!string.IsNullOrEmpty(publisherConfig.ContactSupportEmail))
+            {
+                return new HtmlString($@"<a href=""mailto:{publisherConfig.ContactSupportEmail}"" class=""alert-link"">contact support</a>");
+            }
+            else
+            {
+                return new HtmlString("contact support");
+            }
+        }
     }
 }

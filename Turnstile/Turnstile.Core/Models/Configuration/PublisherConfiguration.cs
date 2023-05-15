@@ -11,8 +11,13 @@ namespace Turnstile.Core.Models.Configuration
     {
         [JsonProperty("turnstile_name")]
         [JsonPropertyName("turnstile_name")]
-        [OpenApiProperty(Nullable = false, Description = "This turnstile's display name")]
+        [OpenApiProperty(Nullable = false, Description = "The SaaS app's name")]
         public string? TurnstileName { get; set; }
+
+        [JsonProperty("app_url")]
+        [JsonPropertyName("app_url")]
+        [OpenApiProperty(Nullable = false, Description = "The SaaS app's main URL")]
+        public string? AppUrl { get; set; }
 
         [JsonProperty("publisher_name")]
         [JsonPropertyName("publisher_name")]
@@ -76,11 +81,11 @@ namespace Turnstile.Core.Models.Configuration
 
         [JsonProperty("default_seating_config")]
         [JsonPropertyName("default_seating_config")]
-        public SeatingConfiguration? SeatingConfiguration { get; set; }
+        public SeatingConfiguration? SeatingConfiguration { get; set; } = new SeatingConfiguration();
 
         [JsonProperty("turnstile_config")]
         [JsonPropertyName("turnstile_config")]
-        public TurnstileConfiguration? TurnstileConfiguration { get; set; }
+        public TurnstileConfiguration? TurnstileConfiguration { get; set; } = new TurnstileConfiguration();
 
         public IEnumerable<string> Validate()
         {
@@ -89,6 +94,11 @@ namespace Turnstile.Core.Models.Configuration
             if (string.IsNullOrEmpty(TurnstileName))
             {
                 errors.Add("[turnstile_name] is required.");
+            }
+
+            if (string.IsNullOrEmpty(AppUrl))
+            {
+                errors.Add("[app_url] is required.");
             }
 
             if (string.IsNullOrEmpty(PublisherName))

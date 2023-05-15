@@ -1,14 +1,15 @@
 ﻿@using Turnstile.Web.Controllers
-@model SubscriptionMessageViewModel
+@using Turnstile.Web.Extensions
 
 @{
-    ViewData["Title"] = "Subscription not ready | Turnstile";
-    Layout = "_SubscriberLayout";
+    var layoutModel = ViewData.GetLayoutModel()!;
+
+    ViewData["Title"] = $"Subscription not ready | {layoutModel.TurnstileName}";
 }
 
 <h1>Subscription not ready</h1>
 
-<lead>Please try again later. For assistance, @Html.Raw(Model.SupportContactHtml).</lead>
+<lead>Please try again later. For assistance, @Html.Raw(layoutModel.ContactSupportHtml).</lead>
 
 <div style="margin-top: 20px">
 <a role="button" class="btn btn-light" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using System.Security.Claims;
 using Turnstile.Core.Models;
 
 namespace Turnstile.Web.Models
@@ -9,16 +10,14 @@ namespace Turnstile.Web.Models
     {
         public SubscriptionsViewModel() { }
 
-        public SubscriptionsViewModel(IEnumerable<Subscription> subscriptions, string? forTenantId = null)
+        public SubscriptionsViewModel(IEnumerable<Subscription> subscriptions, ClaimsPrincipal userPrincipal)
         {
             ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
+            ArgumentNullException.ThrowIfNull(userPrincipal, nameof(userPrincipal));
 
-            Subscriptions = subscriptions.Select(s => new SubscriptionRowViewModel(s)).ToList();
-            ForTenantId = forTenantId;
+            Subscriptions = subscriptions.Select(s => new SubscriptionContextViewModel(s, userPrincipal)).ToList();
         }
 
-        public string? ForTenantId { get; set; }
-
-        public List<SubscriptionRowViewModel> Subscriptions { get; set; } = new List<SubscriptionRowViewModel>();
+        public List<SubscriptionContextViewModel> Subscriptions { get; set; } = new List<SubscriptionContextViewModel>();
     }
 }

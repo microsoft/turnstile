@@ -205,18 +205,6 @@ namespace Turnstile.Core.Models
                 {
                     errors.AddRange(SubscriptionStates.ValidateState(patch.State!));
                 }
-
-                if (patch.TotalSeats != null)
-                {
-                    if (TotalSeats == null)
-                    {
-                        errors.Add("[total_seats] can be patched only on subscriptions that already have [total_seats] configured.");
-                    }
-                    else if (patch.TotalSeats <= TotalSeats)
-                    {
-                        errors.Add($"Patched [total_seats] ({patch.TotalSeats}) must be > existing total seats ({TotalSeats}).");
-                    }
-                }
             }
 
             return errors;

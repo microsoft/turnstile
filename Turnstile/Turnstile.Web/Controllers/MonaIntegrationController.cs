@@ -96,7 +96,7 @@ namespace Turnstile.Web.Controllers
 
                 await subsClient.CreateSubscription(subscription);
 
-                return RedirectToRoute(SubscriptionsController.RouteNames.GetSubscriptionSetup, new { subscriptionId = subscription.SubscriptionId });
+                return RedirectToRoute(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = subscription.SubscriptionId });
             }
             catch (Exception ex)
             {
@@ -121,7 +121,7 @@ namespace Turnstile.Web.Controllers
                    // This also makes it possible to support subscriptions that are not managed by Azure Marketplace/AppSource.
                    // FEEDBACK: There should be a way to get a "management URL" for Marketplace subscriptions.
 
-                   ["Manage subscriptions"] = "https://portal.azure.com/#blade/HubsExtension/BrowseResourceBlade/resourceType/Microsoft.SaaS%2Fresources"
+                   ["Manage your Azure Marketplace subscriptions"] = "https://portal.azure.com/#blade/HubsExtension/BrowseResourceBlade/resourceType/Microsoft.SaaS%2Fresources"
                },
                OfferId = monaSubscription.OfferId,
                PlanId = monaSubscription.PlanId,

@@ -1,29 +1,100 @@
-﻿@using Turnstile.Web.Controllers
+﻿@using Turnstile.Core.Constants;
+@using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions
+
 @model PickSubscriptionViewModel
 
 @{
-    ViewData["Title"] = "Choose subscription | Turnstile";
-    Layout = "_SubscriberLayout";
+    var layoutModel = ViewData.GetLayoutModel()!;
+    var manageableSubs = Model.Subscriptions.Where(s => s.CanUserAdministerSubscription).ToList();
+
+    ViewData["Title"] = $"Choose subscription | {layoutModel.TurnstileName}";
 }
 
 <h1>Please choose a subscription</h1>
 
-<div class="list-group" style="margin-top: 20px">
-    @foreach (var subscription in Model.Subscriptions)
-    {
-        var subTurnstileUrl = Url.RouteUrl(
-            TurnstileController.RouteNames.SpecificTurnstile,
-            subscription.ReturnToUrl == null ?
-                new { subscriptionId = subscription.SubscriptionId } :
-                new { subscriptionId = subscription.SubscriptionId, returnTo = subscription.ReturnToUrl });
+@if (manageableSubs.Any())
+{
+    <ul class="nav nav-tabs" id="pickTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="use-tab" data-bs-toggle="tab" data-bs-target="#use-pane" type="button" role="tab" aria-controls="use-pane" aria-seleted="true">Use</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage-pane" type="button" role="tab" aria-controls="manage-pane" aria-selected="false">Manage</button>
+        </li>
+    </ul>
+}
 
-        <a href="@subTurnstileUrl" class="list-group-item list-group-item-action">
-            @subscription.SubscriptionName &nbsp;
-            @if (subscription.CanAdminister == true)
+<div class="list-group" style="margin-top: 20px">
+    <div class="tab-content" id="pickPanes">
+        <div class="tab-pane fade show active" id="use-pane" role="tabpanel" aria-labelledby="use-tab" tabindex="0">
+            @foreach (var subscription in Model.Subscriptions)
             {
-                <span class="badge badge bg-primary">Admin</span>
+                var subTurnstileUrl = Url.RouteUrl(
+                TurnstileController.RouteNames.SpecificTurnstile,
+                Model.ReturnToUrl == null ?
+                new { subscriptionId = subscription.SubscriptionId } :
+                new { subscriptionId = subscription.SubscriptionId, returnTo = Model.ReturnToUrl });
+
+                <a href="@subTurnstileUrl" class="list-group-item list-group-item-action">
+                    @subscription.SubscriptionName &nbsp;
+                    @if (subscription.CanUserAdministerSubscription == true)
+                    {
+                        <span class="badge badge bg-primary">Admin</span>
+                    }
+                    @if (subscription.IsBeingConfigured || subscription.State == SubscriptionStates.Purchased)
+                    {
+                        <span title="This subscription is being configured and is temporarily unavailable.">
+                            &nbsp;
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                                <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                            </svg>
+                        </span>
+                    }
+                    @if (subscription.IsFreeTrialSubscription)
+                    {
+                        <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                    }
+                    @if (subscription.IsTestSubscription)
+                    {
+                        <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                    }
+                    <br /><small class="text-muted">@subscription.SubscriptionId</small>
+                </a>
             }
-            <br /><small class="text-muted">@subscription.SubscriptionId</small>
-        </a>
-    }
+        </div>
+        @if (manageableSubs.Any())
+        {
+            <div class="tab-pane fade" id="manage-pane" role="tabpanel" aria-labelledby="manage-tab" tabindex="0">
+                @foreach (var subscription in manageableSubs)
+                {
+                    var manageSubUrl = Url.RouteUrl(
+                    SubscriptionsController.RouteNames.GetSubscription,
+                    new { subscriptionId = subscription.SubscriptionId });
+
+                    <a href="@manageSubUrl" class="list-group-item list-group-item-action">
+                        <span><b>Manage</b> @subscription.SubscriptionName </span>
+                        @if (subscription.IsBeingConfigured || subscription.State == SubscriptionStates.Purchased)
+                        {
+                            <span title="This subscription is being configured and is temporarily unavailable.">
+                                &nbsp;
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                                </svg>
+                            </span>
+                        }
+                        @if (subscription.IsFreeTrialSubscription)
+                        {
+                            <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                        }
+                        @if (subscription.IsTestSubscription)
+                        {
+                            <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                        }
+                        <br /><small class="text-muted">@subscription.SubscriptionId</small>
+                    </a>
+                }
+            </div>
+        }
+    </div>
 </div>
