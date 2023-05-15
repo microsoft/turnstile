@@ -90,19 +90,32 @@ namespace Turnstile.Web.Controllers
 
                     var user = User.ToCoreModel();
 
-                    var availableSubs = (await subsClient.GetSubscriptions(user.TenantId))
-                        .Where(s => s.IsActive() && s.IsSetupComplete == true && User.CanUseSubscription(s))
+                    if (User.CanAdministerTurnstile())
+                    {
+                        // If there user is a Turnstile admin, forward them to the subscription management experience...
+
+                        return RedirectToRoute(SubscriptionsController.RouteNames.GetSubscriptions);
+                    }
+
+                    var availableSubs = (await subsClient.GetSubscriptions(user.TenantId)).ToList();
+
+                    var manageableSubs = availableSubs
+                        .Where(s => User.CanAdministerSubscription(s))
                         .ToList();
 
-                    if (availableSubs.None())
+                    var usableSubs = availableSubs
+                        .Where(s => User.CanUseSubscription(s) && s.IsSetupComplete == true && s.IsActive())
+                        .ToList();
+
+                    if (manageableSubs.None() && usableSubs.None())
                     {
                         logger.LogWarning($"User [{user.TenantId}/{user.UserId}] has no available subscriptions.");
 
                         return publisherConfig!.OnNoSubscriptionsFound();
                     }
-                    else if (availableSubs.OnlyOne(s => !User.CanAdministerSubscription(s))) // If there's only one subscription and the user
-                                                                                             // can administer it, we redirect them to the subscription
-                                                                                             // picker page so they can choose to either use or manage it.
+                    else if (usableSubs.OnlyOne() && manageableSubs.None()) // If there's only one subscription and the user
+                                                                            // can administer it, we redirect them to the subscription
+                                                                            // picker page so they can choose to either use or manage it.
                     { 
                         return RedirectToRoute(
                             RouteNames.SpecificTurnstile,

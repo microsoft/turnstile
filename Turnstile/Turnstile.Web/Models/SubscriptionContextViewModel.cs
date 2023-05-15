@@ -23,6 +23,7 @@ namespace Turnstile.Web.Models
             IsFreeTrialSubscription = subscription.IsFreeTrial;
             IsTestSubscription = subscription.IsTestSubscription;
             CanUserAdministerSubscription = userPrincipal.CanAdministerSubscription(subscription);
+            CanUserUseSubscription = userPrincipal.CanUseSubscription(subscription);
             CanUserAdministerTurnstile = userPrincipal.CanAdministerTurnstile();
             ContactSubscriptionAdminHtml = CreateContactSubscriptionAdminHtml(subscription);
 
@@ -55,6 +56,7 @@ namespace Turnstile.Web.Models
 
         public bool IsBeingConfigured { get; set; } = false;
         public bool CanUserAdministerSubscription { get; set; } = false;
+        public bool CanUserUseSubscription { get; set; } = false;
         public bool CanUserAdministerTurnstile { get; set; } = false;
 
 
