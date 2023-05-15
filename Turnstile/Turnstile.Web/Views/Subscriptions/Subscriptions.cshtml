@@ -72,7 +72,7 @@
                     @foreach (var sub in activeSubscriptions)
                     {
                         var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
-                        var canUse = (!isBeingConfigured && sub.CanUserAdministerSubscription);
+                        var canUse = (!isBeingConfigured && sub.CanUserUseSubscription);
 
                         var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
                         new { subscriptionId = sub.SubscriptionId });
