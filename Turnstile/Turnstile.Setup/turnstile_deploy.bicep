@@ -10,24 +10,24 @@ Deployment name __must__:
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
 @allowed([
-  'D1'    // Shared
-  'F1'    // Free
-  'B1'    // Basic
+  'D1' // Shared
+  'F1' // Free
+  'B1' // Basic
   'B2'
   'B3'
-  'S1'    // Standard (S1 is Default)
+  'S1' // Standard (S1 is Default)
   'S2'
   'S3'
-  'P1'    // Premium v1
+  'P1' // Premium v1
   'P2'
   'P3'
-  'P1V2'  // Premium v2
+  'P1V2' // Premium v2
   'P2V2'
   'P3V2'
-  'I1'    // Isolated (ASE)
+  'I1' // Isolated (ASE)
   'I2'
   'I3'
-  'Y1'    // Consumption/Dynamic (supported only for headless/API-only deployments)
+  'Y1' // Consumption/Dynamic (supported only for headless/API-only deployments)
 ])
 @description('''
 Note: Y1 (consumption/dynamic) is supported __only__ for headless/API-only deployments. 
@@ -72,6 +72,8 @@ var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
 var webAppName = 'turn-web-${cleanDeploymentName}'
 var midName = 'turn-id-${cleanDeploymentName}'
+
+var cosmosCapabilities = useCosmosProvisionedThroughput ? [] : [ { name: 'EnableServerless' } ]
 
 resource mid 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: midName
@@ -130,11 +132,7 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-11-15-previ
   location: location
   kind: 'GlobalDocumentDB'
   properties: {
-    capabilities: [
-      {
-        name: 'EnableServerless'
-      }
-    ]
+    capabilities: cosmosCapabilities
     databaseAccountOfferType: 'Standard'
     locations: [
       {
@@ -201,7 +199,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-03-01' = {
   sku: {
     name: appServicePlanSku
   }
-  properties: { }
+  properties: {}
 }
 
 resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
@@ -350,4 +348,3 @@ output eventGridTopicName string = eventGridTopic.name
 
 output webAppName string = headless ? '' : webApp.name
 output webAppBaseUrl string = headless ? '' : 'https://${webApp.properties.defaultHostName}'
-
