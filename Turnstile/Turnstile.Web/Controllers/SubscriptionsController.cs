@@ -102,7 +102,7 @@ namespace Turnstile.Web.Controllers
                         ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
                         ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
 
-                        return View(new SubscriptionDetailViewModel(subscription));
+                        return View(new SubscriptionDetailViewModel(subscription, User));
                     }
                     else
                     {
@@ -120,7 +120,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpPost]
         [Route("subscriptions/{subscriptionId}")]
-        public async Task<IActionResult> Subscription(string subscriptionId, [FromBody] SubscriptionDetailViewModel subscriptionDetail)
+        public async Task<IActionResult> Subscription(string subscriptionId, [FromForm] SubscriptionDetailViewModel subscriptionDetail)
         {
             try
             {
@@ -224,7 +224,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpPost]
         [Route("subscriptions/{subscriptionId}/seats/{seatId}/release")]
-        public async Task<IActionResult> ReleaseSeat(string subscriptionId, string seatId, [FromBody] SeatViewModel model)
+        public async Task<IActionResult> ReleaseSeat(string subscriptionId, string seatId, [FromForm] SeatViewModel model)
         {
             try
             {

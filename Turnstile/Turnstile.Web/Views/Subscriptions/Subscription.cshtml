@@ -18,6 +18,10 @@
         ? "Manage subscription | Turnstile"
         : $"Manage {subContextModel.SubscriptionName} | Turnstile";
 
+    var seatingTabBadgeColor = seatingModel.Seats.Any()
+        ? "badge text-bg-danger"
+        : "badge text-bg-secondary";
+
     ViewData["Title"] = subTitle;
 
     bool CanUserEditSubscriptionName() =>
@@ -56,6 +60,14 @@
         subContextModel.CanUserAdministerTurnstile &&
         subContextModel.State != SubscriptionStates.Canceled;
 
+    bool CanUserEditFreeTrialSubscription() =>
+        subContextModel.CanUserAdministerTurnstile &&
+        subContextModel.State != SubscriptionStates.Canceled;
+
+    bool CanUserEditTestSubscription() =>
+        subContextModel.CanUserAdministerTurnstile &&
+        subContextModel.State != SubscriptionStates.Canceled;
+
     bool CanUserEditOfferId() =>
         subContextModel.CanUserAdministerTurnstile &&
         subContextModel.State != SubscriptionStates.Canceled;
@@ -68,7 +80,7 @@
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item">
-            <a href="@allSubscriptionsUrl">Subscriptions</a>
+            <span></span><a href="@allSubscriptionsUrl">Subscriptions</a>
         </li>
         <li class="breadcrumb-item active" aria-current="page">
             @if (string.IsNullOrEmpty(subContextModel.SubscriptionName))
@@ -78,6 +90,22 @@
             else
             {
                 <span>@subContextModel.SubscriptionName</span>
+            }
+            @if (subContextModel.IsBeingConfigured || subContextModel.State == SubscriptionStates.Purchased)
+            {
+                <span title="This subscription is being configured and is temporarily unavailable.">&nbsp;
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                        <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                    </svg>
+                </span>
+            }
+            @if (subContextModel.IsFreeTrialSubscription)
+            {
+                <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+            }
+            @if (subContextModel.IsTestSubscription)
+            {
+                <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
             }
         </li>
     </ol>
@@ -198,7 +226,10 @@
         <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-tab-pane" type="button" role="tab" aria-controls="basics-tab-pane" aria-selected="true">Subscription</button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">Active seats</button>
+        <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">
+            Active seats
+            <span>&nbsp;<span class="@seatingTabBadgeColor">@seatingModel.Seats.Count</span></span>
+        </button>
     </li>
     @if (subContextModel.CanUserAdministerSubscription && !seatingModel.SubscriptionHasNoMoreSeats)
     {
@@ -224,7 +255,7 @@
     <div class="tab-pane fade show active" id="basics-tab-pane" style="margin-top: 20px" role="tabpanel" aria-labelledby="basics-tab" tabindex="0">
         <form method="post">
             <div class="mb-3">
-                <label asp-for="@Model.SubscriptionName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                <label asp-for="@Model.SubscriptionName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                 @if (CanUserEditSubscriptionName())
                 {
                     <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
@@ -237,7 +268,7 @@
                 <div id="subNameHelp" class="form-text">The name of this subscription as it will appear in the UI.</div>
             </div>
             <div class="mb-3">
-                <label asp-for="@Model.TenantName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                <label asp-for="@Model.TenantName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                 @if (CanUserEditTenantName())
                 {
                     <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
@@ -250,19 +281,19 @@
                 <div id="tenantNameHelp" class="form-text">The name of the subscriber's organization as it will appear in the UI.</div>
             </div>
             <div class="mb-3">
-                <label asp-for="@Model.TenantCountry" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                <label asp-for="@Model.TenantCountry" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                 @if (CanUserEditTenantCountry())
                 {
-                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" />
+                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-select"></select>
                 }
                 else
                 {
-                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-control" disabled />
+                    <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-select" disabled></select>
                 }
                 <span asp-validation-for="@Model.TenantCountry" class="text-danger"></span>
             </div>
             <div class="mb-3">
-                <label asp-for="@Model.AdminName" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                <label asp-for="@Model.AdminName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                 @if (CanUserEditAdminName())
                 {
                     <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
@@ -275,7 +306,7 @@
                 <div id="adminRoleNameHelp" class="form-text">The name of this subscription's primary admin.</div>
             </div>
             <div class="mb-3">
-                <label asp-for="@Model.AdminEmail" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                <label asp-for="@Model.AdminEmail" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                 @if (CanUserEditAdminEmail())
                 {
                     <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" />
@@ -289,7 +320,7 @@
             </div>
             <div class="mb-3">
                 <a data-bs-toggle="collapse" href="#moreOptions" aria-expanded="false" aria-controls="moreOptions">
-                    <p class="h6">More options</p>
+                    <p class="h6">More options &#x25BC;</p>
                 </a>
             </div>
             <div class="collapse" id="moreOptions">
@@ -320,14 +351,14 @@
                     <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="@Model.State" class="form-label">&nbsp;<span class="text-danger">*</span></label>
+                    <label asp-for="@Model.State" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                     @if (CanUserEditState())
                     {
-                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" />
+                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select"></select>
                     }
                     else
                     {
-                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" disabled />
+                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select" disabled></select>
                     }
                     <span asp-validation-for="@Model.State" class="text-danger"></span>
                 </div>
@@ -340,10 +371,32 @@
                     {
                         <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" disabled />
                     }
-                    <label asp-for="@Model.IsBeingConfigured" class="form-check-label" />
+                    <label asp-for="@Model.IsBeingConfigured" class="form-check-label"></label>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    @if (CanUserEditFreeTrialSubscription())
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsFreeTrialSubscription" />
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsFreeTrialSubscription" disabled />
+                    }
+                    <label asp-for="@Model.IsFreeTrialSubscription" class="form-check-label"></label>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    @if (CanUserEditTestSubscription())
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsTestSubscription" />
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsTestSubscription" disabled />
+                    }
+                    <label asp-for="@Model.IsTestSubscription" class="form-check-label"></label>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="@Model.OfferId" class="form-label"></label>
+                    <label asp-for="@Model.OfferId" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                     @if (CanUserEditOfferId())
                     {
                         <input asp-for="@Model.OfferId" class="form-control" type="text" />
@@ -355,7 +408,7 @@
                     <span asp-validation-for="@Model.State" class="text-danger"></span>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="@Model.PlanId" class="form-label"></label>
+                    <label asp-for="@Model.PlanId" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
                     @if (CanUserEditPlanId())
                     {
                         <input asp-for="@Model.PlanId" class="form-control" type="text" />
@@ -367,24 +420,24 @@
                 </div>
                 <div class="mb-3">
                     <label asp-for="@Model.SubscriptionId" class="form-label"></label>
-                    <input asp-for="@Model.SubscriptionId" class="form-control-plaintext" type="text" readonly />
+                    <input asp-for="@Model.SubscriptionId" class="form-control" type="text" disabled />
                 </div>
                 <div class="mb-3">
                     <label asp-for="@Model.TenantId" class="form-label"></label>
-                    <input asp-for="@Model.TenantId" class="form-control-plaintext" type="text" readonly />
+                    <input asp-for="@Model.TenantId" class="form-control" type="text" disabled />
                 </div>
                 <div class="mb-3">
                     <label asp-for="@subContextModel.CreatedUtc" class="form-label"></label>
-                    <input asp-for="@subContextModel.CreatedUtc" class="form-control-plaintext" type="datetime" readonly />
+                    <input asp-for="@subContextModel.CreatedUtc" class="form-control" type="datetime" disabled />
                 </div>
                 <div class="mb-3">
                     <label asp-for="@subContextModel.StateLastUpdatedUtc" class="form-label"></label>
-                    <input asp-for="@subContextModel.StateLastUpdatedUtc" class="form-control-plaintext" type="datetime" readonly />
+                    <input asp-for="@subContextModel.StateLastUpdatedUtc" class="form-control" type="datetime" disabled />
                 </div>
             </div>
             <hr />
             <div style="margin-top: 20px; margin-bottom: 20px">
-                <button type="submit" class="btn btn-outline-primary">Save changes</button>
+                <button type="submit" class="btn btn-primary">Save changes</button>
             </div>
         </form>
     </div>
@@ -411,14 +464,16 @@
                                 }
                             </td>
                             <td>
-                                <span>
-                                    <a class="btn btn-primary" href="mailto:@seat.UserEmail">Contact user »</a>
-                                </span>
-                                <span>
-                                    <a class="btn btn-danger"
-                                       href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReleaseSeat,
-                                                       new { subscriptionId = subContextModel.SubscriptionId, seatId = seat.SeatId })">Release seat »</a>
-                                </span>
+                                <div class="float-end">
+                                    <span>
+                                        <a class="btn btn-primary" href="mailto:@seat.UserEmail">Contact user</a>
+                                    </span>
+                                    <span>
+                                        <a class="btn btn-danger"
+                                           href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReleaseSeat,
+                                                       new { subscriptionId = subContextModel.SubscriptionId, seatId = seat.SeatId })">Release seat</a>
+                                    </span>
+                                </div>
                             </td>
                         </tr>
                     }

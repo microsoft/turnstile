@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System.Net;
 using System.Security.Claims;
 using Turnstile.Core.Models.Configuration;
@@ -206,7 +207,9 @@ namespace Turnstile.Web.Extensions
 
             if (string.IsNullOrEmpty(publisherConfig.TurnstileConfiguration?.OnAccessDeniedUrl))
             {
-                return new ForbidResult(); 
+                return new RedirectToRouteResult(
+                    TurnstileController.RouteNames.OnAccessDenied,
+                    new { subscriptionId });
             }
             else
             {

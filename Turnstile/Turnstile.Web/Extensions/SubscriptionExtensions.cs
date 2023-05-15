@@ -13,16 +13,18 @@ namespace Turnstile.Web.Extensions
 
             subscription.AdminEmail = subscriptionDetail.AdminEmail;
             subscription.AdminName = subscriptionDetail.AdminName;
-            subscription.AdminRoleName = subscriptionDetail.AdminRoleName;
+            subscription.AdminRoleName = subscriptionDetail.AdminRoleName ?? string.Empty;
             subscription.IsBeingConfigured = subscriptionDetail.IsBeingConfigured;
+            subscription.IsTestSubscription = subscriptionDetail.IsTestSubscription;
+            subscription.IsFreeTrial = subscriptionDetail.IsFreeTrialSubscription;
             subscription.OfferId = subscriptionDetail.OfferId;
             subscription.PlanId = subscriptionDetail.PlanId;
             subscription.State = subscriptionDetail.State;
             subscription.SubscriptionName = subscriptionDetail.SubscriptionName;
             subscription.TenantName = subscriptionDetail.TenantName;
-            subscription.UserRoleName = subscriptionDetail.UserRoleName;
+            subscription.UserRoleName = subscriptionDetail.UserRoleName ?? string.Empty;
 
-            subscription.SubscriberInfo = new JObject(new SubscriberInfo(subscriptionDetail.TenantCountry));
+            subscription.SubscriberInfo = JObject.FromObject(new SubscriberInfo(subscriptionDetail.TenantCountry));
 
             return subscription;
         }

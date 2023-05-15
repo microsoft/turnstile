@@ -14,9 +14,14 @@ namespace Turnstile.Web.Models
             ArgumentNullException.ThrowIfNull(userPrincipal, nameof(userPrincipal));
 
             SubscriptionId = subscription.SubscriptionId;
+            SubscriptionName = subscription.SubscriptionName;
             State = subscription.State;
+            TenantId = subscription.TenantId;
+            TenantName = subscription.TenantName;
 
             IsBeingConfigured = subscription.IsBeingConfigured == true;
+            IsFreeTrialSubscription = subscription.IsFreeTrial;
+            IsTestSubscription = subscription.IsTestSubscription;
             CanUserAdministerSubscription = userPrincipal.CanAdministerSubscription(subscription);
             CanUserAdministerTurnstile = userPrincipal.CanAdministerTurnstile();
             ContactSubscriptionAdminHtml = CreateContactSubscriptionAdminHtml(subscription);
@@ -44,6 +49,9 @@ namespace Turnstile.Web.Models
 
         [Display(Name = "Tenant name")]
         public string? TenantName { get; set; }
+
+        public bool IsFreeTrialSubscription { get; set; } = false;
+        public bool IsTestSubscription { get; set; } = false;
 
         public bool IsBeingConfigured { get; set; } = false;
         public bool CanUserAdministerSubscription { get; set; } = false;

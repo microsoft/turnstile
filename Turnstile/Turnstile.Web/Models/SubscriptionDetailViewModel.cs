@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Security.Claims;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Models;
 
@@ -13,9 +14,10 @@ namespace Turnstile.Web.Models
     {
         public SubscriptionDetailViewModel() { }
 
-        public SubscriptionDetailViewModel(Subscription subscription)
+        public SubscriptionDetailViewModel(Subscription subscription, ClaimsPrincipal userPrincipal)
         {
             ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
+            ArgumentNullException.ThrowIfNull(userPrincipal, nameof(userPrincipal));
 
             SubscriptionId = subscription.SubscriptionId;
             SubscriptionName = subscription.SubscriptionName;
@@ -29,8 +31,17 @@ namespace Turnstile.Web.Models
             AdminName = subscription.AdminName;
             AdminEmail = subscription.AdminEmail;
             IsBeingConfigured = (subscription.IsBeingConfigured == true);
+            IsFreeTrialSubscription = subscription.IsFreeTrial;
+            IsTestSubscription = subscription.IsTestSubscription;
 
-            AvailableStates = new List<SelectListItem>(GetAvailableStates(subscription));
+            var subscriberInfo = subscription.SubscriberInfo == null
+                ? new SubscriberInfo()
+                : subscription.SubscriberInfo.ToObject<SubscriberInfo>();
+
+            var thisCountry = userPrincipal.FindFirstValue(ClaimTypes.Country)
+                ?? RegionInfo.CurrentRegion.TwoLetterISORegionName;
+
+            TenantCountry = subscriberInfo!.TenantCountry ?? thisCountry;
         }
 
         [Display(Name = "Subscription ID")]
@@ -77,10 +88,23 @@ namespace Turnstile.Web.Models
         [Display(Name = "Subscription is currently being configured")]
         public bool IsBeingConfigured { get; set; }
 
+        [Display(Name = "Is free trial subscription")]
+        public bool IsFreeTrialSubscription { get; set; }
+
+        [Display(Name = "Is test subscription")]
+        public bool IsTestSubscription { get; set; }
+
         public bool IsSubscriptionUpdated { get; set; }
         public bool HasValidationErrors { get; set; }
 
-        public List<SelectListItem> AvailableStates { get; set; } = new List<SelectListItem>();
+        public List<SelectListItem> AvailableStates => State switch
+        {
+            SubscriptionStates.Purchased => new List<SelectListItem> { GetPurchasedStateListItem(true), GetActiveStateListItem(), GetCanceledStateListItem(), GetSuspendedStateListItem() },
+            SubscriptionStates.Active => new List<SelectListItem> { GetActiveStateListItem(true), GetCanceledStateListItem(), GetSuspendedStateListItem() },
+            SubscriptionStates.Canceled => new List<SelectListItem> { GetCanceledStateListItem(true) },
+            SubscriptionStates.Suspended => new List<SelectListItem> { GetActiveStateListItem(), GetCanceledStateListItem(), GetSuspendedStateListItem(true) },
+            _ => new List<SelectListItem>()
+        };
 
         // TODO: This probably isn't the most reliable way of getting country names. Revisit...
 
@@ -91,15 +115,6 @@ namespace Turnstile.Web.Models
             .OrderBy(c => c.EnglishName)
             .Select(c => new SelectListItem(c.EnglishName, c.TwoLetterISORegionName))
             .ToList();
-
-        private IEnumerable<SelectListItem> GetAvailableStates(Subscription subscription) => subscription.State switch
-        {
-            SubscriptionStates.Purchased => new[] { GetPurchasedStateListItem(true), GetActiveStateListItem(), GetCanceledStateListItem(), GetSuspendedStateListItem() },
-            SubscriptionStates.Active => new[] { GetActiveStateListItem(true), GetCanceledStateListItem(), GetSuspendedStateListItem() },
-            SubscriptionStates.Canceled => new[] { GetCanceledStateListItem(true) },
-            SubscriptionStates.Suspended => new[] { GetActiveStateListItem(), GetCanceledStateListItem(), GetSuspendedStateListItem(true) },
-            _ => throw new ArgumentOutOfRangeException($"Subscription state [{subscription.State}] is invalid.")
-        };
 
         private SelectListItem GetPurchasedStateListItem(bool inState = false) =>
             new SelectListItem("Purchased", SubscriptionStates.Purchased, inState);
