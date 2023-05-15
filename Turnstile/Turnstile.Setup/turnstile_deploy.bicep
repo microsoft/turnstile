@@ -46,6 +46,8 @@ The web app is not deployed in headless mode.
 ''')
 param headless bool = false
 
+param useCosmosProvisionedThroughput bool = false
+
 @secure()
 param webAppAadClientSecret string = ''
 

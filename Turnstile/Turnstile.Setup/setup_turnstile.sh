@@ -40,10 +40,10 @@ readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() {
     echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
-    echo "         [-i integration_pack] [-H flag: headless]"
+    echo "         [-i integration_pack] [-H flag: headless] [-p flag: use_cosmos_provisioned_throughput]"
     echo 
     echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
-    echo "         -i \"default\" -H" 
+    echo "         -i \"default\" -H -p" 
 }
 
 check_az() {
@@ -205,8 +205,9 @@ done
 p_headless="$FALSE"
 p_app_service_sku="S1"
 p_integration_pack="default"
+p_use_cosmos_provisioned_throughput="$FALSE"
 
-while getopts "s:c:d:n:r:i:h" opt; do
+while getopts "s:c:d:n:r:i:Hp" opt; do
     case $opt in
         s)
             p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
@@ -226,12 +227,15 @@ while getopts "s:c:d:n:r:i:h" opt; do
         r)
             p_deployment_region=$OPTARG
         ;;
-        h)
+        H)
             p_headless="$TRUE"
 
             # This flag allows you to deploy Turnstile in "headless" mode. Headless mode deploys _only_
             # the API and supporting resources. It does not deploy the web app and, consequently, doesn't
             # do any AAD configuration.
+        ;;
+        p)
+            p_use_cosmos_provisioned_throughput="$TRUE"
         ;;
         \?)
             usage
@@ -421,6 +425,7 @@ az deployment group create \
         webAppAadClientId="$aad_app_id" \
         webAppAadTenantId="$current_user_tid" \
         webAppAadClientSecret="$aad_app_secret" \
+        useCosmosProvisionedThroughput="$p_use_cosmos_provisioned_throughput" \
         headless="$p_headless" 2>/dev/null
 
 if [[ $? == 0 ]]; then

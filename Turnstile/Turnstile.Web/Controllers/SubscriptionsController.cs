@@ -147,6 +147,8 @@ namespace Turnstile.Web.Controllers
                         {
                             subscription.ApplyUpdate(subscriptionDetail);
 
+                            subscription.IsSetupComplete = true;
+
                             subscription = await subsClient.UpdateSubscription(subscription);
 
                             subscriptionDetail.IsSubscriptionUpdated = true;
