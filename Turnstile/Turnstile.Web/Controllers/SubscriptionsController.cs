@@ -41,7 +41,7 @@ namespace Turnstile.Web.Controllers
 
         [HttpGet]
         [Route("subscriptions", Name = RouteNames.GetSubscriptions)]
-        public async Task<IActionResult> Subscriptions(string? sort = null)
+        public async Task<IActionResult> Subscriptions()
         {
             try
             {
@@ -147,7 +147,7 @@ namespace Turnstile.Web.Controllers
                     {
                         if (ModelState.IsValid)
                         {
-                            subscription.ApplyUpdate(subscriptionDetail);
+                            subscription.ApplyUpdateBy(subscriptionDetail, User!);
 
                             subscription.IsSetupComplete = true;
 
@@ -205,7 +205,10 @@ namespace Turnstile.Web.Controllers
                     {
                         return NotFound();
                     }
-                    else if (User.CanAdministerSubscription(subscription))
+                    else if (User.CanAdministerSubscription(subscription)) // Only the subscriber themselves can release a seat in their subscription.
+                                                                           // This decision is up for debate since, technically, the publisher can always
+                                                                           // go in and release a seat. Points to the need for a complete RACI of all the folks
+                                                                           // that will wind up using Turnstile -- publishers, subscribers, and users.
                     {
                         ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
                         ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
@@ -292,7 +295,8 @@ namespace Turnstile.Web.Controllers
 
                         return NotFound();
                     }
-                    else if (User.CanAdministerSubscription(subscription))
+                    else if (User.CanAdministerSubscription(subscription)) // Same rule as with releasing seats. Only subscribers can
+                                                                           // can create seat reservations through the UI.
                     {
                         ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
                         ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));

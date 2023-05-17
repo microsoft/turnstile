@@ -8,69 +8,17 @@
     var layoutModel = ViewData.GetLayoutModel()!;
     var seatingModel = ViewData.GetSeatingModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
-
+    var canUserManage = subContextModel.CanUserAdministerSubscription && subContextModel.State != SubscriptionStates.Canceled;
+    var isNewSetup = subContextModel.CanUserAdministerSubscription && !subContextModel.IsSetupComplete;
     var allSubscriptionsUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions);
-
-    var reserveSeatUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat,
-        new { subscriptionId = subContextModel.SubscriptionId });
+    var reserveSeatUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = subContextModel.SubscriptionId });
+    var seatingTabBadgeColor = seatingModel.Seats.Any() ? "badge text-bg-danger" : "badge text-bg-secondary";
 
     var subTitle = string.IsNullOrEmpty(subContextModel.SubscriptionName)
         ? "Manage subscription | Turnstile"
         : $"Manage {subContextModel.SubscriptionName} | Turnstile";
 
-    var seatingTabBadgeColor = seatingModel.Seats.Any()
-        ? "badge text-bg-danger"
-        : "badge text-bg-secondary";
-
     ViewData["Title"] = subTitle;
-
-    bool CanUserEditSubscriptionName() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditTenantName() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditTenantCountry() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditAdminName() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditAdminEmail() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditAdminRole() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditUserRole() =>
-        (subContextModel.CanUserAdministerSubscription || subContextModel.CanUserAdministerTurnstile) &&
-        (subContextModel.State != SubscriptionStates.Canceled);
-
-    bool CanUserEditState() =>
-        subContextModel.CanUserAdministerTurnstile &&
-        subContextModel.State != SubscriptionStates.Canceled;
-
-    bool CanUserEditConfigurationState() =>
-        subContextModel.CanUserAdministerTurnstile &&
-        subContextModel.State != SubscriptionStates.Canceled;
-
-    bool CanUserEditFreeTrialSubscription() => false; // Not yet supported by API.
-
-    bool CanUserEditTestSubscription() => false; // Not yet supported by API.
-
-    bool CanUserEditOfferId() =>
-        subContextModel.CanUserAdministerTurnstile &&
-        subContextModel.State != SubscriptionStates.Canceled;
-
-    bool CanUserEditPlanId() =>
-        subContextModel.CanUserAdministerTurnstile &&
-        subContextModel.State != SubscriptionStates.Canceled;
 }
 
 <nav aria-label="breadcrumb">
@@ -108,7 +56,16 @@
     </ol>
 </nav>
 
-<h1>Manage subscription</h1>
+@if (isNewSetup)
+{
+    <h1>Set up your subscription</h1>
+    <lead>Are you ready to start using your new subscription? You're almost there! Please provide a few more details to activate your subscription.</lead>
+}
+else
+{
+    <h1>Manage subscription</h1>
+}
+
 <hr />
 
 <div id="subscriptionAlerts">
@@ -228,7 +185,7 @@
             <span>&nbsp;<span class="@seatingTabBadgeColor">@seatingModel.Seats.Count</span></span>
         </button>
     </li>
-    @if (subContextModel.CanUserAdministerSubscription && !seatingModel.SubscriptionHasNoMoreSeats)
+    @if (canUserManage && !seatingModel.SubscriptionHasNoMoreSeats)
     {
         <li class="nav-item"><a class="nav-link" href="@reserveSeatUrl">Reserve seat</a></li>
     }
@@ -253,7 +210,7 @@
         <form method="post">
             <div class="mb-3">
                 <label asp-for="@Model.SubscriptionName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (CanUserEditSubscriptionName())
+                @if (layoutModel.IsTurnstileAdmin || canUserManage)
                 {
                     <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
                 }
@@ -266,7 +223,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.TenantName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (CanUserEditTenantName())
+                @if (layoutModel.IsTurnstileAdmin || canUserManage)
                 {
                     <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
                 }
@@ -279,7 +236,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.TenantCountry" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (CanUserEditTenantCountry())
+                @if (layoutModel.IsTurnstileAdmin || canUserManage)
                 {
                     <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-select"></select>
                 }
@@ -291,7 +248,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.AdminName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (CanUserEditAdminName())
+                @if (layoutModel.IsTurnstileAdmin || canUserManage)
                 {
                     <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
                 }
@@ -304,7 +261,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.AdminEmail" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (CanUserEditAdminEmail())
+                @if (layoutModel.IsTurnstileAdmin || canUserManage)
                 {
                     <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" />
                 }
@@ -323,7 +280,7 @@
             <div class="collapse" id="moreOptions">
                 <div class="mb-3">
                     <label asp-for="@Model.AdminRoleName" class="form-label"></label>
-                    @if (CanUserEditAdminRole())
+                    @if (layoutModel.IsTurnstileAdmin || canUserManage)
                     {
                         <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" />
                     }
@@ -336,7 +293,7 @@
                 </div>
                 <div class="mb-3">
                     <label asp-for="@Model.UserRoleName" class="form-label"></label>
-                    @if (CanUserEditUserRole())
+                    @if (layoutModel.IsTurnstileAdmin || canUserManage)
                     {
                         <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" />
                     }
@@ -347,7 +304,8 @@
                     <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
                     <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
                 </div>
-                @if (CanUserEditState())
+
+                @if (layoutModel.IsTurnstileAdmin)
                 {
                     <div class="mb-3">
                         <label asp-for="@Model.State" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
@@ -355,48 +313,61 @@
                         <span asp-validation-for="@Model.State" class="text-danger"></span>
                     </div>
                 }
-                else
-                {
-                    <hidden asp-for="@Model.State" />
-                }
-                @if (CanUserEditConfigurationState())
+
+                @if (layoutModel.IsTurnstileAdmin)
                 {
                     <div class="mb-3 form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" />
                         <label asp-for="@Model.IsBeingConfigured" class="form-check-label"></label>
                     </div>
                 }
+
+                @if (layoutModel.IsTurnstileAdmin)
+                {
+                    <div class="mb-3">
+                        <label asp-for="@Model.OfferId" class="form-label"></label><span class="text-danger">*</span>
+                        <input asp-for="@Model.OfferId" class="form-control" type="text" />
+                        <span asp-validation-for="@Model.OfferId" class="text-danger"></span>
+                    </div>
+                }
                 else
                 {
-                    <hidden asp-for="@Model.IsBeingConfigured" />
+                    <div class="mb-3 row">
+                        <label asp-for="@Model.OfferId" class="col-sm-2 col-form-label"></label>
+                        <div class="col-sm-10">
+                            <input type="text" readonly class="form-control-plaintext" value="@Model.OfferId" />
+                        </div>
+                    </div>
                 }
-                <div class="mb-3">
-                    <label asp-for="@Model.OfferId" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                    @if (CanUserEditOfferId())
-                    {
-                        <input asp-for="@Model.OfferId" class="form-control" type="text" />
-                    }
-                    else
-                    {
-                        <input asp-for="@Model.OfferId" class="form-control-plaintext" type="text" readonly />
-                    }
-                    <span asp-validation-for="@Model.State" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="@Model.PlanId" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                    @if (CanUserEditPlanId())
-                    {
+
+                @if (layoutModel.IsTurnstileAdmin)
+                {
+                    <div class="mb-3">
+                        <label asp-for="@Model.PlanId" class="form-label"></label><span class="text-danger">*</span>
                         <input asp-for="@Model.PlanId" class="form-control" type="text" />
-                    }
-                    else
-                    {
-                        <input asp-for="@Model.PlanId" class="form-control-plaintext" type="text" readonly />
-                    }
-                </div>
+                        <span asp-validation-for="@Model.PlanId" class="text-danger"></span>
+                    </div>
+                }
+                else
+                {
+                    <div class="mb-3 row">
+                        <label asp-for="@Model.PlanId" class="col-sm-2 col-form-label"></label>
+                        <div class="col-sm-10">
+                            <input type="text" readonly class="form-control-plaintext" value="@Model.PlanId" />
+                        </div>
+                    </div>
+                }
             </div>
             <hr />
             <div style="margin-top: 20px; margin-bottom: 20px">
-                <button type="submit" class="btn btn-primary">Save changes</button>
+                @if (isNewSetup)
+                {
+                    <button type="submit" class="btn btn-success">Activate my subscription</button>
+                }
+                else
+                {
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                }
             </div>
         </form>
     </div>
@@ -443,7 +414,7 @@
         {
             <div class="alert alert-secondary" role="alert">
                 No active seats in this subscription.
-                @if (!layoutModel.IsTurnstileAdmin)
+                @if (canUserManage)
                 {
                     <span> <a href="@reserveSeatUrl">Reserve a seat now.</a></span>
                 }

@@ -20,6 +20,7 @@ namespace Turnstile.Web.Models
             TenantName = subscription.TenantName;
 
             IsBeingConfigured = subscription.IsBeingConfigured == true;
+            IsSetupComplete = subscription.IsSetupComplete == true;
             IsFreeTrialSubscription = subscription.IsFreeTrial;
             IsTestSubscription = subscription.IsTestSubscription;
             CanUserAdministerSubscription = userPrincipal.CanAdministerSubscription(subscription);
@@ -55,6 +56,7 @@ namespace Turnstile.Web.Models
         public bool IsTestSubscription { get; set; } = false;
 
         public bool IsBeingConfigured { get; set; } = false;
+        public bool IsSetupComplete { get; set; } = false;
         public bool CanUserAdministerSubscription { get; set; } = false;
         public bool CanUserUseSubscription { get; set; } = false;
         public bool CanUserAdministerTurnstile { get; set; } = false;

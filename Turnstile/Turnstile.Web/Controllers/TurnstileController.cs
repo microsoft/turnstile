@@ -104,7 +104,9 @@ namespace Turnstile.Web.Controllers
                         .ToList();
 
                     var usableSubs = availableSubs
-                        .Where(s => User.CanUseSubscription(s) && s.IsSetupComplete == true && s.IsActive())
+                        .Where(s => User.CanUseSubscription(s) && 
+                                    s.IsSetupComplete == true && 
+                                    s.IsActive())
                         .ToList();
 
                     if (manageableSubs.None() && usableSubs.None())

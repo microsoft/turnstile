@@ -24,7 +24,7 @@ namespace Turnstile.Core.Models.Configuration
         [JsonPropertyName("limited_overflow_seating_enabled")]
         [JsonProperty("limited_overflow_seating_enabled")]
         [OpenApiProperty(Nullable = false, Description = "Determines whether [limited] seats will be distributed when there are no more available [standard] seats; by default, false")]
-        public bool? LimitedOverflowSeatingEnabled { get; set; }
+        public bool? LimitedOverflowSeatingEnabled { get; set; } = false;
 
         [JsonPropertyName("seat_reservation_expiry_in_days")]
         [JsonProperty("seat_reservation_expiry_in_days")]
