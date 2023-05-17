@@ -79,9 +79,11 @@ namespace Turnstile.Web.Models
         public string? UserRoleName { get; set; }
 
         [Display(Name = "Primary admin name")]
+        [Required(ErrorMessage = "Primary admin name is required.")]
         public string? AdminName { get; set; }
 
         [Display(Name = "Primary admin email")]
+        [Required(ErrorMessage = "Primary admin email is required.")]
         [EmailAddress(ErrorMessage = "Subscription admin email is not a valid email address.")]
         public string? AdminEmail { get; set; }
 

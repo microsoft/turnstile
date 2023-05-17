@@ -25,6 +25,7 @@ namespace Turnstile.Web.Extensions
             {
                 subscription.IsTestSubscription = subscriptionDetail.IsTestSubscription;
                 subscription.IsFreeTrial = subscriptionDetail.IsFreeTrialSubscription;
+                subscription.State = subscriptionDetail.State;
                 subscription.OfferId = subscriptionDetail.OfferId;
                 subscription.PlanId = subscriptionDetail.PlanId;
             }
