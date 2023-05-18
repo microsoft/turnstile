@@ -4,8 +4,6 @@
 using Microsoft.Identity.Web;
 using System.Security.Claims;
 using Turnstile.Core.Models;
-using static System.Environment;
-using static Turnstile.Core.Constants.EnvironmentVariableNames;
 
 namespace Turnstile.Web.Extensions
 {
@@ -45,23 +43,6 @@ namespace Turnstile.Web.Extensions
                 UserId = principal.GetHomeObjectId(),
                 UserName = principal.GetDisplayName()
             };
-        }
-
-        public static bool CanAdministerTurnstile(this ClaimsPrincipal principal)
-        {
-            ArgumentNullException.ThrowIfNull(principal, nameof(principal));
-
-            var pubTenantId = GetEnvironmentVariable(Publisher.TenantId) ??
-                throw new InvalidOperationException($"[{Publisher.TenantId}] environment variable not configured.");
-
-            var pubAdminRoleName = GetEnvironmentVariable(Publisher.AdminRoleName) ??
-                throw new InvalidOperationException($"[{Publisher.AdminRoleName}] environment variable not configured.");
-
-            return 
-                // Do they belong to this turnstile's tenant?
-                principal.GetHomeTenantId() == pubTenantId && 
-                // Do they belong to the administrator's role?
-                principal.IsInRole(pubAdminRoleName);
         }
 
         public static bool CanUseSubscription(this ClaimsPrincipal principal, Subscription subscription)

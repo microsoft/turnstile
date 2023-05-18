@@ -8,21 +8,22 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="knockoutjs" Version="3.5.1" />
-    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.3" NoWarn="NU1605" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.3" NoWarn="NU1605" />
-    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.0-preview.2.22153.2" />
-    <PackageReference Include="Microsoft.Identity.Web" Version="1.16.0" />
-    <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="1.16.0" />
-    <PackageReference Include="Microsoft.Identity.Web.UI" Version="1.16.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.2" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="knockoutjs" Version="3.5.1" />
+		<PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.21.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.3" NoWarn="NU1605" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.3" NoWarn="NU1605" />
+		<PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.0-preview.2.22153.2" />
+		<PackageReference Include="Microsoft.Identity.Web" Version="1.16.0" />
+		<PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="1.16.0" />
+		<PackageReference Include="Microsoft.Identity.Web.UI" Version="1.16.0" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.2" />
+	</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Turnstile.Core\Turnstile.Core.csproj" />
     <ProjectReference Include="..\Turnstile.Services\Turnstile.Services.csproj" />
+    <ProjectReference Include="..\Turnstile.Web.Common\Turnstile.Web.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,5 +31,4 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 </Project>

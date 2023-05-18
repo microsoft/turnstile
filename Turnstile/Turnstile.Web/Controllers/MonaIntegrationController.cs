@@ -12,7 +12,7 @@ using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
-using Turnstile.Web.Extensions;
+using Turnstile.Web.Common.Extensions;
 
 namespace Turnstile.Web.Controllers
 {
@@ -48,7 +48,7 @@ namespace Turnstile.Web.Controllers
                 {
                     logger.LogWarning("Publisher setup is incomplete.");
 
-                    return User!.CanAdministerTurnstile() ? RedirectToRoute("get_publisher_config") : this.ServiceUnavailable();
+                    return this.ServiceUnavailable();
                 }
 
                 if (string.IsNullOrEmpty(pubConfig!.MonaBaseStorageUrl))

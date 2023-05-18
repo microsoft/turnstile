@@ -125,6 +125,8 @@ namespace Turnstile.Core.Models
 
         public bool IsActive() => State == SubscriptionStates.Active; // Just a little convenience method.
 
+        public bool IsUsable() => IsActive() && IsSetupComplete == true;
+
         public IEnumerable<string> Validate()
         {
             var errors = new List<string>();

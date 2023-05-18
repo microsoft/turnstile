@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
+using Turnstile.Web.Common.Extensions;
+using Turnstile.Web.Common.Models;
 using Turnstile.Web.Extensions;
 using Turnstile.Web.Models;
 
@@ -40,41 +42,6 @@ namespace Turnstile.Web.Controllers
         }
 
         [HttpGet]
-        [Route("subscriptions", Name = RouteNames.GetSubscriptions)]
-        public async Task<IActionResult> Subscriptions()
-        {
-            try
-            {
-                var publisherConfig = await publisherConfigClient.GetConfiguration();
-
-                if (publisherConfig?.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-                else
-                {
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-
-                    var subUser = User.ToCoreModel();
-
-                    var subscriptions = (User.CanAdministerTurnstile()
-                        ? (await subsClient.GetSubscriptions())
-                        : (await subsClient.GetSubscriptions(subUser.TenantId)).Where(s => User.CanAdministerSubscription(s)))
-                        .ToList();
-
-                    return View(new SubscriptionsViewModel(subscriptions, User));
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogError($"Exception @ GET [{nameof(Subscriptions)}]: [{ex.Message}]");
-
-                throw;
-            }
-        }
-
-        [HttpGet]
         [Route("subscriptions/{subscriptionId}", Name = RouteNames.GetSubscription)]
         public async Task<IActionResult> Subscription(string subscriptionId)
         {
@@ -82,14 +49,9 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
+                if (publisherConfig?.IsSetupComplete == true)
                 {
-                    return setupAction;
-                }
-                else
-                {
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                    this.ApplyModel(new LayoutViewModel(publisherConfig));
 
                     var subscription = await subsClient.GetSubscription(subscriptionId);
 
@@ -97,19 +59,23 @@ namespace Turnstile.Web.Controllers
                     {
                         return NotFound();
                     }
-                    else if (User.CanAdministerTurnstile() || User.CanAdministerSubscription(subscription))
+                    else if (User.CanAdministerSubscription(subscription))
                     {
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
-                        ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
+                        this.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
 
-                        return View(new SubscriptionDetailViewModel(subscription, User));
+                        return View(new SubscriptionDetailViewModel(subscription));
                     }
                     else
                     {
                         return Forbid();
                     }
+                }
+                else
+                {
+                    return this.ServiceUnavailable();
                 }
             }
             catch (Exception ex)
@@ -128,14 +94,9 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
+                if (publisherConfig?.IsSetupComplete == true)
                 {
-                    return setupAction;
-                }
-                else
-                {
-                    ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                    this.ApplyModel(new LayoutViewModel(publisherConfig!));
 
                     var subscription = await subsClient.GetSubscription(subscriptionId);
 
@@ -143,11 +104,11 @@ namespace Turnstile.Web.Controllers
                     {
                         return NotFound();
                     }
-                    else if (User.CanAdministerSubscription(subscription) || User.CanAdministerTurnstile())
+                    else if (User.CanAdministerSubscription(subscription))
                     {
                         if (ModelState.IsValid)
                         {
-                            subscription.ApplyUpdateBy(subscriptionDetail, User!);
+                            subscription.ApplyUpdate(subscriptionDetail);
 
                             subscription.IsSetupComplete = true;
 
@@ -164,8 +125,8 @@ namespace Turnstile.Web.Controllers
 
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription!, User));
-                        ViewData.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription!, seats));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription!, seats));
 
                         return View(subscriptionDetail);
                     }
@@ -173,6 +134,10 @@ namespace Turnstile.Web.Controllers
                     {
                         return Forbid();
                     }
+                }
+                else
+                {
+                    return this.ServiceUnavailable();
                 }
             }
             catch (Exception ex)
@@ -191,12 +156,7 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-                else
+                if (publisherConfig?.IsSetupComplete == true)
                 {
                     var subscription = await subsClient.GetSubscription(subscriptionId);
                     var seat = await seatsClient.GetSeat(subscriptionId, seatId);
@@ -210,8 +170,8 @@ namespace Turnstile.Web.Controllers
                                                                            // go in and release a seat. Points to the need for a complete RACI of all the folks
                                                                            // that will wind up using Turnstile -- publishers, subscribers, and users.
                     {
-                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
+                        this.ApplyModel(new LayoutViewModel(publisherConfig!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
 
                         return View(new SeatViewModel(seat));
                     }
@@ -219,6 +179,10 @@ namespace Turnstile.Web.Controllers
                     {
                         return Forbid();
                     }
+                }
+                else
+                {
+                    return this.ServiceUnavailable();
                 }
             }
             catch (Exception ex)
@@ -237,12 +201,7 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-                else
+                if (publisherConfig?.IsSetupComplete == true)
                 {
                     var subscription = await subsClient.GetSubscription(subscriptionId);
                     var seat = await seatsClient.GetSeat(subscriptionId, seatId);
@@ -262,6 +221,10 @@ namespace Turnstile.Web.Controllers
                         return Forbid();
                     }
                 }
+                else
+                {
+                    return this.ServiceUnavailable();
+                }
             }
             catch (Exception ex)
             {
@@ -279,13 +242,8 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-                else
-                {
+                if (publisherConfig?.IsSetupComplete == true)
+                { 
                     var subscription = await subsClient.GetSubscription(subscriptionId);
 
                     if (subscription?.State != SubscriptionStates.Active)
@@ -298,8 +256,8 @@ namespace Turnstile.Web.Controllers
                     else if (User.CanAdministerSubscription(subscription)) // Same rule as with releasing seats. Only subscribers can
                                                                            // can create seat reservations through the UI.
                     {
-                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
-                        ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
+                        this.ApplyModel(new LayoutViewModel(publisherConfig!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
 
                         return View(new ReserveSeatViewModel(subscription));
                     }
@@ -307,6 +265,10 @@ namespace Turnstile.Web.Controllers
                     {
                         return Forbid();
                     }
+                }
+                else
+                {
+                    return this.ServiceUnavailable();
                 }
             }
             catch (Exception ex)
@@ -325,16 +287,11 @@ namespace Turnstile.Web.Controllers
             {
                 var publisherConfig = await publisherConfigClient.GetConfiguration();
 
-                if (publisherConfig!.CheckTurnstileSetupIsComplete(User, logger) is var setupAction &&
-                    setupAction != null)
-                {
-                    return setupAction;
-                }
-                else
+                if (publisherConfig?.IsSetupComplete == true)
                 {
                     var subscription = await subsClient.GetSubscription(subscriptionId);
 
-                    if (subscription == null)
+                    if (subscription?.State != SubscriptionStates.Active)
                     {
                         return NotFound();
                     }
@@ -363,7 +320,7 @@ namespace Turnstile.Web.Controllers
                             }
                         }
 
-                        ViewData.ApplyModel(new LayoutViewModel(publisherConfig!, User));
+                        this.ApplyModel(new LayoutViewModel(publisherConfig!));
 
                         if (ModelState.IsValid)
                         {
@@ -371,7 +328,7 @@ namespace Turnstile.Web.Controllers
                         }
                         else
                         {
-                            ViewData.ApplyModel(new SubscriptionContextViewModel(subscription, User));
+                            this.ApplyModel(new SubscriptionContextViewModel(subscription));
 
                             return View(model);
                         }
@@ -383,6 +340,10 @@ namespace Turnstile.Web.Controllers
 
                         return Forbid();
                     }
+                }
+                else
+                {
+                    return this.ServiceUnavailable();
                 }
             }
             catch (Exception ex)
