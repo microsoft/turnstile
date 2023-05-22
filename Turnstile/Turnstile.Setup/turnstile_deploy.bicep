@@ -39,7 +39,7 @@ param publisherAdminRoleName string = 'turnstile_admins'
 
 param userWebAppAadClientId string = ''
 param adminWebAppAadClientId string = ''
-
+param adminWebAppAadDomain string = ''
 param aadTenantId string = ''
 
 @description('''
@@ -66,6 +66,7 @@ var uniqueDeploymentName = toLower(uniqueString(resourceGroup().id, deployment()
 var storageAccountName = take('turnstor${uniqueDeploymentName}', 24)
 var configStorageContainerName = 'turn-configuration'
 var configStorageBlobName = 'publisher_config.json'
+var seatResultCacheStorageContainerName = 'seat-results'
 var eventStoreContainerName = 'event-store'
 var logAnalyticsName = 'turn-logs-${cleanDeploymentName}'
 var appInsightsName = 'turn-insights-${cleanDeploymentName}'
@@ -191,6 +192,10 @@ resource configStorageContainer 'Microsoft.Storage/storageAccounts/blobServices/
 
 resource eventStoreContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
   name: '${storageAccount.name}/default/${eventStoreContainerName}'
+}
+
+resource seatResultCacheContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = {
+  name: '${storageAccount.name}/default/${seatResultCacheStorageContainerName}'
 }
 
 resource eventGridTopic 'Microsoft.EventGrid/topics@2021-12-01' = {
@@ -356,6 +361,14 @@ resource adminWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
           value: 'InstrumentationKey=${appInsights.properties.InstrumentationKey}'
         }
         {
+          name: 'Turnstile_SeatResultCache_StorageConnectionString'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'Turnstile_SeatResultCache_StorageContainerName'
+          value: seatResultCacheStorageContainerName
+        }
+        {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
         }
@@ -370,6 +383,10 @@ resource adminWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
         {
           name: 'Turnstile_AadClientSecret'
           value: adminWebAppAadClientSecret
+        }
+        {
+          name: 'Turnstile_AadDomain'
+          value: adminWebAppAadDomain
         }
         {
           name: 'Turnstile_PublisherTenantId'

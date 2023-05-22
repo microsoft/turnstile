@@ -413,6 +413,8 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         create_admin_app_response=$(az ad app create \
             --display-name "$admin_aad_app_name" \
             --enable-id-token-issuance true \
+            --sign-in-audience "AzureADMyOrg" \
+            --web-redirect-uris "https://turn-admin-${p_deployment_name}.azurewebsites.net/signin-oidc" \
             --output json)
 
         admin_aad_app_id=$(echo "$create_admin_app_response" | jq -r ".appId")
@@ -502,6 +504,7 @@ az deployment group create \
         aadTenantId="$current_user_tid" \
         userWebAppAadClientId="$aad_app_id" \
         adminWebAppAadClientId="$admin_aad_app_id" \
+        adminWebAppAadDomain="$admin_aad_domain" \
         userWebAppAadClientSecret="$aad_app_secret" \
         adminWebAppAadClientSecret="$admin_aad_app_secret" \
         useCosmosProvisionedThroughput="$p_use_cosmos_provisioned_throughput" \
@@ -544,6 +547,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         --name "$az_deployment_name" \
         --query properties.outputs.adminWebAppBaseUrl.value \
         --output tsv)
+
 fi
 
 api_app_name=$(az deployment group show \
@@ -809,6 +813,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
     az webapp deployment source config-zip \
         --resource-group "$resource_group_name" \
+        --name "$admin_web_app_name" \
         --src "./admin_web_topublish.zip" &
 
     deploy_admin_web_pid=$!
