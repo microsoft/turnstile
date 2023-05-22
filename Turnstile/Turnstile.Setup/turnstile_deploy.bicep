@@ -36,9 +36,11 @@ Default is S1 (Standard).
 param appServicePlanSku string = 'S1'
 
 param publisherAdminRoleName string = 'turnstile_admins'
-param subscriberTenantAdminRoleName string = 'subscriber_tenant_admins'
-param webAppAadClientId string = ''
-param webAppAadTenantId string = ''
+
+param userWebAppAadClientId string = ''
+param adminWebAppAadClientId string = ''
+
+param aadTenantId string = ''
 
 @description('''
 In headless mode, __only__ the API and its supporting resources are deployed. 
@@ -49,7 +51,10 @@ param headless bool = false
 param useCosmosProvisionedThroughput bool = false
 
 @secure()
-param webAppAadClientSecret string = ''
+param userWebAppAadClientSecret string = ''
+
+@secure()
+param adminWebAppAadClientSecret string = ''
 
 param location string = resourceGroup().location
 
@@ -70,7 +75,8 @@ var eventGridTopicName = 'turn-events-${cleanDeploymentName}'
 var eventGridConnectionName = 'turn-events-connect-${cleanDeploymentName}'
 var eventGridConnectionDisplayName = 'Turnstile SaaS Events'
 var apiAppName = 'turn-services-${cleanDeploymentName}'
-var webAppName = 'turn-web-${cleanDeploymentName}'
+var adminWebAppName = 'turn-admin-${cleanDeploymentName}'
+var userWebAppName = 'turn-web-${cleanDeploymentName}'
 var midName = 'turn-id-${cleanDeploymentName}'
 
 var cosmosCapabilities = useCosmosProvisionedThroughput ? [] : [ { name: 'EnableServerless' } ]
@@ -292,8 +298,8 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
-  name: webAppName
+resource userWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
+  name: userWebAppName
   location: location
   kind: 'app'
   properties: {
@@ -318,20 +324,57 @@ resource webApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
         }
         {
           name: 'Turnstile_AadClientId'
-          value: webAppAadClientId
+          value: userWebAppAadClientId
         }
         {
           name: 'Turnstile_AadClientSecret'
-          value: webAppAadClientSecret
+          value: userWebAppAadClientSecret
         }
         {
           name: 'Turnstile_PublisherTenantId'
-          value: webAppAadTenantId
+          value: aadTenantId
+        } 
+      ]
+    }
+  }
+}
+
+resource adminWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
+  name: adminWebAppName
+  location: location
+  kind: 'app'
+  properties: {
+    serverFarmId: appServicePlan.id
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: appInsights.properties.InstrumentationKey
         }
         {
-          name: 'Turnstile_SubscriberTenantAdminRoleName'
-          value: subscriberTenantAdminRoleName
+          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+          value: 'InstrumentationKey=${appInsights.properties.InstrumentationKey}'
         }
+        {
+          name: 'Turnstile_ApiBaseUrl'
+          value: 'https://${apiAppName}.azurewebsites.net'
+        }
+        {
+          name: 'Turnstile_PublisherAdminRoleName'
+          value: publisherAdminRoleName
+        }
+        {
+          name: 'Turnstile_AadClientId'
+          value: adminWebAppAadClientId
+        }
+        {
+          name: 'Turnstile_AadClientSecret'
+          value: adminWebAppAadClientSecret
+        }
+        {
+          name: 'Turnstile_PublisherTenantId'
+          value: aadTenantId
+        } 
       ]
     }
   }
@@ -348,5 +391,8 @@ output eventGridConnectionName string = eventGridConnection.name
 output eventGridTopicId string = eventGridTopic.id
 output eventGridTopicName string = eventGridTopic.name
 
-output webAppName string = headless ? '' : webApp.name
-output webAppBaseUrl string = headless ? '' : 'https://${webApp.properties.defaultHostName}'
+output userWebAppName string = headless ? '' : userWebApp.name
+output userWebAppBaseUrl string = headless ? '' : 'https://${userWebApp.properties.defaultHostName}'
+
+output adminWebAppName string = headless ? '' : adminWebApp.name
+output adminWebAppBaseUrl string = headless ? '' : 'https://${adminWebApp.properties.defaultHostName}'

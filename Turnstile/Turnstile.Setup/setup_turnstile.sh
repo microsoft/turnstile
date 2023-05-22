@@ -40,10 +40,35 @@ readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() {
     echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
-    echo "         [-i integration_pack] [-H flag: headless] [-p flag: use_cosmos_provisioned_throughput]"
+    echo "         [-i integration_pack] [-s app_service_plan_sku] [-H flag: headless] \\" 
+    echo "         [-p flag: use_cosmos_provisioned_throughput]"
     echo 
     echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
-    echo "         -i \"default\" -H -p" 
+    echo "         -i \"default\" -s \"P1\" -H -p"
+    echo
+    echo "Parameter details"
+    echo
+    echo "<-n name>.....................................Unique name for this Turnstile deployment"
+    echo "                                              Lower-case, alphanumeric, must be between 5-13 characters"
+    echo "<-r deployment_region>........................The Azure region to deploy Turnstile to"
+    echo "                                              For region list, run `az account list-locations -o table`"
+    echo "[-c publisher_config_path]....................Optional; indicates the path of a custom publisher configuration"
+    echo "                                              file that should be used with this deployment"
+    echo "[-d display_name].............................Optional; indicates the display name of the Azure Active "
+    echo "                                              Directory app created to protect this deployment. Admin "
+    echo "                                              app display name will be \"[display_name] Admin\"."
+    echo "[-i integration_pack].........................Optional; indicates the name (if pack is in `./integration_packs`)"
+    echo "                                              or absolute path of integration pack to deploy. If no pack "
+    echo "                                              is specified, the default pack (`./integration_packs/default`)"
+    echo "                                              will be deployed."
+    echo "[-s app_service_plan_sku].....................Optional; indicates the SKU to use when creating Turnstile's" 
+    echo "                                              app service plan. By default, SKU is S1 (Standard). Y1 (Consumption)"
+    echo "                                              SKU can be used only with headless (-H) deployments." 
+    echo "[-H flag: headless]...........................Optional; if flag is set, only the Turnstile API will be deployed."
+    echo "                                              If not set, the API and both user and admin web apps will be deployed."
+    echo "[-p flag: use_cosmos_provisioned_throughput]..Optional; if flag is set, Turnstile's Cosmos account will"
+    echo "                                              be created in provisioned throughput mode instead of the default"
+    echo "                                              serverless mode."
 }
 
 check_az() {
@@ -283,8 +308,9 @@ if [[ "$p_headless" == "$FALSE" ]]; then
     # Create the app registration in AAD...
 
     aad_app_name="$display_name"
+    admin_aad_app_name="$display_name Admin"
 
-    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration..."
+    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration for Turnstile's subscriber/user web app..."
 
     graph_token=$(az account get-access-token \
         --resource-type ms-graph \
@@ -319,11 +345,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
             if [[ $i1 == 5 ]]; then
                 # We tried five times and it's still not working. Time to give up, unfortunately.
-                echo "❌   Failed to create AAD app. Setup failed."
+                echo "❌   Failed to create AAD app registration for Turnstile's subscriber/user web app. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
-                echo "⚠️   Trying to create AAD app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create AAD app registration for Turnstile's subscriber/user web app again in [$sleep_for] seconds."
                 sleep $sleep_for
             fi
         else
@@ -334,7 +360,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
     # Regardless of whether or not the user provided an existing AAD app ID, we still need to create
     # a client secret that the web app can use for authentication.
 
-    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] client credentials..."
+    echo "🛡️   Creating AAD app [$aad_app_name] client credentials for Turnstile's subscriber web app..."
 
     add_password_json=$(cat ./aad/add_password.json)
 
@@ -350,11 +376,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
         if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
             if [[ $i2 == 5 ]]; then
-                echo "❌   Failed to create AAD app client credentials. Setup failed."
+                echo "❌   Failed to create AAD app client credentials for Turnstile's subscriber/user web app. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i2))
-                echo "⚠️   Trying to create AAD app client credentials again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create AAD app client credentials for Turnstile's subscriber/user web app again in [$sleep_for] seconds."
                 sleep $sleep_for
             fi
         else
@@ -362,20 +388,71 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         fi
     done
 
-    echo "🛡️   Creating AAD app [$aad_app_name] service principal..."
+    echo "🛡️   Creating AAD app [$aad_app_name] service principal for Turnstile's subscriber/user web app..."
 
     for i3 in {1..5}; do
         aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
 
         if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
             if [[ $i3 == 5 ]]; then
-                echo "❌   Failed to create Turnstile AAD service principal. Setup failed."
+                echo "❌   Failed to create AAD service principal for Turnstile's subscriber/user web app. Setup failed."
                 exit 1
             else
-                sleep_for=$((2**i2))
-                echo "⚠️   Trying to create service principal again in [$sleep_for] seconds."
+                sleep_for=$((2**i3))
+                echo "⚠️   Trying to create AAD service principal for Turnstile's subscriber/user web app again in [$sleep_for] seconds."
                 sleep $sleep_for
             fi     
+        else
+            break
+        fi
+    done
+
+    echo "🛡️   Creating AAD app [$admin_aad_app_name] registration for Turnstile's admin web app..."
+
+    for i4 in {1..5}; do
+        create_admin_app_response=$(az ad app create \
+            --display-name "$admin_aad_app_name" \
+            --enable-id-token-issuance true \
+            --output json)
+
+        admin_aad_app_id=$(echo "$create_admin_app_response" | jq -r ".appId")
+        admin_aad_object_id=$(echo "$create_admin_app_response" | jq -r ".id")
+        admin_aad_domain=$(echo "$create_admin_app_response" | jq -r ".publisherDomain")
+
+        if [[ -z $admin_aad_app_id || $admin_aad_app_id == null || -z $admin_aad_object_id || $admin_aad_object_id == null || -z $admin_aad_domain || $admin_aad_domain == null ]]; then
+            if [[ $i4 == 5 ]]; then
+                echo "❌   Failed to create AAD app registration for Turnstile's admin web app. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i4))
+                echo "⚠️   Trying to create AAD app registration for Turnstile's admin web app again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi     
+        else
+            break
+        fi
+    done
+
+    echo "🛡️   Creating AAD app [$admin_aad_app_name] client credentials for Turnstile's admin web app..."
+
+    for i5 in {1..5}; do
+        create_admin_creds_response=$(az ad app credential reset \
+            --id "$admin_aad_app_id" \
+            --append \
+            --output json \
+            --years 100)
+
+        admin_aad_app_secret=$(echo "$create_admin_creds_response" | jq -r ".password")
+
+        if [[ -z $admin_aad_app_secret || $admin_aad_app_secret == null ]]; then
+            if [[ $i5 == 5 ]]; then
+                echo "❌   Failed to create AAD client credentials for Turnstile's admin web app. Setup failed."
+                exit 1
+            else
+                sleep_for=$((2**i5))
+                echo "⚠️   Trying to create AAD client credentials for Turnstile's admin web app again in [$sleep_for] seconds."
+                sleep $sleep_for
+            fi
         else
             break
         fi
@@ -422,9 +499,11 @@ az deployment group create \
     --parameters \
         appServicePlanSku="$p_app_service_sku" \
         deploymentName="$p_deployment_name" \
-        webAppAadClientId="$aad_app_id" \
-        webAppAadTenantId="$current_user_tid" \
-        webAppAadClientSecret="$aad_app_secret" \
+        aadTenantId="$current_user_tid" \
+        userWebAppAadClientId="$aad_app_id" \
+        adminWebAppAadClientId="$admin_aad_app_id" \
+        userWebAppAadClientSecret="$aad_app_secret" \
+        adminWebAppAadClientSecret="$admin_aad_app_secret" \
         useCosmosProvisionedThroughput="$p_use_cosmos_provisioned_throughput" \
         headless="$p_headless" 2>/dev/null
 
@@ -445,14 +524,26 @@ if [[ "$p_headless" == "$FALSE" ]]; then
     web_app_name=$(az deployment group show \
         --resource-group "$resource_group_name" \
         --name "$az_deployment_name" \
-        --query properties.outputs.webAppName.value \
+        --query properties.outputs.userWebAppName.value \
         --output tsv);
 
     web_app_base_url=$(az deployment group show \
         --resource-group "$resource_group_name" \
         --name "$az_deployment_name" \
-        --query properties.outputs.webAppBaseUrl.value \
+        --query properties.outputs.userWebAppBaseUrl.value \
         --output tsv);
+
+    admin_web_app_name=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.adminWebAppName.value \
+        --output tsv)
+
+    admin_web_app_base_url=$(az deployment group show \
+        --resource-group "$resource_group_name" \
+        --name "$az_deployment_name" \
+        --query properties.outputs.adminWebAppBaseUrl.value \
+        --output tsv)
 fi
 
 api_app_name=$(az deployment group show \
@@ -660,6 +751,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         --resource-group "$resource_group_name" \
         --settings "Turnstile_ApiAccessKey=$api_key"
 
+    az webapp config appsettings set \
+        --name "$admin_web_app_name" \
+        --resource-group "$resource_group_name" \
+        --settings "Turnstile_ApiAccessKey=$api_key"
+
 fi
 
 # Build and prepare the API and function apps for deployment to the cloud...
@@ -668,7 +764,10 @@ echo "🏗️   Building Turnstile app(s)..."
 
 dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
 
-[[ "$p_headless" == "$FALSE" ]] && dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+if [[ "$p_headless" == "$FALSE" ]]; then
+    dotnet publish -c Release -o ./web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+    dotnet publish -c Release -o ./admin_web_topublish ../Turnstile.Web.Admin/Turnstile.Web.Admin.csproj
+fi
 
 # Once the builds are finished, pack them up for deployment.
 
@@ -680,6 +779,10 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
     cd ./web_topublish
     zip -r ../web_topublish.zip . >/dev/null
+    cd ..
+
+    cd ./admin_web_topublish
+    zip -r ../admin_web_topublish.zip . >/dev/null
     cd ..
 
 fi
@@ -704,7 +807,14 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
     deploy_web_pid=$!
 
+    az webapp deployment source config-zip \
+        --resource-group "$resource_group_name" \
+        --src "./admin_web_topublish.zip" &
+
+    deploy_admin_web_pid=$!
+
     wait $deploy_web_pid
+    wait $deploy_admin_web_pid
 
 fi
 
@@ -719,13 +829,15 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
     rm -rf ./web_topublish >/dev/null
     rm -rf ./web_topublish.zip >/dev/null
+    rm -rf ./admin_web_topublish >/dev/null
+    rm -rf ./admin_web_topublish.zip >/dev/null
 
 fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
 
 if [[ "$p_headless" == "$FALSE" ]]; then
-    echo "➡️   Please go to [ $web_app_base_url/config/basics ] to complete setup."
+    echo "➡️   Please go to [ $admin_web_app_base_url/config/basics ] to complete setup."
 fi
 
 echo
