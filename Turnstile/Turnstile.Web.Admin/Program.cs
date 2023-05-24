@@ -7,10 +7,27 @@ using Microsoft.Identity.Web.UI;
 using Turnstile.Web.Admin.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
+var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');
+var deploymentName = builder.Configuration["Turnstile_DeploymentName"];
 
 // Add services to the container.
 builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"));
+    .AddMicrosoftIdentityWebApp(o =>
+    {
+        o.Instance = "https://login.microsoftonline.com";
+        o.ClientId = builder.Configuration["Turnstile_AadClientId"];
+        o.ClientSecret = builder.Configuration["Turnstile_AadClientSecret"];
+        o.TenantId = builder.Configuration["Turnstile_PublisherTenantId"];
+        o.CallbackPath = "/signin-oidc";
+        o.SignedOutCallbackPath = "/signout-callback-oidc";
+    })
+        .EnableTokenAcquisitionToCallDownstreamApi(initialScopes)
+            .AddMicrosoftGraph(o =>
+            {
+                o.Scopes = "user.read email profile";
+                o.BaseUrl = "https://graph.microsoft.com/v1.0";
+            })
+            .AddInMemoryTokenCaches();
 
 builder.Services.AddAuthorization(options =>
 {

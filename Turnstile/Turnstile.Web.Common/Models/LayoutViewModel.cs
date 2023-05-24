@@ -22,6 +22,8 @@ namespace Turnstile.Web.Common.Models
             PrivacyNoticePageUrl = publisherConfig.PrivacyNoticePageUrl;
             ContactSalesUrl = publisherConfig.ContactSalesUrl;
             ContactSupportUrl = publisherConfig.ContactSupportUrl;
+            ContactSalesEmail = publisherConfig.ContactSalesEmail;
+            ContactSupportEmail = publisherConfig.ContactSupportEmail;
 
             ContactSalesHtml = CreateContactSalesHtml(publisherConfig);
             ContactSupportHtml = CreateContactSupportHtml(publisherConfig);
@@ -32,7 +34,9 @@ namespace Turnstile.Web.Common.Models
         public string? HomePageUrl { get; set; }
         public string? ContactPageUrl { get; set; }
         public string? ContactSalesUrl { get; set; }
+        public string? ContactSalesEmail { get; set; }
         public string? ContactSupportUrl { get; set; }
+        public string? ContactSupportEmail { get; set; }
         public string? PrivacyNoticePageUrl { get; set; }
 
         public HtmlString? ContactSalesHtml { get; set; }

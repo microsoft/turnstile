@@ -1,5 +1,5 @@
-﻿@using Turnstile.Web.Controllers;
-@using Turnstile.Web.Models.PublisherConfig;
+﻿@using Turnstile.Web.Admin.Controllers;
+@using Turnstile.Web.Admin.Models.PublisherConfig;
 
 @{
     ViewData["Title"] = "User redirection | Turnstile";
@@ -45,8 +45,8 @@
     </div>
     <div class="mb-3">
         <label class="form-label">On <b>subscription not ready</b> URL</label>
-        <input asp-for="@Model.OnSubscriptionPurchasedUrl" type="url" class="form-control" aria-describedBy="onNotReadyHelp" />
-        <span asp-validation-for="@Model.OnSubscriptionPurchasedUrl" class="text-danger"></span>
+        <input asp-for="@Model.OnSubscriptionNotReadyUrl" type="url" class="form-control" aria-describedBy="onNotReadyHelp" />
+        <span asp-validation-for="@Model.OnSubscriptionNotReadyUrl" class="text-danger"></span>
         <div id="onNotReadyHelp" class="form-text">If the subscription isn't currently ready (e.g., it's being configured), where should the user be redirected to?</div>
     </div>
     <div class="mb-3">

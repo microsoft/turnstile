@@ -19,7 +19,6 @@ namespace Turnstile.Web.Controllers
         public static class RouteNames
         {
             public const string GetSubscription = "subscription";
-            public const string GetSubscriptions = "subscriptions";
             public const string GetReleaseSeat = "release_seat";
             public const string GetReserveSeat = "reserve_seat";
         }

@@ -10,24 +10,24 @@ Deployment name __must__:
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
 @allowed([
-  'D1' // Shared
-  'F1' // Free
-  'B1' // Basic
+  'D1'    // Shared
+  'F1'    // Free
+  'B1'    // Basic
   'B2'
   'B3'
-  'S1' // Standard (S1 is Default)
+  'S1'    // Standard (S1 is Default)
   'S2'
   'S3'
-  'P1' // Premium v1
+  'P1'    // Premium v1
   'P2'
   'P3'
-  'P1V2' // Premium v2
+  'P1V2'  // Premium v2
   'P2V2'
   'P3V2'
-  'I1' // Isolated (ASE)
+  'I1'    // Isolated (ASE)
   'I2'
   'I3'
-  'Y1' // Consumption/Dynamic (supported only for headless/API-only deployments)
+  'Y1'    // Consumption/Dynamic (supported only for headless/API-only deployments)
 ])
 @description('''
 Note: Y1 (consumption/dynamic) is supported __only__ for headless/API-only deployments. 
@@ -44,10 +44,15 @@ param aadTenantId string = ''
 
 @description('''
 In headless mode, __only__ the API and its supporting resources are deployed. 
-The web app is not deployed in headless mode.
+The web apps are not deployed in headless mode.
 ''')
 param headless bool = false
 
+@description('''
+By default, Turnstile's Cosmos account is created in serverless mode 
+to control costs. Setting this flag will cause the account to be 
+created in provisioned throughput mode.
+''')
 param useCosmosProvisionedThroughput bool = false
 
 @secure()
@@ -57,6 +62,8 @@ param userWebAppAadClientSecret string = ''
 param adminWebAppAadClientSecret string = ''
 
 param location string = resourceGroup().location
+
+var deploymentType = 'standard-v1'
 
 var cleanDeploymentName = toLower(deploymentName)
 var cosmosDbAccountName = 'turn-cosmos-${cleanDeploymentName}'
@@ -150,7 +157,8 @@ resource cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2021-11-15-previ
 }
 
 resource cosmosSqlDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-11-15-preview' = {
-  name: '${cosmosDbAccount.name}/${cosmosDbName}'
+  parent: cosmosDbAccount
+  name: cosmosDbName
   properties: {
     resource: {
       id: cosmosDbName
@@ -159,7 +167,8 @@ resource cosmosSqlDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-11
 }
 
 resource cosmosContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2021-11-15-preview' = {
-  name: '${cosmosSqlDb.name}/${cosmosContainerName}'
+  parent: cosmosSqlDb
+  name: cosmosContainerName
   properties: {
     resource: {
       id: cosmosContainerName
@@ -320,6 +329,10 @@ resource userWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
           value: 'InstrumentationKey=${appInsights.properties.InstrumentationKey}'
         }
         {
+          name: 'Turnstile_DeploymentName'
+          value: deploymentName
+        }
+        {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
         }
@@ -359,6 +372,10 @@ resource adminWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
         {
           name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
           value: 'InstrumentationKey=${appInsights.properties.InstrumentationKey}'
+        }
+        {
+          name: 'Turnstile_DeploymentName'
+          value: deploymentName
         }
         {
           name: 'Turnstile_SeatResultCache_StorageConnectionString'
@@ -413,3 +430,46 @@ output userWebAppBaseUrl string = headless ? '' : 'https://${userWebApp.properti
 
 output adminWebAppName string = headless ? '' : adminWebApp.name
 output adminWebAppBaseUrl string = headless ? '' : 'https://${adminWebApp.properties.defaultHostName}'
+
+// So, here's the idea with deploymentTypes and deploymentProfiles. In Mona, admins can access supporting Azure
+// resources provisioned during deployment using Azure portal deep links presented in the Mona UI. Customers
+// love this as it reduces the Azure learning curve needed to support a Mona deployment. While this is the only
+// supported Turnstile deployment method today, it's entirely plausible that customers in the future may
+// choose to deploy it in different ways including on K8s. To bring this Azure operations UI capability to 
+// the Turnstile UI _while_ supporting multiple future potential deployment methods, we publish a deploymentProfile
+// to a shared blob storage location along with a deploymentType label. If the Tursntile UI knows the deploymentType, it
+// can present a UI experience that allows users to support it. This leaves the door open for future deploymentTypes
+// and corresponding UI enhancements.
+
+output deploymentType string = deploymentType
+
+output deploymentProfile object = { // This schema describes a standard-v1 deployment type.
+  deploymentName: deploymentName
+  isHeadless: headless
+  azureDeploymentName: deployment().name
+  azureSubscriptionId: subscription().subscriptionId
+  azureResourceGroupName: resourceGroup().name
+  azureRegion: location
+  eventGridTopicName: eventGridTopicName
+  aadTenantId: aadTenantId
+  publisherAdminRoleName: publisherAdminRoleName
+  apps: {
+    api: {
+      isDeployed: true
+      name: apiAppName
+      baseUrl: 'https://${apiAppName}.azurewebsites.net'
+    }
+    userWeb: {
+      isDeployed: !headless
+      aadClientId: userWebAppAadClientId
+      name: headless ? '' : userWebAppName
+      baseUrl: headless ? '' : 'https://${userWebApp.properties.defaultHostName}'
+    }
+    adminWeb: {
+      isDeployed: !headless
+      aadClientId: adminWebAppAadClientId
+      name: headless ? '' : adminWebAppName
+      baseUrl: headless ? '' : 'https://${adminWebApp.properties.defaultHostName}'
+    }
+  }
+}

@@ -1,4 +1,5 @@
 ﻿@using Turnstile.Core.Constants;
+@using Turnstile.Web.Common.Extensions;
 @using Turnstile.Web.Controllers
 @using Turnstile.Web.Extensions;
 
@@ -8,9 +9,8 @@
     var layoutModel = ViewData.GetLayoutModel()!;
     var seatingModel = ViewData.GetSeatingModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
-    var canUserManage = subContextModel.CanUserAdministerSubscription && subContextModel.State != SubscriptionStates.Canceled;
-    var isNewSetup = subContextModel.CanUserAdministerSubscription && !subContextModel.IsSetupComplete;
-    var allSubscriptionsUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions);
+    var isReadOnly = subContextModel.State != SubscriptionStates.Canceled;
+    var allSubscriptionsUrl = Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile);
     var reserveSeatUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = subContextModel.SubscriptionId });
     var seatingTabBadgeColor = seatingModel.Seats.Any() ? "badge text-bg-danger" : "badge text-bg-secondary";
 
@@ -56,14 +56,14 @@
     </ol>
 </nav>
 
-@if (isNewSetup)
+@if (!subContextModel.IsSetupComplete)
 {
     <h1>Set up your subscription</h1>
     <lead>Are you ready to start using your new subscription? You're almost there! Please provide a few more details to activate your subscription.</lead>
 }
 else
 {
-    <h1>Manage subscription</h1>
+    <h1>Manage your subscription</h1>
 }
 
 <hr />
@@ -179,15 +179,18 @@ else
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-tab-pane" type="button" role="tab" aria-controls="basics-tab-pane" aria-selected="true">Subscription</button>
     </li>
-    <li class="nav-item" role="presentation">
-        <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">
-            Active seats
-            <span>&nbsp;<span class="@seatingTabBadgeColor">@seatingModel.Seats.Count</span></span>
-        </button>
-    </li>
-    @if (canUserManage && !seatingModel.SubscriptionHasNoMoreSeats)
+    @if (!isReadOnly)
     {
-        <li class="nav-item"><a class="nav-link" href="@reserveSeatUrl">Reserve seat</a></li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">
+                Active seats
+                <span>&nbsp;<span class="@seatingTabBadgeColor">@seatingModel.Seats.Count</span></span>
+            </button>
+        </li>
+        @if (!seatingModel.SubscriptionHasNoMoreSeats)
+        {
+            <li class="nav-item"><a class="nav-link" href="@reserveSeatUrl">Reserve seat</a></li>
+        }
     }
     @if (subContextModel.ManagementLinks.Any())
     {
@@ -210,7 +213,7 @@ else
         <form method="post">
             <div class="mb-3">
                 <label asp-for="@Model.SubscriptionName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                @if (!isReadOnly)
                 {
                     <input asp-for="@Model.SubscriptionName" class="form-control" type="text" aria-describedBy="subNameHelp" />
                 }
@@ -223,7 +226,7 @@ else
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.TenantName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                @if (!isReadOnly)
                 {
                     <input asp-for="@Model.TenantName" class="form-control" type="text" aria-describedBy="tenantNameHelp" />
                 }
@@ -236,7 +239,7 @@ else
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.TenantCountry" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                @if (!isReadOnly)
                 {
                     <select asp-for="@Model.TenantCountry" asp-items="@Model.Countries" class="form-select"></select>
                 }
@@ -248,7 +251,7 @@ else
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.AdminName" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                @if (!isReadOnly)
                 {
                     <input asp-for="@Model.AdminName" class="form-control" type="text" aria-describedBy="adminNameHelp" />
                 }
@@ -261,7 +264,7 @@ else
             </div>
             <div class="mb-3">
                 <label asp-for="@Model.AdminEmail" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                @if (!isReadOnly)
                 {
                     <input asp-for="@Model.AdminEmail" class="form-control" type="text" aria-describedBy="adminEmailHelp" />
                 }
@@ -280,7 +283,7 @@ else
             <div class="collapse" id="moreOptions">
                 <div class="mb-3">
                     <label asp-for="@Model.AdminRoleName" class="form-label"></label>
-                    @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                    @if (!isReadOnly)
                     {
                         <input asp-for="@Model.AdminRoleName" class="form-control" type="text" aria-describedBy="adminRoleNameHelp" />
                     }
@@ -293,7 +296,7 @@ else
                 </div>
                 <div class="mb-3">
                     <label asp-for="@Model.UserRoleName" class="form-label"></label>
-                    @if (layoutModel.IsTurnstileAdmin || canUserManage)
+                    @if (!isReadOnly)
                     {
                         <input asp-for="@Model.UserRoleName" class="form-control" type="text" aria-describedBy="userRoleNameHelp" />
                     }
@@ -304,121 +307,71 @@ else
                     <span asp-validation-for="@Model.UserRoleName" class="text-danger"></span>
                     <div id="userRoleNameHelp" class="form-text">If configured, only users that belong to this role can <b>use</b> this subscription.</div>
                 </div>
-
-                @if (layoutModel.IsTurnstileAdmin)
-                {
-                    <div class="mb-3">
-                        <label asp-for="@Model.State" class="form-label"></label>&nbsp;<span class="text-danger">*</span>
-                        <select asp-for="@Model.State" asp-items="@Model.AvailableStates" class="form-select"></select>
-                        <span asp-validation-for="@Model.State" class="text-danger"></span>
-                    </div>
-                }
-
-                @if (layoutModel.IsTurnstileAdmin)
-                {
-                    <div class="mb-3 form-check form-switch">
-                        <input class="form-check-input" type="checkbox" role="switch" asp-for="@Model.IsBeingConfigured" />
-                        <label asp-for="@Model.IsBeingConfigured" class="form-check-label"></label>
-                    </div>
-                }
-
-                @if (layoutModel.IsTurnstileAdmin)
-                {
-                    <div class="mb-3">
-                        <label asp-for="@Model.OfferId" class="form-label"></label><span class="text-danger">*</span>
-                        <input asp-for="@Model.OfferId" class="form-control" type="text" />
-                        <span asp-validation-for="@Model.OfferId" class="text-danger"></span>
-                    </div>
-                }
-                else
-                {
-                    <div class="mb-3 row">
-                        <label asp-for="@Model.OfferId" class="col-sm-2 col-form-label"></label>
-                        <div class="col-sm-10">
-                            <input type="text" readonly class="form-control-plaintext" value="@Model.OfferId" />
-                        </div>
-                    </div>
-                }
-
-                @if (layoutModel.IsTurnstileAdmin)
-                {
-                    <div class="mb-3">
-                        <label asp-for="@Model.PlanId" class="form-label"></label><span class="text-danger">*</span>
-                        <input asp-for="@Model.PlanId" class="form-control" type="text" />
-                        <span asp-validation-for="@Model.PlanId" class="text-danger"></span>
-                    </div>
-                }
-                else
-                {
-                    <div class="mb-3 row">
-                        <label asp-for="@Model.PlanId" class="col-sm-2 col-form-label"></label>
-                        <div class="col-sm-10">
-                            <input type="text" readonly class="form-control-plaintext" value="@Model.PlanId" />
-                        </div>
-                    </div>
-                }
             </div>
             <hr />
-            <div style="margin-top: 20px; margin-bottom: 20px">
-                @if (isNewSetup)
-                {
-                    <button type="submit" class="btn btn-success">Activate my subscription</button>
-                }
-                else
-                {
-                    <button type="submit" class="btn btn-primary">Save changes</button>
-                }
-            </div>
+            @if (!isReadOnly)
+            {
+                <div style="margin-top: 20px; margin-bottom: 20px">
+                    @if (!subContextModel.IsSetupComplete)
+                    {
+                        <button type="submit" class="btn btn-success">Activate my subscription</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                    }
+                </div>
+            }
         </form>
     </div>
-    <div class="tab-pane fade" id="seating-tab-pane" style="margin-top: 20px" role="tabpanel" aria-labelledby="seating-tab" tabindex="0">
-        @if (seatingModel.Seats.Any())
-        {
-            <table class="table">
-                <tbody>
-                    @foreach (var seat in seatingModel.Seats)
-                    {
-                        <tr>
-                            <td>
-                                @seat.UserName <br />
-                                <small>@seat.SeatId</small>
-                            </td>
-                            <td>
-                                @if (seat.IsReserved)
-                                {
-                                    <span class="badge text-bg-secondary">Reserved</span>
-                                }
-                                else if (seat.IsLimited)
-                                {
-                                    <span class="badge text-bg-warning">Limited</span>
-                                }
-                            </td>
-                            <td>
-                                <div class="float-end">
-                                    <span>
-                                        <a class="btn btn-primary" href="mailto:@seat.UserEmail">Contact user</a>
-                                    </span>
-                                    <span>
-                                        <a class="btn btn-danger"
-                                           href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReleaseSeat,
+    @if (!isReadOnly)
+    {
+        <div class="tab-pane fade" id="seating-tab-pane" style="margin-top: 20px" role="tabpanel" aria-labelledby="seating-tab" tabindex="0">
+            @if (seatingModel.Seats.Any())
+            {
+                <table class="table">
+                    <tbody>
+                        @foreach (var seat in seatingModel.Seats)
+                        {
+                            <tr>
+                                <td>
+                                    @seat.UserName <br />
+                                    <small>@seat.SeatId</small>
+                                </td>
+                                <td>
+                                    @if (seat.IsReserved)
+                                    {
+                                        <span class="badge text-bg-secondary">Reserved</span>
+                                    }
+                                    else if (seat.IsLimited)
+                                    {
+                                        <span class="badge text-bg-warning">Limited</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="float-end">
+                                        <span>
+                                            <a class="btn btn-primary" href="mailto:@seat.UserEmail">Contact user</a>
+                                        </span>
+                                        <span>
+                                            <a class="btn btn-danger"
+                                               href="@Url.RouteUrl(SubscriptionsController.RouteNames.GetReleaseSeat,
                                                        new { subscriptionId = subContextModel.SubscriptionId, seatId = seat.SeatId })">Release seat</a>
-                                    </span>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        }
-        else
-        {
-            <div class="alert alert-secondary" role="alert">
-                No active seats in this subscription.
-                @if (canUserManage)
-                {
+                                        </span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="alert alert-secondary" role="alert">
+                    No active seats in this subscription.
                     <span> <a href="@reserveSeatUrl">Reserve a seat now.</a></span>
-                }
-            </div>
-        }
-    </div>
+                </div>
+            }
+        </div>
+    }
 </div>
