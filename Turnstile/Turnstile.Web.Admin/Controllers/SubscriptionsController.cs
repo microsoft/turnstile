@@ -55,7 +55,7 @@ namespace Turnstile.Web.Controllers
 
                     var subscriptions = (await subsClient.GetSubscriptions()).ToList();
 
-                    return View(new SubscriptionsViewModel(subscriptions, User));
+                    return View(new SubscriptionsViewModel(subscriptions));
                 }
                 else
                 {

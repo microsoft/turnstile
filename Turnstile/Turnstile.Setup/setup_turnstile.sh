@@ -131,7 +131,7 @@ check_app_service_sku() {
 
     if [[ "${APP_SERVICE_SKUS[*]}" =~ "${sku}" ]]; then
         if [[ "$headless" == "$FALSE" && "$sku" == "$CONSUMPTION_APP_SERVICE_SKU" ]]; then # Only functions (the API layer) can be deployed to a consumption plan.
-            echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless/API-only (-h) deployments."
+            echo "❌   [$sku] Azure App Service plan SKU is only valid when used with headless/API-only (-H) deployments."
             return 1
         else
             echo "✔   [$sku] is a valid Azure App Service plan SKU for this deployment."
@@ -177,7 +177,7 @@ check_deployment_name() {
         echo "✔   [$name] is a valid Turnstile deployment name."
         return 0
     elif [[ -z $name ]]; then
-        echo "❌   Turnstile deployment name is required. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
+        echo "❌   Turnstile deployment name <-n> is required. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
         return 1
     else
         echo "❌   [$name] is not a valid Turnstile deployment name. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
@@ -508,6 +508,7 @@ az deployment group create \
         userWebAppAadClientSecret="$aad_app_secret" \
         adminWebAppAadClientSecret="$admin_aad_app_secret" \
         useCosmosProvisionedThroughput="$p_use_cosmos_provisioned_throughput" \
+        turnstileVersion="$TURNSTILE_VERSION" \
         headless="$p_headless" 2>/dev/null
 
 if [[ $? == 0 ]]; then
@@ -521,8 +522,6 @@ else
 fi
 
 if [[ "$p_headless" == "$FALSE" ]]; then
-
-    # web_app_name and web_app_base_url are only needed when not deploying in headless mode.
 
     web_app_name=$(az deployment group show \
         --resource-group "$resource_group_name" \
@@ -597,6 +596,27 @@ event_grid_topic_id=$(az deployment group show \
     --name "$az_deployment_name" \
     --query properties.outputs.eventGridTopicId.value \
     --output tsv);
+
+deployment_type=$(az deployment group show \
+    --resource-group "$resoruce_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.deploymentType.value \
+    --output tsv)
+
+deployment_profile=$(az deployment group show \
+    --resource-group "$resource_group_name" \
+    --name "$az_deployment_name" \
+    --query properties.outputs.deplomentProfile.value \
+    --output tsv)
+
+echo "⚙️   Saving deployment profile..."
+
+az storage blob upload \
+    --account-name "$storage_account_name" \
+    --account-key "$storage_account_key" \
+    --container-name "turn-configuration" \
+    --data "$deployment_profile" \
+    --name "deployment/$deployment_type/profile.json"
 
 echo "🔐   Granting managed identity [$managed_id_name] contributor access to resource group [$resource_group_name]..."
 

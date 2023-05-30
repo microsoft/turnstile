@@ -9,6 +9,8 @@ Deployment name __must__:
 ''')
 param deploymentName string = take(uniqueString(resourceGroup().id), 13)
 
+param turnstileVersion string
+
 @allowed([
   'D1'    // Shared
   'F1'    // Free
@@ -445,6 +447,7 @@ output deploymentType string = deploymentType
 
 output deploymentProfile object = { // This schema describes a standard-v1 deployment type.
   deploymentName: deploymentName
+  deployedVersion: turnstileVersion
   isHeadless: headless
   azureDeploymentName: deployment().name
   azureSubscriptionId: subscription().subscriptionId

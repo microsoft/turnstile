@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Turnstile.Web.Common.Extensions;
-using Turnstile.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 var initialScopes = builder.Configuration["DownstreamApi:Scopes"]?.Split(' ') ?? builder.Configuration["MicrosoftGraph:Scopes"]?.Split(' ');

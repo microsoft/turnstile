@@ -48,11 +48,23 @@ check_dotnet() {
     fi
 }
 
+check_zip() {
+    zip -h >/dev/null
+
+    if [[ $? -ne 0 ]]; then
+        echo "❌   Please install zip before continuing."
+        return 1
+    else
+        echo "✔   zip installed."
+    fi
+}
+
 check_prereqs() {
     echo "Checking Turnstile upgrade prerequisites...";
 
     check_az;       if [[ $? -ne 0 ]]; then prereq_check_failed=1; fi;
     check_dotnet;   if [[ $? -ne 0 ]]; then prereq_check_failed=1; fi;
+    check_zip;      if [[ $? -ne 0 ]]; then prereq_check_failed=1; fi;
 
     if [[ -z $prereq_check_failed ]]; then
         echo "✔   All Turnstile upgrade prerequisites satisfied."

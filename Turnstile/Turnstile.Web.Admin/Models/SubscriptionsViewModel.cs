@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT License.
 
+using Turnstile.Core.Constants;
 using Turnstile.Core.Models;
 using Turnstile.Web.Common.Models;
 
@@ -10,9 +11,30 @@ namespace Turnstile.Web.Models
     {
         public SubscriptionsViewModel() { }
 
-        public SubscriptionsViewModel(IEnumerable<Subscription> subscriptions) =>
-            Subscriptions = subscriptions.Select(s => new SubscriptionContextViewModel(s)).ToList();
+        public SubscriptionsViewModel(IEnumerable<Subscription> subscriptions)
+        {
+            ArgumentNullException.ThrowIfNull(subscriptions, nameof(subscriptions));
 
-        public List<SubscriptionContextViewModel> Subscriptions { get; set; } = new List<SubscriptionContextViewModel>();
+            ActiveSubscriptions = subscriptions
+                .Where(s => s.State == SubscriptionStates.Active || s.State == SubscriptionStates.Purchased)
+                .Select(s => new SubscriptionContextViewModel(s))
+                .ToList();
+
+            SuspendedSubscriptions = subscriptions
+                .Where(s => s.State == SubscriptionStates.Suspended)
+                .Select(s => new SubscriptionContextViewModel(s))
+                .ToList();
+
+            CanceledSubscriptions = subscriptions
+                .Where(s => s.State == SubscriptionStates.Canceled)
+                .Select(s => new SubscriptionContextViewModel(s))
+                .ToList();
+        }
+
+        public List<SubscriptionContextViewModel> ActiveSubscriptions { get; set; } = new List<SubscriptionContextViewModel>();
+        public List<SubscriptionContextViewModel> SuspendedSubscriptions { get; set; } = new List<SubscriptionContextViewModel>();
+        public List<SubscriptionContextViewModel> CanceledSubscriptions { get; set;} = new List<SubscriptionContextViewModel>();
+
+
     }
 }

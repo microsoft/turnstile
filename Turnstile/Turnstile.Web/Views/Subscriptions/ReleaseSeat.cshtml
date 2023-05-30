@@ -9,7 +9,7 @@
 
     var subContext = ViewData.GetSubscriptionContextModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
-    var urlBackToSubscriptions = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscriptions);
+    var urlBackToSubscriptions = Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile);
     var urlBackToSubscription = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
         new { subscriptionId = subContext.SubscriptionId });
 }
