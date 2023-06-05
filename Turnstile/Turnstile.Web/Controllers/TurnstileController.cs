@@ -3,7 +3,6 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
-using System.Reflection.Metadata.Ecma335;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
@@ -103,11 +102,25 @@ namespace Turnstile.Web.Controllers
                         return RedirectToRoute(
                             RouteNames.SpecificTurnstile,
                             returnTo == null ?
-                                new { subscriptionId = usableSub } :
-                                new { subscriptionId = usableSub, returnTo });
+                                new { subscriptionId = usableSub.SubscriptionId } :
+                                new { subscriptionId = usableSub.SubscriptionId, returnTo });
+                    }
+                    else if (pickSubsModel.UsableSubscriptions.None() && pickSubsModel.ManageableSubscriptions.OnlyOne())
+                    {
+                        // If the user can't _use_ any subscriptions but can _manage_ one and only one, there's a pretty good
+                        // chance they just purchased it and need to set it up. Why make this any more complicated than it needs
+                        // to be? Rediret them to the subscription setup page...
+
+                        var manageableSub = pickSubsModel.ManageableSubscriptions.First()!;
+
+                        return RedirectToRoute(
+                            SubscriptionsController.RouteNames.GetSubscription,
+                            new { subscriptionId = manageableSub.SubscriptionId });
                     }
                     else
                     {
+                        // Let them pick...
+
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
 
                         return View(ViewNames.PickSubscription, pickSubsModel);

@@ -61,7 +61,7 @@
                         var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
 
                         var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
-                        new { subscriptionId = sub.SubscriptionId });
+                            new { subscriptionId = sub.SubscriptionId });
 
                         <tr>
                             <td>
@@ -129,7 +129,7 @@
                     @foreach (var sub in Model.SuspendedSubscriptions)
                     {
                         var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
-                        new { subscriptionId = sub.SubscriptionId });
+                            new { subscriptionId = sub.SubscriptionId });
 
                         <tr>
                             <td>

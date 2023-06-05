@@ -73,6 +73,185 @@ check_prereqs() {
     fi
 }
 
+upgrade_turn_user_web() {
+    local subscription_id="$1"
+    local rg_name="$2"
+    local deployment_name="$3"
+
+    local web_app_name="turn-web-$deployment_name"
+
+    local web_app_id=$(az resource show \
+        --resource-group "$rg_name" \
+        --resource-type "Microsoft.Web/sites" \
+        --subscription "$subscription_id" \
+        --name "$web_app_name" \
+        --query "id" \
+        --output "tsv")
+
+    if [[ -z "$web_app_id" ]]; then
+        # The web app is optional so it's not a big deal if it isn't here.
+
+        echo
+        echo "⚠️   Turnstile user's web app [$web_app_name] not found in resource group [$rg_name]. Nothing to upgrade."
+    
+        return 1
+    else
+        else
+        # Alright so we're doing this...
+
+        local upgrade_slot_name="turn-upgrade-$(date +%s)"
+
+        # Create a temporary slot to push the new Turnstile web app to...
+
+        echo
+        echo "🏗️   Creating Turnstile user's web app [$web_app_name] temporary upgrade slot [$upgrade_slot_name]..."
+
+        az functionapp deployment slot create \
+            --name "$web_app_name" \
+            --resource-group "$rg_name" \
+            --slot "$upgrade_slot_name" \
+            --configuration-source "$web_app_name" \
+            --subscription "$subscription_id"
+
+        if [[ $? -ne 0 ]]; then
+            # We couldn't create deployment slots which means that we can't do this upgrade
+            # safely which means that we're not going to try to do it at all. I mean, this thing
+            # is probably running in production. More than likely, the app service that Turnstile
+            # is deployed to doesn't support deployment slots (< Standard).
+
+            echo
+            echo "⚠️  Unable to create Turnstile user's web app [$web_app_name] temporary upgrade slot. Can not safely perform upgrade. Please ensure that your App Service Plan SKU is Standard (S1) or higher. For more information, see [ https://docs.microsoft.com/azure/azure-resource-manager/management/azure-subscription-service-limits#app-service-limits ]."
+            
+            return 1
+        fi
+
+        echo
+        echo "📦   Packaging new Turnstile user's web app for deployment to [$web_app_name] temporary upgrade slot [$upgrade_slot_name]..."
+
+        dotnet publish -c Release -o ./user_web_topublish ../Turnstile.Web/Turnstile.Web.csproj
+        cd ./user_web_topublish
+        zip -r ../user_web_topublish.zip . >/dev/null
+        cd ..
+
+        echo
+        echo "☁️   Deploying upgraded Turnstile user's web app [$web_app_name] to temporary upgrade slot [$upgrade_slot_name]..."
+
+        az functionapp deployment source config-zip \
+            --src ./user_web_topublish.zip \
+            --name "$web_app_name" \
+            --resource-group "$rg_name" \
+            --slot "$upgrade_slot_name" \
+            --subscription "$subscription_id"
+
+        # Clean up after ourselves...
+
+        rm -rf ./user_web_topublish >/dev/null
+        rm -rf ./user_web_topublish.zip >/dev/null
+
+        echo "🔃   Upgraded Turnstile API app deployed to function app [$api_app_name] slot [$upgrade_slot_name]. Swapping production slots with upgraded deployment slots..."
+
+        az functionapp deployment slot swap \
+            --slot "$upgrade_slot_name" \
+            --action "swap" \
+            --name "$api_app_name" \
+            --resource-group "$rg_name" \
+            --subscription "$subscription_id" \
+            --target-slot "production"
+
+        echo
+        echo "✔   Upgraded Turnstile API promoted to production slot."   
+    fi
+}
+
+upgrade_turn_api() {
+    local subscription_id="$1"
+    local rg_name="$2"
+    local deployment_name="$3"
+
+    local api_app_name="turn-services-$deployment_name"
+
+    local api_app_id=$(az resource show \
+        --resource-group "$rg_name" \
+        --resource-type "Microsoft.Web/sites" \
+        --subscription "$subscription_id" \
+        --name "$api_app_name" \
+        --query "id" \
+        --output "tsv")
+
+    if [[ -z "$api_app_id" ]]; then
+         # There should be an API and web app here but there isn't. Let the user know then bail early...
+
+        echo
+        echo "⚠️   Expected Turnstile API function app [$api_app_name] not found in resource group [$rg_name]. Upgrade failed." >&2
+
+        return 1
+    else
+        # Alright so we're doing this...
+
+        local upgrade_slot_name="turn-upgrade-$(date +%s)"
+
+        # Create a temporary slot to push the new Turnstile web app to...
+
+        echo
+        echo "🏗️   Creating Turnstile API function app [$api_app_name] temporary upgrade slot [$upgrade_slot_name]..."
+
+        az functionapp deployment slot create \
+            --name "$api_app_name" \
+            --resource-group "$rg_name" \
+            --slot "$upgrade_slot_name" \
+            --configuration-source "$api_app_name" \
+            --subscription "$subscription_id"
+
+        if [[ $? -ne 0 ]]; then
+            # We couldn't create deployment slots which means that we can't do this upgrade
+            # safely which means that we're not going to try to do it at all. I mean, this thing
+            # is probably running in production. More than likely, the app service that Turnstile
+            # is deployed to doesn't support deployment slots (< Standard).
+
+            echo
+            echo "⚠️  Unable to create Turnstile API function app [$api_app_name] temporary upgrade slot. Can not safely perform upgrade. Please ensure that your App Service Plan SKU is Standard (S1) or higher. For more information, see [ https://docs.microsoft.com/azure/azure-resource-manager/management/azure-subscription-service-limits#app-service-limits ]."
+            
+            return 1
+        fi
+
+        echo
+        echo "📦   Packaging new Turnstile API for deployment to function app [$api_app_name] temporary upgrade slot [$upgrade_slot_name]..."
+
+        dotnet publish -c Release -o ./api_topublish ../Turnstile.Api/Turnstile.Api.csproj
+        cd ./api_topublish
+        zip -r ../api_topublish.zip . >/dev/null
+        cd ..
+
+        echo
+        echo "☁️   Deploying upgraded Turnstile API to function app [$api_app_name] temporary upgrade slot [$upgrade_slot_name]..."
+
+        az functionapp deployment source config-zip \
+            --src ./api_topublish.zip \
+            --name "$api_app_name" \
+            --resource-group "$rg_name" \
+            --slot "$upgrade_slot_name" \
+            --subscription "$subscription_id"
+
+        # Clean up after ourselves...
+
+        rm -rf ./api_topublish >/dev/null
+        rm -rf ./api_topublish.zip >/dev/null
+
+        echo "🔃   Upgraded Turnstile API app deployed to function app [$api_app_name] slot [$upgrade_slot_name]. Swapping production slots with upgraded deployment slots..."
+
+        az functionapp deployment slot swap \
+            --slot "$upgrade_slot_name" \
+            --action "swap" \
+            --name "$api_app_name" \
+            --resource-group "$rg_name" \
+            --subscription "$subscription_id" \
+            --target-slot "production"
+
+        echo
+        echo "✔   Upgraded Turnstile API promoted to production slot."
+    fi
+}
+
 upgrade_turn_rg() {
     local subscription_id="$1"
     local rg_name="$2"

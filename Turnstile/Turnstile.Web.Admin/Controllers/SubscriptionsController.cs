@@ -20,8 +20,6 @@ namespace Turnstile.Web.Controllers
         {
             public const string GetSubscription = "subscription";
             public const string GetSubscriptions = "subscriptions";
-            public const string GetReleaseSeat = "release_seat";
-            public const string GetReserveSeat = "reserve_seat";
         }
 
         private readonly ILogger logger;
@@ -168,9 +166,6 @@ namespace Turnstile.Web.Controllers
                 throw;
             }
         }
-
-        private string CreateInvitationLink(string subscriptionId, string email) =>
-           $"https://{HttpContext.Request.Host}/turnstile/{subscriptionId}?login_hint={email}";
 
         private IActionResult RedirectToBasics() => Redirect(PublisherConfigController.RouteNames.ConfigureBasics);
     }

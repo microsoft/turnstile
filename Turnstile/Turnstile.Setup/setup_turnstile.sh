@@ -199,32 +199,6 @@ splash() {
 
 splash
 
-# Make sure all pre-reqs are installed...
-
-echo "Checking setup prerequisites..."
-
-check_az;           [[ $? -ne 0 ]] && prereq_check_failed=1
-check_dotnet;       [[ $? -ne 0 ]] && prereq_check_failed=1
-check_zip;          [[ $? -ne 0 ]] && prereq_check_failed=1
-
-if [[ -z $prereq_check_failed ]]; then
-    echo "✔   All setup prerequisites installed."
-else
-    echo "❌   Please install all setup prerequisites then try again."
-    exit 1
-fi
-
-# Try to upgrade Bicep...
-
-az bicep upgrade
-
-# Log in the user if they aren't already...
-
-while [[ -z $current_user_oid ]]; do
-    current_user_oid=$(az ad signed-in-user show --query id --output tsv 2>/dev/null);
-    if [[ -z $current_user_oid ]]; then az login; fi;
-done
-
 # Get our parameters...
 
 p_headless="$FALSE"
@@ -273,9 +247,9 @@ echo "Validating script parameters..."
 
 [[ -z p_deployment_name || -z p_deployment_region ]] && { usage; exit 1; }
 
-check_app_service_sku "$p_app_service_sku" "$p_headless"; [[ $? -ne 0 ]] && param_check_failed=1
-check_deployment_region "$p_deployment_region";           [[ $? -ne 0 ]] && param_check_failed=1
-check_deployment_name "$p_deployment_name";               [[ $? -ne 0 ]] && param_check_failed=1
+check_app_service_sku   "$p_app_service_sku" "$p_headless";     [[ $? -ne 0 ]] && param_check_failed=1
+check_deployment_region "$p_deployment_region";                 [[ $? -ne 0 ]] && param_check_failed=1
+check_deployment_name   "$p_deployment_name";                   [[ $? -ne 0 ]] && param_check_failed=1
 
 if [[ -z $param_check_failed ]]; then
     echo "✔   All setup parameters are valid."
@@ -285,6 +259,32 @@ else
     usage
     exit 1
 fi
+
+# Make sure all pre-reqs are installed...
+
+echo "Checking setup prerequisites..."
+
+check_az;           [[ $? -ne 0 ]] && prereq_check_failed=1
+check_dotnet;       [[ $? -ne 0 ]] && prereq_check_failed=1
+check_zip;          [[ $? -ne 0 ]] && prereq_check_failed=1
+
+if [[ -z $prereq_check_failed ]]; then
+    echo "✔   All setup prerequisites installed."
+else
+    echo "❌   Please install all setup prerequisites then try again."
+    exit 1
+fi
+
+# Try to upgrade Bicep...
+
+az bicep upgrade
+
+# Log in the user if they aren't already...
+
+while [[ -z $current_user_oid ]]; do
+    current_user_oid=$(az ad signed-in-user show --query id --output tsv 2>/dev/null);
+    if [[ -z $current_user_oid ]]; then az login; fi;
+done
 
 if [[ "$p_headless" == "$TRUE" ]]; then 
     echo "ℹ️   This is a HEADLESS (-h) deployment. Only the Turnstile API layer will be deployed."
@@ -310,7 +310,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
     aad_app_name="$display_name"
     admin_aad_app_name="$display_name Admin"
 
-    echo "🛡️   Creating Azure Active Directory (AAD) app [$aad_app_name] registration for Turnstile's subscriber/user web app..."
+    echo "🛡️   Creating Azure Active Directory app registration [$aad_app_name] for Turnstile user web app..."
 
     graph_token=$(az account get-access-token \
         --resource-type ms-graph \
@@ -345,11 +345,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         if [[ -z $aad_object_id || -z $aad_app_id || $aad_object_id == null || $aad_app_id == null ]]; then
             if [[ $i1 == 5 ]]; then
                 # We tried five times and it's still not working. Time to give up, unfortunately.
-                echo "❌   Failed to create AAD app registration for Turnstile's subscriber/user web app. Setup failed."
+                echo "❌   Failed to create Azure Active Directory app registration [$aad_app_name] for Turnstile user web app. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i1)) # Exponential backoff - 2..4..8..16..32 second wait between retries
-                echo "⚠️   Trying to create AAD app registration for Turnstile's subscriber/user web app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create Azure Active Directory app registration [$aad_app_name] for Turnstile user web app again in [$sleep_for] seconds..."
                 sleep $sleep_for
             fi
         else
@@ -360,7 +360,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
     # Regardless of whether or not the user provided an existing AAD app ID, we still need to create
     # a client secret that the web app can use for authentication.
 
-    echo "🛡️   Creating AAD app [$aad_app_name] client credentials for Turnstile's subscriber web app..."
+    echo "🛡️   Creating Azure Active Directory client credentials for Turnstile user web app [$aad_app_name]..."
 
     add_password_json=$(cat ./aad/add_password.json)
 
@@ -376,11 +376,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
         if [[ -z $aad_app_secret || $aad_app_secret == null ]]; then
             if [[ $i2 == 5 ]]; then
-                echo "❌   Failed to create AAD app client credentials for Turnstile's subscriber/user web app. Setup failed."
+                echo "❌   Failed to create Azure Active Directory client credentials for Turnstile user web app [$aad_app_name]. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i2))
-                echo "⚠️   Trying to create AAD app client credentials for Turnstile's subscriber/user web app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create Azure Active Directory client credentials for Turnstile user web app [$aad_app_name] again in [$sleep_for] seconds..."
                 sleep $sleep_for
             fi
         else
@@ -388,18 +388,18 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         fi
     done
 
-    echo "🛡️   Creating AAD app [$aad_app_name] service principal for Turnstile's subscriber/user web app..."
+    echo "🛡️   Creating Azure Active Directory service principal for Turnstile user web app [$aad_app_name]..."
 
     for i3 in {1..5}; do
         aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
 
         if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
             if [[ $i3 == 5 ]]; then
-                echo "❌   Failed to create AAD service principal for Turnstile's subscriber/user web app. Setup failed."
+                echo "❌   Failed to create Azure Active Directory service principal for Turnstile user web app [$aad_app_name]. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i3))
-                echo "⚠️   Trying to create AAD service principal for Turnstile's subscriber/user web app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create Azure Active Directory service principal for Turnstile user web app [$aad_app_name] in [$sleep_for] seconds."
                 sleep $sleep_for
             fi     
         else
@@ -407,7 +407,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         fi
     done
 
-    echo "🛡️   Creating AAD app [$admin_aad_app_name] registration for Turnstile's admin web app..."
+    echo "🛡️   Creating Azure Active Directory app registration [$admin_aad_app_name] for Turnstile admin web app..."
 
     for i4 in {1..5}; do
         create_admin_app_response=$(az ad app create \
@@ -423,11 +423,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
         if [[ -z $admin_aad_app_id || $admin_aad_app_id == null || -z $admin_aad_object_id || $admin_aad_object_id == null || -z $admin_aad_domain || $admin_aad_domain == null ]]; then
             if [[ $i4 == 5 ]]; then
-                echo "❌   Failed to create AAD app registration for Turnstile's admin web app. Setup failed."
+                echo "❌   Failed to create Azure Active Directory app registration [$admin_aad_app_name] for Turnstile admin web app. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i4))
-                echo "⚠️   Trying to create AAD app registration for Turnstile's admin web app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create Azure Active Directory app registration [$admin_aad_app_name] for Turnstile admin web app again in [$sleep_for] seconds."
                 sleep $sleep_for
             fi     
         else
@@ -435,7 +435,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         fi
     done
 
-    echo "🛡️   Creating AAD app [$admin_aad_app_name] client credentials for Turnstile's admin web app..."
+    echo "🛡️   Creating Azure Active Directory client credentials for Turnstile admin web app [$admin_aad_app_name]..."
 
     for i5 in {1..5}; do
         create_admin_creds_response=$(az ad app credential reset \
@@ -448,11 +448,11 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
         if [[ -z $admin_aad_app_secret || $admin_aad_app_secret == null ]]; then
             if [[ $i5 == 5 ]]; then
-                echo "❌   Failed to create AAD client credentials for Turnstile's admin web app. Setup failed."
+                echo "❌   Failed to create Azure Active Directory client credentials for Turnstile admin web app [$admin_web_app_name]. Setup failed."
                 exit 1
             else
                 sleep_for=$((2**i5))
-                echo "⚠️   Trying to create AAD client credentials for Turnstile's admin web app again in [$sleep_for] seconds."
+                echo "⚠️   Trying to create Azure Active Directory client credentials for Turnstile admin web app [$admin_web_app_name] in [$sleep_for] seconds..."
                 sleep $sleep_for
             fi
         else
@@ -468,7 +468,7 @@ current_user_tid=$(az account show --query tenantId --output tsv);
 
 # Create our resource group if it doesn't already exist...
 
-resource_group_name="turnstile-$p_deployment_name"
+resource_group_name="deploy-turnstile-$p_deployment_name"
 
 if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
     echo "Creating resource group [$resource_group_name]..."
@@ -492,7 +492,7 @@ az bicep upgrade
 
 az_deployment_name="turnstile-deploy-$p_deployment_name"
 
-echo "🦾   Deploying core Turnstile Bicep template to subscription [$subscription_id] resource group [$resource_group_name]. This may take a while..."
+echo "🦾   Deploying core Turnstile Bicep template [$az_deployment_name] to subscription [$subscription_id] resource group [$resource_group_name]. This may take a while..."
 
 az deployment group create \
     --resource-group "$resource_group_name" \
@@ -609,7 +609,7 @@ deployment_profile=$(az deployment group show \
     --query properties.outputs.deplomentProfile.value \
     --output tsv)
 
-echo "⚙️   Saving deployment profile..."
+echo "⚙️   Saving [$deployment_type] deployment profile..."
 
 az storage blob upload \
     --account-name "$storage_account_name" \
