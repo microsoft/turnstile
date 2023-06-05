@@ -13,7 +13,7 @@ using Turnstile.Web.Models;
 
 namespace Turnstile.Web.Controllers
 {
-    [Authorize(Policy = "admin")]
+    [Authorize]
     public class SubscriptionsController : Controller
     {
         public static class RouteNames

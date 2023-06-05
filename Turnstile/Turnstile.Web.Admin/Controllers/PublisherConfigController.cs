@@ -12,7 +12,7 @@ using Turnstile.Web.Admin.Extensions;
 
 namespace Turnstile.Web.Admin.Controllers
 {
-    [Authorize(Policy = "admin")]
+    [Authorize]
     public class PublisherConfigController : Controller
     {
         public static class RouteNames
