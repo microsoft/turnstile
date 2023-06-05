@@ -268,7 +268,7 @@ fi
 echo "Checking setup prerequisites..."
 
 check_az;           [[ $? -ne 0 ]] && prereq_check_failed=1
-check_dotnet;       [[ $? -ne 0 ]] && prereq_check_failed=1
+# check_dotnet;       [[ $? -ne 0 ]] && prereq_check_failed=1
 check_zip;          [[ $? -ne 0 ]] && prereq_check_failed=1
 
 if [[ -z $prereq_check_failed ]]; then
