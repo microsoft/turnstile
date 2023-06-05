@@ -471,7 +471,7 @@ current_user_tid=$(az account show --query tenantId --output tsv);
 
 # Create our resource group if it doesn't already exist...
 
-resource_group_name="deploy-turnstile-$p_deployment_name"
+resource_group_name="turnstile-$p_deployment_name"
 
 if [[ $(az group exists --resource-group "$resource_group_name" --output tsv) == false ]]; then
     echo "Creating resource group [$resource_group_name]..."
@@ -601,7 +601,7 @@ event_grid_topic_id=$(az deployment group show \
     --output tsv);
 
 deployment_type=$(az deployment group show \
-    --resource-group "$resoruce_group_name" \
+    --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
     --query properties.outputs.deploymentType.value \
     --output tsv)
@@ -609,7 +609,7 @@ deployment_type=$(az deployment group show \
 deployment_profile=$(az deployment group show \
     --resource-group "$resource_group_name" \
     --name "$az_deployment_name" \
-    --query properties.outputs.deplomentProfile.value \
+    --query properties.outputs.deploymentProfile.value \
     --output tsv)
 
 echo "⚙️   Saving [$deployment_type] deployment profile..."
@@ -694,37 +694,6 @@ az storage blob upload \
     --container-name "turn-configuration" \
     --file "$publisher_config_path" \
     --name "publisher_config.json"
-
-if [[ "$p_headless" == "$FALSE" ]]; then
-
-    echo "🔐   Adding you to this turnstile's administrative roles..."
-
-    # Add the current user to the subscriber tenant administrator's AAD role...
-
-    curl -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $graph_token" \
-        -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$tenant_admin_role_id\" }" \
-        "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
-
-    tenant_admin_role_pid=$!
-
-    # Add the current user to the turnstile administrator's AAD role...
-
-    curl -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $graph_token" \
-        -d "{ \"principalId\": \"$current_user_oid\", \"resourceId\": \"$aad_sp_id\", \"appRoleId\": \"$turnstile_admin_role_id\" }" \
-        "https://graph.microsoft.com/v1.0/users/$current_user_oid/appRoleAssignments" &
-
-    turnstile_admin_role_pid=$!
-
-    wait $tenant_admin_role_pid
-    wait $turnstile_admin_role_pid
-
-    echo
-
-fi
 
 echo "🔐   Configuring API access keys..."
 

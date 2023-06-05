@@ -37,8 +37,6 @@ Default is S1 (Standard).
 ''')
 param appServicePlanSku string = 'S1'
 
-param publisherAdminRoleName string = 'turnstile_admins'
-
 param userWebAppAadClientId string = ''
 param adminWebAppAadClientId string = ''
 param adminWebAppAadDomain string = ''
@@ -339,10 +337,6 @@ resource userWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
           value: 'https://${apiAppName}.azurewebsites.net'
         }
         {
-          name: 'Turnstile_PublisherAdminRoleName'
-          value: publisherAdminRoleName
-        }
-        {
           name: 'Turnstile_AadClientId'
           value: userWebAppAadClientId
         }
@@ -390,10 +384,6 @@ resource adminWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
         {
           name: 'Turnstile_ApiBaseUrl'
           value: 'https://${apiAppName}.azurewebsites.net'
-        }
-        {
-          name: 'Turnstile_PublisherAdminRoleName'
-          value: publisherAdminRoleName
         }
         {
           name: 'Turnstile_AadClientId'
@@ -455,7 +445,6 @@ output deploymentProfile object = { // This schema describes a standard-v1 deplo
   azureRegion: location
   eventGridTopicName: eventGridTopicName
   aadTenantId: aadTenantId
-  publisherAdminRoleName: publisherAdminRoleName
   apps: {
     api: {
       isDeployed: true

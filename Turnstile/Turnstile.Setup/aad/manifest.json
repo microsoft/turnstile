@@ -1,28 +1,7 @@
 {
     "displayName": "__aad_app_name__",
     "signInAudience": "AzureADandPersonalMicrosoftAccount",
-    "appRoles": [
-        {
-            "allowedMemberTypes": [
-                "User"
-            ],
-            "displayName": "Tenant Administrators",
-            "description": "Users that can administer this Azure Active Directory tenant's turnstile subscriptions",
-            "id": "__tenant_admin_role_id__",
-            "isEnabled": true,
-            "value": "subscriber_tenant_admins"
-        },
-        {
-            "allowedMemberTypes": [
-                "User"
-            ],
-            "displayName": "Turnstile Administrators",
-            "description": "Users that can administer this turnstile",
-            "id": "__turnstile_admin_role_id__",
-            "isEnabled": true,
-            "value": "turnstile_admins"
-        }
-    ],
+    "appRoles": [],
     "optionalClaims": {
         "accessToken": [],
         "idToken": [
