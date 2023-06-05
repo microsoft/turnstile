@@ -39,6 +39,7 @@ readonly APP_SERVICE_SKUS=(
 readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
 usage() {
+    echo
     echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
     echo "         [-i integration_pack] [-s app_service_plan_sku] [-H flag: headless] \\" 
     echo "         [-p flag: use_cosmos_provisioned_throughput]"
@@ -47,6 +48,7 @@ usage() {
     echo "         -i \"default\" -s \"P1\" -H -p"
     echo
     echo "Parameter details"
+    echo "--------------------------------------------------------------------------------------------------------------------"
     echo
     echo "<-n name>.....................................Unique name for this Turnstile deployment"
     echo "                                              Lower-case, alphanumeric, must be between 5-13 characters"
@@ -69,6 +71,7 @@ usage() {
     echo "[-p flag: use_cosmos_provisioned_throughput]..Optional; if flag is set, Turnstile's Cosmos account will"
     echo "                                              be created in provisioned throughput mode instead of the default"
     echo "                                              serverless mode."
+    echo
 }
 
 check_az() {
