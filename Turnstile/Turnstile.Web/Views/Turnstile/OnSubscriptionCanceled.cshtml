@@ -11,14 +11,7 @@
 
 <h1>Subscription canceled</h1>
 
-@if (Model.IsSubscriptionAdministrator)
-{
-    <lead>To purchase a new subscription, @Html.Raw(layoutModel.ContactSalesHtml).</lead>
-}
-else
-{
-    <lead>For assistance, @Html.Raw(subContextModel.ContactSubscriptionAdminHtml).</lead>
-}
+<lead>To purchase a new subscription, @Html.Raw(layoutModel.ContactSalesHtml).</lead>
 
 <div style="margin-top: 20px">
     <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
