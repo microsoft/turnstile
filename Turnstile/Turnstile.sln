@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web", "Turnstile.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web.Admin", "Turnstile.Web.Admin\Turnstile.Web.Admin.csproj", "{89609DB9-9381-457B-961A-B6CA59420A42}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Turnstile.Web.Common", "Turnstile.Web.Common\Turnstile.Web.Common.csproj", "{700664F2-DD19-4798-BA8F-F8C6770299D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web.Common", "Turnstile.Web.Common\Turnstile.Web.Common.csproj", "{700664F2-DD19-4798-BA8F-F8C6770299D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
