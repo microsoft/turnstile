@@ -9,7 +9,7 @@
     var layoutModel = ViewData.GetLayoutModel()!;
     var seatingModel = ViewData.GetSeatingModel()!;
     var subContextModel = ViewData.GetSubscriptionContextModel()!;
-    var isReadOnly = subContextModel.State != SubscriptionStates.Canceled;
+    var isReadOnly = subContextModel.State == SubscriptionStates.Canceled;
     var allSubscriptionsUrl = Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile);
     var reserveSeatUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetReserveSeat, new { subscriptionId = subContextModel.SubscriptionId });
     var seatingTabBadgeColor = seatingModel.Seats.Any() ? "badge text-bg-danger" : "badge text-bg-secondary";

@@ -85,14 +85,20 @@ namespace Turnstile.Web.Controllers
                     var availableSubs = (await subsClient.GetSubscriptions(user.TenantId)).ToList();
                     var pickSubsModel = new PickSubscriptionViewModel(availableSubs, User, returnTo);
 
-                    if (pickSubsModel.Any())
+                    if (!pickSubsModel.Any())
                     {
+                        // There's literally nothing here they have access to.
+
                         logger.LogWarning($"User [{user.TenantId}/{user.UserId}] has no available subscriptions.");
 
                         return publisherConfig!.OnNoSubscriptionsFound();
                     }
-                    else if (pickSubsModel.UsableSubscriptions.OnlyOne() && pickSubsModel.ManageableSubscriptions.None())
+                    else if (pickSubsModel.UsableSubscriptions.Count == 1 && pickSubsModel.ManageableSubscriptions.None())
                     {
+                        // In production, this is probably the most common case. Someone wants to obtain a seat in the
+                        // subscription and use it. It's the only thing they know about and they only thing they can do.
+                        // Our goal is to make this path as insivible to the user as possible.
+
                         // If the user can't _manage_ any subscriptions but they can only _use_ one subscription
                         // (in reality, probably the most likely use case for users hitting Turnstile), we keep things
                         // real simple and redirect them immediately to use the SaaS app.
@@ -105,8 +111,13 @@ namespace Turnstile.Web.Controllers
                                 new { subscriptionId = usableSub.SubscriptionId } :
                                 new { subscriptionId = usableSub.SubscriptionId, returnTo });
                     }
-                    else if (pickSubsModel.UsableSubscriptions.None() && pickSubsModel.ManageableSubscriptions.OnlyOne())
+                    else if (pickSubsModel.UsableSubscriptions.None() && pickSubsModel.ManageableSubscriptions.Count == 1)
                     {
+                        // After the customer has purchased a subscription, the next thing they'll need to do is set it up.
+                        // This path covers that case and will probably be followed only once per subscription because, once
+                        // the subscription is set up, chances are the administrator will also be able to use it. In that case,
+                        // we fall to the case below and let them pick whether they want to administer or use the subscription.
+
                         // If the user can't _use_ any subscriptions but can _manage_ one and only one, there's a pretty good
                         // chance they just purchased it and need to set it up. Why make this any more complicated than it needs
                         // to be? Rediret them to the subscription setup page...

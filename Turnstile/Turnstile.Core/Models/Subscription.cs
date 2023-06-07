@@ -81,7 +81,7 @@ namespace Turnstile.Core.Models
         [JsonPropertyName("is_being_configured")]
         [JsonProperty("is_being_configured")]
         [OpenApiProperty(Nullable = false, Description = "Whether or not this subscription is currently being configured; subscriptions can not be used if they're being configured")]
-        public bool? IsBeingConfigured { get; set; }
+        public bool? IsBeingConfigured { get; set; } = false;
 
         [JsonPropertyName("is_free_trial")]
         [JsonProperty("is_free_trial")]

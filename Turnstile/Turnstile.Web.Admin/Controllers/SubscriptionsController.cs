@@ -40,7 +40,8 @@ namespace Turnstile.Web.Controllers
         }
 
         [HttpGet]
-        [Route("subscriptions", Name = RouteNames.GetSubscriptions)]
+        [Route("/")] // Send admins to subscription list by default.
+        [Route("/subscriptions", Name = RouteNames.GetSubscriptions)]
         public async Task<IActionResult> Subscriptions()
         {
             try
