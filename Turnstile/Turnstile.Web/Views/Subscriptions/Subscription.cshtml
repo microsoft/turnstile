@@ -179,7 +179,7 @@ else
     <li class="nav-item" role="presentation">
         <button class="nav-link active" id="basics-tab" data-bs-toggle="tab" data-bs-target="#basics-tab-pane" type="button" role="tab" aria-controls="basics-tab-pane" aria-selected="true">Subscription</button>
     </li>
-    @if (!isReadOnly)
+    @if (subContextModel.State == SubscriptionStates.Active)
     {
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="seating-tab" data-bs-toggle="tab" data-bs-target="#seating-tab-pane" type="button" role="tab" aria-controls="seating-tab-pane" aria-selected="true">

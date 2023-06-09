@@ -54,7 +54,7 @@ namespace Turnstile.Web.Controllers
 
                     var subscriptions = (await subsClient.GetSubscriptions()).ToList();
 
-                    return View(new SubscriptionsViewModel(subscriptions));
+                    return View(new SubscriptionsViewModel(subscriptions, User!));
                 }
                 else
                 {
@@ -91,7 +91,7 @@ namespace Turnstile.Web.Controllers
                     {
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription, User!));
                         this.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
 
                         return View(new SubscriptionDetailViewModel(subscription));
@@ -149,7 +149,7 @@ namespace Turnstile.Web.Controllers
 
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!, User!));
                         this.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription!, seats));
 
                         return View(subscriptionDetail);

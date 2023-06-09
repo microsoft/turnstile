@@ -62,7 +62,7 @@ namespace Turnstile.Web.Controllers
                     {
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription, User!));
                         this.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription, seats));
 
                         return View(new SubscriptionDetailViewModel(subscription));
@@ -124,7 +124,7 @@ namespace Turnstile.Web.Controllers
 
                         var seats = await seatsClient.GetSeats(subscriptionId);
 
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!, User!));
                         this.ApplyModel(new SubscriptionSeatingViewModel(publisherConfig!, subscription!, seats));
 
                         return View(subscriptionDetail);
@@ -170,7 +170,7 @@ namespace Turnstile.Web.Controllers
                                                                            // that will wind up using Turnstile -- publishers, subscribers, and users.
                     {
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription, User!));
 
                         return View(new SeatViewModel(seat));
                     }
@@ -256,7 +256,7 @@ namespace Turnstile.Web.Controllers
                                                                            // can create seat reservations through the UI.
                     {
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription, User!));
 
                         return View(new ReserveSeatViewModel(subscription));
                     }
@@ -327,7 +327,7 @@ namespace Turnstile.Web.Controllers
                         }
                         else
                         {
-                            this.ApplyModel(new SubscriptionContextViewModel(subscription));
+                            this.ApplyModel(new SubscriptionContextViewModel(subscription, User!));
 
                             return View(model);
                         }

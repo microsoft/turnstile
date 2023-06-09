@@ -11,7 +11,14 @@
 
 <h1>Subscription suspended</h1>
 
-<lead>This subscription has been suspended. For assistance, @Html.Raw(layoutModel.ContactSupportHtml).</lead>
+@if (subContextModel.CanUserAdministerSubscription)
+{
+    <lead>This subscription has been suspended. For assistance, @Html.Raw(layoutModel.ContactSupportHtml).</lead>
+}
+else
+{
+    <lead>For assistance, @Html.Raw(subContextModel.ContactSubscriptionAdminHtml).</lead>
+}
 
 <div style="margin-top: 20px">
     <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>

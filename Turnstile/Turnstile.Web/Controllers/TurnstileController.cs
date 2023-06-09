@@ -249,7 +249,7 @@ namespace Turnstile.Web.Controllers
                     else
                     {
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!, User!));
 
                         return View();
                     }
@@ -286,7 +286,7 @@ namespace Turnstile.Web.Controllers
                     else
                     {
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!, User!));
 
                         return View();
                     }
@@ -323,7 +323,7 @@ namespace Turnstile.Web.Controllers
                     else
                     {
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!, User!));
 
                         return View();
                     }
@@ -386,7 +386,7 @@ namespace Turnstile.Web.Controllers
                     else
                     {
                         this.ApplyModel(new LayoutViewModel(publisherConfig!));
-                        this.ApplyModel(new SubscriptionContextViewModel(subscription!));
+                        this.ApplyModel(new SubscriptionContextViewModel(subscription!, User!));
 
                         return View();
                     }

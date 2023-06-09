@@ -1,14 +1,17 @@
 ﻿using Microsoft.AspNetCore.Html;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Turnstile.Core.Models;
+using Turnstile.Web.Common.Extensions;
 
 namespace Turnstile.Web.Common.Models
 {
     public class SubscriptionContextViewModel
     {
-        public SubscriptionContextViewModel(Subscription subscription)
+        public SubscriptionContextViewModel(Subscription subscription, ClaimsPrincipal userPrincipal)
         {
             ArgumentNullException.ThrowIfNull(subscription, nameof(subscription));
+            ArgumentNullException.ThrowIfNull(userPrincipal, nameof(userPrincipal));
 
             SubscriptionId = subscription.SubscriptionId;
             SubscriptionName = subscription.SubscriptionName;
@@ -21,6 +24,9 @@ namespace Turnstile.Web.Common.Models
             IsFreeTrialSubscription = subscription.IsFreeTrial;
             IsTestSubscription = subscription.IsTestSubscription;
             ContactSubscriptionAdminHtml = CreateContactSubscriptionAdminHtml(subscription);
+
+            CanUserAdministerSubscription = userPrincipal.CanAdministerSubscription(subscription);
+            CanUserUseSubscription = userPrincipal.CanUseSubscription(subscription);
 
             if (subscription.ManagementUrls != null)
             {

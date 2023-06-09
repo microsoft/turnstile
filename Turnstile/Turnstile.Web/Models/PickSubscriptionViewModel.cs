@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using Turnstile.Core.Models;
+using Turnstile.Web.Common.Extensions;
 using Turnstile.Web.Common.Models;
-using Turnstile.Web.Extensions;
 
 namespace Turnstile.Web.Models
 {
@@ -16,12 +16,12 @@ namespace Turnstile.Web.Models
 
             ManageableSubscriptions = subscriptions
                 .Where(s => userPrincipal.CanAdministerSubscription(s))
-                .Select(s => new SubscriptionContextViewModel(s))
+                .Select(s => new SubscriptionContextViewModel(s, userPrincipal))
                 .ToList();
 
             UsableSubscriptions = subscriptions
                 .Where(s => userPrincipal.CanUseSubscription(s) && s.IsUsable())
-                .Select(s => new SubscriptionContextViewModel(s))
+                .Select(s => new SubscriptionContextViewModel(s, userPrincipal))
                 .ToList();
 
             ReturnToUrl = returnTo;
