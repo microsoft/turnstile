@@ -48,7 +48,7 @@ usage() {
     echo "         -i \"default\" -s \"P1\" -H -p"
     echo
     echo "Parameter details"
-    echo "--------------------------------------------------------------------------------------------------------------------"
+    echo "####################################################################################################################"
     echo
     echo "<-n name>.....................................Unique name for this Turnstile deployment"
     echo "                                              Lower-case, alphanumeric, must be between 5-13 characters"
@@ -56,10 +56,9 @@ usage() {
     echo "                                              For region list, run \"az account list-locations -o table\"."
     echo "[-c publisher_config_path]....................Optional; indicates the path of a custom publisher configuration"
     echo "                                              file that should be used with this deployment"
-    echo "[-d display_name].............................Optional; indicates the display name of the Azure Active "
-    echo "                                              Directory app created to protect this deployment. Default "
-    echo "                                              display name is \"[name]\". Admin app display name will be "
-    echo "                                              \"[display_name] Admin\"."
+    echo "[-d display_name].............................Optional; indicates the display name of the Azure Active Directory " 
+    echo "                                              app created to protect this deployment. Default display name is "
+    echo "                                              \"[name]\". Admin app display name will be \"[display_name] Admin\"."
     echo "[-i integration_pack].........................Optional; indicates the name (if pack is in \"./integration_packs\")"
     echo "                                              or absolute path of integration pack to deploy. If no pack "
     echo "                                              is specified, the default pack (\"./integration_packs/default\")"
