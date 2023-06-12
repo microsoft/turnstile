@@ -831,17 +831,17 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
 fi
 
-    echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
-    echo
-    echo "Turnstile deployment summary"
-    echo
-    echo "Deployment name...................[$deployment_name]"
-    echo "Deployment version................[$TURNSTILE_VERSION]"
-    echo "Deployed in Azure subscription....[$subscription_id]"
-    echo "Deployed in resource group........[$resource_group_name]"
-    echo "Azure AD tenant ID................[$current_user_tid]"
-    echo "Turnstile API base URL............[https://$api_app_name.azurewebsites.net]"
-    echo "Turnstile API key (secret!).......[$api_key]"
+echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
+echo
+echo "ℹ️   Turnstile deployment summary"
+echo
+echo "Deployment name...................[$deployment_name]"
+echo "Deployment version................[$TURNSTILE_VERSION]"
+echo "Deployed in Azure subscription....[$subscription_id]"
+echo "Deployed in resource group........[$resource_group_name]"
+echo "Azure AD tenant ID................[$current_user_tid]"
+echo "Turnstile API base URL............[https://$api_app_name.azurewebsites.net]"
+echo "Turnstile API key (secret!).......[$api_key]"
 
 if [[ "$p_headless" == "$FALSE" ]]; then
     echo "User web app base URL.............[$web_app_base_url/]"
