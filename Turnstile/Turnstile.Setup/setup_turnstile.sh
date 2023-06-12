@@ -831,9 +831,25 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
 fi
 
-echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
+    echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
+    echo
+    echo "Turnstile deployment summary"
+    echo
+    echo "Deployment name...................[$deployment_name]"
+    echo "Deployment version................[$TURNSTILE_VERSION]"
+    echo "Deployed in Azure subscription....[$subscription_id]"
+    echo "Deployed in resource group........[$resource_group_name]"
+    echo "Azure AD tenant ID................[$current_user_tid]"
+    echo "Turnstile API base URL............[https://$api_app_name.azurewebsites.net]"
+    echo "Turnstile API key (secret!).......[$api_key]"
 
 if [[ "$p_headless" == "$FALSE" ]]; then
+    echo "User web app base URL.............[$web_app_base_url/]"
+    echo "Admin web app base URL............[$admin_web_app_base_url/]"
+    echo "User web app Azure AD client ID...[$aad_app_id]"
+    echo "Admin web app Azure AD client ID..[$admin_aad_app_id]"
+    echo "Storage account base URL..........[https://$storage_account_name.blob.core.windows.net]"
+    echo
     echo "➡️   Please go to [ $admin_web_app_base_url/config/basics ] to complete setup."
 fi
 

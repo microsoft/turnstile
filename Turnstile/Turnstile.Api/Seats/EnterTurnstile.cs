@@ -19,7 +19,6 @@ using System.Threading.Tasks;
 using Turnstile.Api.Extensions;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
-using Turnstile.Core.Interfaces;
 using Turnstile.Core.Models;
 using Turnstile.Core.Models.Events.V_2022_03_18;
 using Turnstile.Services.Clients;
@@ -31,12 +30,9 @@ namespace Turnstile.Api.Seats
     public class EnterTurnstile
     {
         private readonly HttpClient httpClient;
-        private readonly ITurnstileRepository turnstileRepo;
 
-        public EnterTurnstile(ITurnstileRepository turnstileRepo)
+        public EnterTurnstile()
         {
-            this.turnstileRepo = turnstileRepo;
-
             httpClient = new HttpClient();
 
             httpClient.BaseAddress = new Uri(

@@ -8,12 +8,18 @@ namespace Turnstile.Core.Models
     {
         public SeatResult() { }
 
-        public SeatResult(string resultCode, Subscription? subscription = null, Seat? seat = null)
+        public SeatResult(string resultCode, SeatRequest seatRequest, Subscription? subscription = null, Seat? seat = null)
         {
+            RequestId = seatRequest.RequestId;
             ResultCode = resultCode;
             Seat = seat;
             Subscription = subscription;
         }
+
+        [JsonProperty("request_id")]
+        [JsonPropertyName("request_id")]
+        [OpenApiProperty(Nullable = false, Description = "The original seat request ID.")]
+        public string? RequestId { get; set; }
 
         [JsonProperty("result_code")]
         [JsonPropertyName("result_code")]

@@ -3,9 +3,11 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
+using System.Net;
 using Turnstile.Core.Constants;
 using Turnstile.Core.Extensions;
 using Turnstile.Core.Interfaces;
+using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Common.Extensions;
 using Turnstile.Web.Common.Models;
@@ -36,6 +38,7 @@ namespace Turnstile.Web.Controllers
 
         private readonly ILogger logger;
         private readonly IPublisherConfigurationClient pubConfigClient;
+        private readonly ISeatResultCache seatResultCache;
         private readonly ISeatsClient seatsClient;
         private readonly ISubscriptionsClient subsClient;
 
@@ -47,11 +50,13 @@ namespace Turnstile.Web.Controllers
         public TurnstileController(
             ILogger<TurnstileController> logger,
             IPublisherConfigurationClient pubConfigClient,
+            ISeatResultCache seatResultCache,
             ISeatsClient seatsClient,
             ISubscriptionsClient subsClient)
         {
             this.logger = logger;
             this.pubConfigClient = pubConfigClient;
+            this.seatResultCache = seatResultCache;
             this.seatsClient = seatsClient;
             this.subsClient = subsClient;
         }
@@ -183,9 +188,9 @@ namespace Turnstile.Web.Controllers
                         SeatResultCodes.SubscriptionSuspended => publisherConfig!.OnSubscriptionSuspended(subscriptionId),
                         SeatResultCodes.SubscriptionNotReady => publisherConfig!.OnSubscriptionNotReady(subscriptionId),
                         SeatResultCodes.SubscriptionNotFound => publisherConfig!.OnSubscriptionNotFound(subscriptionId),
-                        SeatResultCodes.SeatProvided => string.IsNullOrEmpty(returnTo) ? publisherConfig!.OnAccessGranted(subscriptionId) : Redirect(returnTo),
+                        SeatResultCodes.SeatProvided => await OnSeatProvided(seatResult!, subscriptionId, returnTo),
                         SeatResultCodes.SubscriptionCanceled => publisherConfig!.OnSubscriptionCanceled(subscriptionId),
-                        SeatResultCodes.AccessDenied => publisherConfig!.OnAccessGranted(subscriptionId),
+                        SeatResultCodes.AccessDenied => publisherConfig!.OnAccessDenied(subscriptionId),
                         SeatResultCodes.NoSeatsAvailable => publisherConfig!.OnNoSeatsAvailable(subscriptionId),
                         _ => throw new InvalidOperationException($"Unable to handle turnstile seat result code [{seatResult!.ResultCode}].")
                     };
@@ -201,6 +206,27 @@ namespace Turnstile.Web.Controllers
 
                 throw;
             }
+        }
+
+        private async Task<IActionResult> OnSeatProvided(SeatResult seatResult, string subscriptionId, string? returnTo = null)
+        {
+            var publisherConfig = (await GetPublisherConfiguration())!;
+
+            var redirectUrl = returnTo
+                ?? publisherConfig.TurnstileConfiguration?.OnAccessGrantedUrl
+                ?? publisherConfig.AppUrl!;
+
+            redirectUrl = redirectUrl.Replace("{subscription_id}", subscriptionId);
+
+            if (publisherConfig.TurnstileConfiguration?.IncludeSeatResultOnAccessGrantedRedirect == true)
+            {
+                var ticketToken = await seatResultCache.CacheSeatResult(seatResult);
+
+                redirectUrl += (string.IsNullOrEmpty(new Uri(redirectUrl).Query) ? "?" : "&")
+                    + $"_tt={WebUtility.UrlEncode(ticketToken)}"; // _tt = Turnstile ticket
+            }
+
+            return Redirect(redirectUrl);
         }
 
         [HttpGet]

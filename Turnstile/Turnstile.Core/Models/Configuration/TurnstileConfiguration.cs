@@ -9,6 +9,11 @@ namespace Turnstile.Core.Models.Configuration
 {
     public class TurnstileConfiguration
     {
+        [JsonProperty("include_seat_result_on_access_granted_redirect")]
+        [JsonPropertyName("include_seat_result_on_access_granted_redirect")]
+        [OpenApiProperty(Nullable = true, Description = "If provided, indicates whether or not seat result details should be provided securely via query string parameter when user is provided a seat (seat result code [seat_provided]) and redirected to SaaS app.")]
+        public bool IncludeSeatResultOnAccessGrantedRedirect { get; set; } = false;
+
         [JsonProperty("on_access_denied_url")]
         [JsonPropertyName("on_access_denied_url")]
         [OpenApiProperty(Nullable = true, Description = "If provided, the URL that a user will be redirected to when their access to the subscription has been denied (seat result code [access_denied])")]

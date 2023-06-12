@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using Turnstile.Core.Interfaces;
+using Turnstile.Services.BlobStorage;
 using Turnstile.Web.Common.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +50,7 @@ builder.Services.AddRazorPages()
     .AddMicrosoftIdentityUI();
 
 builder.Services.AddApiClients($"turn-web-{deploymentName}");
+builder.Services.AddTransient<ISeatResultCache, BlobStorageSeatResultCache>();
 
 builder.Services.AddApplicationInsightsTelemetry(options =>
     options.ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]);

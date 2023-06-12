@@ -9,7 +9,7 @@ namespace Turnstile.Core.Models
         [JsonProperty("request_id")]
         [JsonPropertyName("request_id")]
         [OpenApiProperty(Nullable = true, Description = "Unique seat request identifier")]
-        public string? RequestId { get; set; }
+        public string RequestId { get; set; } = Guid.NewGuid().ToString();
 
         [JsonProperty("user_id")]
         [JsonPropertyName("user_id")]

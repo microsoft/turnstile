@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.AspNetCore.Mvc;
+using Turnstile.Core.Models;
 using Turnstile.Core.Models.Configuration;
 using Turnstile.Web.Controllers;
 
@@ -135,16 +136,6 @@ namespace Turnstile.Web.Extensions
                     publisherConfig.TurnstileConfiguration!.OnNoSeatAvailableUrl,
                     subscriptionId));
             }
-        }
-
-        public static IActionResult OnAccessGranted(this PublisherConfiguration publisherConfig, string subscriptionId)
-        {
-            ArgumentNullException.ThrowIfNull(publisherConfig, nameof(publisherConfig));
-            ArgumentNullException.ThrowIfNull(subscriptionId, nameof(subscriptionId));
-
-            var appUrl = publisherConfig.AppUrl ?? publisherConfig.TurnstileConfiguration?.OnAccessGrantedUrl;
-
-            return new RedirectResult(MergeSubscriptionId(appUrl!, subscriptionId));
         }
 
         private static string MergeSubscriptionId(string intoString, string subscriptionId) =>
