@@ -81,9 +81,9 @@ usage() {
     echo "[-p flag: use_cosmos_provisioned_throughput]..Optional; if flag is set, Turnstile's Cosmos account will"
     echo "                                              be created in provisioned throughput mode instead of the default"
     echo "                                              serverless mode."
-    echo "[-e flag: create_env_file]....................Optional; if flag is set, a file (\"./[name].env\") will be generated"
-    echo "                                              that contains all the properties from the deployment summary as"
-    echo "                                              environment variables. NOTE that this file contains secrets. "
+    echo "[-e flag: create_env_file]....................Optional; if flag is set, a file (\"./[name].turnstile.env\") "
+    echo "                                              will be generated that contains all the properties from the deployment "
+    echo "                                              summary as environment variables. NOTE that this file contains secrets. "
     echo "                                              Handle with extreme care and delete when no longer needed."
     echo
 }
@@ -838,13 +838,13 @@ if [[ "$p_headless" == "$FALSE" ]]; then
 
 fi
 
-echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
+echo "✔️   Turnstile deployment complete. It took [$SECONDS] seconds."
 echo
 
 api_base_url="https://$api_app_name.azurewebsites.net"
 
 if [[ -n $p_create_env_file ]]; then
-    env_file_path="./$deployment_name.env"
+    env_file_path="./$deployment_name.turnstile.env"
 
     echo "📄   [-e]: Writing deployment environment variables to [$env_file_path]..."
     echo
@@ -853,7 +853,9 @@ if [[ -n $p_create_env_file ]]; then
     # ${var//\'/\\\'} escapes single quotes.
 
     echo "# Turnstile deployment [$deployment_name] environment variables"                  >> $env_file_path
+    echo                                                                                    >> $env_file_path
     echo "# WARNING: File contains secrets. Treat with extreme caution."                    >> $env_file_path
+    echo "#          Delete when no longer needed."                                         >> $env_file_path
     echo                                                                                    >> $env_file_path
     echo "TURNSTILE_DEPLOYMENT_NAME='${deployment_name//\'/\\\'}'"                          >> $env_file_path
     echo "TURNSTILE_DEPLOYMENT_VERSION='${TURNSTILE_VERSION//\'/\\\'}'"                     >> $env_file_path
