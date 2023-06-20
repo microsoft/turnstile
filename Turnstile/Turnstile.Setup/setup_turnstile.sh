@@ -42,10 +42,10 @@ usage() {
     echo
     echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
     echo "         [-i integration_pack] [-s app_service_plan_sku] [-H flag: headless] \\" 
-    echo "         [-p flag: use_cosmos_provisioned_throughput]"
+    echo "         [-p flag: use_cosmos_provisioned_throughput] [-e flag: create_env_file]"
     echo 
     echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
-    echo "         -i \"default\" -s \"P1\" -H -p"
+    echo "         -i \"default\" -s \"P1\" -H -p -e"
     echo
     echo "Parameter details"
     echo "####################################################################################################################"
@@ -71,6 +71,10 @@ usage() {
     echo "[-p flag: use_cosmos_provisioned_throughput]..Optional; if flag is set, Turnstile's Cosmos account will"
     echo "                                              be created in provisioned throughput mode instead of the default"
     echo "                                              serverless mode."
+    echo "[-e flag: create_env_file]....................Optional; if flag is set, a file (\"./[name].env\") will be generated"
+    echo "                                              that contains all the properties from the deployment summary as"
+    echo "                                              environment variables. NOTE that this file contains secrets. "
+    echo "                                              Handle with extreme care and delete when no longer needed."
     echo
 }
 
@@ -209,7 +213,7 @@ p_app_service_sku="S1"
 p_integration_pack="default"
 p_use_cosmos_provisioned_throughput="$FALSE"
 
-while getopts "s:c:d:n:r:i:Hp" opt; do
+while getopts "s:c:d:n:r:i:Hpe" opt; do
     case $opt in
         s)
             p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
@@ -238,6 +242,9 @@ while getopts "s:c:d:n:r:i:Hp" opt; do
         ;;
         p)
             p_use_cosmos_provisioned_throughput="$TRUE"
+        ;;
+        e)
+            p_create_env_file="$TRUE"
         ;;
         \?)
             usage
@@ -290,9 +297,9 @@ while [[ -z $current_user_oid ]]; do
 done
 
 if [[ "$p_headless" == "$TRUE" ]]; then 
-    echo "ℹ️   This is a HEADLESS (-h) deployment. Only the Turnstile API layer will be deployed."
+    echo "ℹ️   [-H]: This is a headless deployment. Only the API layer will be deployed."
 else
-    echo "ℹ️   This is a FULL deployment. Both the Turnstile API and web app layers will be deployed."
+    echo "ℹ️   This is a FULL deployment. Both the API and web app layers will be deployed."
 fi
 
 p_deployment_name=$(echo "$p_deployment_name" | tr '[:upper:]' '[:lower:]') # Lower the deployment name...
@@ -833,6 +840,30 @@ fi
 
 echo "🏁   Turnstile deployment complete. It took [$SECONDS] seconds."
 echo
+
+api_base_url="https://$api_app_name.azurewebsites.net"
+
+if [[ -n $p_create_env_file ]]; then
+    env_file_path="./$deployment_name.env"
+
+    echo "📄   [-e]: Writing deployment environment variables file to [$env_file_path]..."
+    echo
+
+    # Alright, let's write this env file...
+    # ${var//\'/\\\'} escapes single quotes.
+
+    echo "# Turnstile deployment [$deployment_name] environment variables"                  >> $env_file_path
+    echo "# WARNING: File contains secrets. Treat with extreme caution."                    >> $env_file_path
+    echo                                                                                    >> $env_file_path
+    echo "TURNSTILE_DEPLOYMENT_NAME='${deployment_name//\'/\\\'}'"                          >> $env_file_path
+    echo "TURNSTILE_DEPLOYMENT_VERSION='${TURNSTILE_VERSION//\'/\\\'}'"                     >> $env_file_path
+    echo "TURNSTILE_AZURE_SUBSCRIPTION_ID='${subscription_id//\'/\\\'}'"                    >> $env_file_path
+    echo "TURNSTILE_AZURE_RESOURCE_GROUP_NAME='${resource_group_name//\'/\\\'}'"            >> $env_file_path
+    echo "TURNSTILE_AZURE_AD_TENANT_ID='${current_user_tid//\'/\\\'}'"                      >> $env_file_path
+    echo "TURNSTILE_API_BASE_URL='${api_base_url//\'/\\\'}'"                                >> $env_file_path
+    echo "TURNSTILE_API_KEY='${api_key//\'/\\\'}'"                                          >> $env_file_path
+fi
+
 echo "ℹ️   Turnstile deployment summary"
 echo
 echo "Deployment name...................[$deployment_name]"
@@ -840,20 +871,37 @@ echo "Deployment version................[$TURNSTILE_VERSION]"
 echo "Deployed in Azure subscription....[$subscription_id]"
 echo "Deployed in resource group........[$resource_group_name]"
 echo "Azure AD tenant ID................[$current_user_tid]"
-echo "Turnstile API base URL............[https://$api_app_name.azurewebsites.net]"
+echo "Turnstile API base URL............[$api_base_url]"
 echo "Turnstile API key (secret!).......[$api_key]"
 
 if [[ "$p_headless" == "$FALSE" ]]; then
-    echo "User web app base URL.............[$web_app_base_url/]"
-    echo "Admin web app base URL............[$admin_web_app_base_url/]"
+    web_app_base_url="$web_app_base_url/"
+    admin_web_app_base_url="$admin_web_app_base_url/"
+    storage_account_base_url="https://$storage_account_name.blob.core.windows.net"
+
+    if [[ -n $p_create_env_file ]]; then
+        echo "TURNSTILE_USER_WEB_APP_BASE_URL='${web_app_base_url//\'/\\\'}'"
+        echo "TURNSTILE_ADMIN_WEB_APP_BASE_URL='${admin_web_app_base_url//\'/\\\'}'"        >> $env_file_path
+        echo "TURNSTILE_USER_WEB_APP_AZURE_AD_CLIENT_ID='${aad_app_id//\'/\\\'}'"           >> $env_file_path
+        echo "TURNSTILE_ADMIN_WEB_APP_AZURE_AD_CLIENT_ID='${admin_aad_app_id//\'/\\\'}'"    >> $env_file_path
+        echo "TURNSTILE_STORAGE_ACCOUNT_BASE_URL='${storage_account_base_url//\'/\\\'}'"    >> $env_file_path
+    fi
+
+    echo "User web app base URL.............[$web_app_base_url]"
+    echo "Admin web app base URL............[$admin_web_app_base_url]"
     echo "User web app Azure AD client ID...[$aad_app_id]"
     echo "Admin web app Azure AD client ID..[$admin_aad_app_id]"
-    echo "Storage account base URL..........[https://$storage_account_name.blob.core.windows.net]"
+    echo "Storage account base URL..........[$storage_account_base_url]"
     echo
     echo "➡️   Please go to [ $admin_web_app_base_url/config/basics ] to complete setup."
 fi
 
 echo
+
+if [[ -n $p_create_env_file ]]; then
+    echo "📄   [-e]: Deployment environment variables written to [$env_file_path]."
+    echo "⚠️   [-e]: WARNING: [$env_file_path] contains secrets. Treat this file with extreme caution and delete when done."
+fi
 
 
 
