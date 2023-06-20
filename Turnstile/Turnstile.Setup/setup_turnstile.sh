@@ -38,6 +38,16 @@ readonly APP_SERVICE_SKUS=(
 
 readonly CONSUMPTION_APP_SERVICE_SKU="Y1" # We'll be using this later...
 
+splash() {
+    echo "Turnstile | $TURNSTILE_VERSION"
+    echo "Your SaaS app's friendly automated usher."
+    echo "https://github.com/microsoft/turnstile"
+    echo
+    echo "Copyright (c) Microsoft Corporation. All rights reserved."
+    echo "Licensed under the MIT License. See LICENSE in project root for more information."
+    echo
+}
+
 usage() {
     echo
     echo "Usage:   $0 <-n name> <-r deployment_region> [-c publisher_config_path] [-d display_name] \\"
@@ -190,16 +200,6 @@ check_deployment_name() {
         echo "❌   [$name] is not a valid Turnstile deployment name. The name must contain only lowercase letters and numbers and be between 5 and 13 characters in length."
         return 1
     fi
-}
-
-splash() {
-    echo "Turnstile | $TURNSTILE_VERSION"
-    echo "Your SaaS app's friendly automated usher."
-    echo "https://github.com/microsoft/turnstile"
-    echo
-    echo "Copyright (c) Microsoft Corporation. All rights reserved."
-    echo "Licensed under the MIT License. See LICENSE in project root for more information."
-    echo
 }
 
 # Howdy!
@@ -846,7 +846,7 @@ api_base_url="https://$api_app_name.azurewebsites.net"
 if [[ -n $p_create_env_file ]]; then
     env_file_path="./$deployment_name.env"
 
-    echo "📄   [-e]: Writing deployment environment variables file to [$env_file_path]..."
+    echo "📄   [-e]: Writing deployment environment variables to [$env_file_path]..."
     echo
 
     # Alright, let's write this env file...
