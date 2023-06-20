@@ -880,7 +880,7 @@ if [[ "$p_headless" == "$FALSE" ]]; then
     storage_account_base_url="https://$storage_account_name.blob.core.windows.net"
 
     if [[ -n $p_create_env_file ]]; then
-        echo "TURNSTILE_USER_WEB_APP_BASE_URL='${web_app_base_url//\'/\\\'}'"
+        echo "TURNSTILE_USER_WEB_APP_BASE_URL='${web_app_base_url//\'/\\\'}'"               >> $env_file_path
         echo "TURNSTILE_ADMIN_WEB_APP_BASE_URL='${admin_web_app_base_url//\'/\\\'}'"        >> $env_file_path
         echo "TURNSTILE_USER_WEB_APP_AZURE_AD_CLIENT_ID='${aad_app_id//\'/\\\'}'"           >> $env_file_path
         echo "TURNSTILE_ADMIN_WEB_APP_AZURE_AD_CLIENT_ID='${admin_aad_app_id//\'/\\\'}'"    >> $env_file_path
