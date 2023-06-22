@@ -1,0 +1,60 @@
+# SaaS Seating with Turnstile in 7 Easy Steps
+
+Turnstile makes it easier to build SaaS apps on Azure by automating the process of providing seats (or licenses, badges, etc.) to your users. It is easy to set up (as you're about to learn) and cost-effective allowing you to scale dynamically to meet your customer's constantly changing demands. Turnstile is designed to support any Azure-based SaaS app regardless of development stack or architecture. 
+
+## Before we get started
+
+First, ensure that the following prerequisites are met.
+
+* You have an active Azure Subscription. [If you don't already have one, get one free here.](https://azure.microsoft.com/free)
+* You can create new Azure Active Directory app registrations. In order to create app registrations, you must be a directory administrator. For more information, see [this article](https://docs.microsoft.com/azure/active-directory/roles/permissions-reference).
+* You can create resources and resource groups within the target Azure subscription. Typically, this requires at least [contributor-level access](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor) to the subscription.
+* You're using an Azure Active Directory work or school account. Guest or personal account won't work.
+
+## 1. Clone the Turnstile GitHub repo
+
+Navigate to [the Azure portal](https://portal.azure.com) and [open the __Bash__ Cloud Shell](https://learn.microsoft.com/en-us/azure/cloud-shell/quickstart?tabs=azurecli). Clone the Turnstile repo by running the following command in the cloud shell:
+
+```shell
+git clone https://github.com/microsoft/turnstile
+```
+
+## 2. Run the Turnstile setup script
+
+Navigate to the newly cloned Tursntile repo's setup folder by running the following command in the cloud shell:
+
+```shell
+cd ./turnstile/Turnstile/Turnstile.Setup
+```
+
+Allow the setup script to be executed locally by running the following command in the cloud shell:
+
+```shell
+chmod +x ./setup_turnstile.sh
+```
+
+Now it's time to actually run the setup script. You'll need to provide a few parameters:
+
+* __Deployment name (`-n`).__ All Turnstile URLs, supporting Azure resources, and Azure Active Directory app registrations will include this name by default. Deployment name must be globally unique, alphanumeric (containing only letters and numbers), and between 5-13 characters in length.
+* __Deployment region (`-r`).__ [Azure is available in more than 60 regions around the globe.](https://azure.microsoft.com/explore/global-infrastructure/geographies/#overview) For a complete listing, run `az account list-locations -o table` from the cloud shell. Be sure to use the region's `Name`, not `DisplayName` or `RegionalDisplayName`.
+* Learn about additional optional parameters by running `./setup_turnstile.sh -h` from the cloud shell.
+
+Assuming your deployment name is `dontusethis` and your region is `southcentralus` (South Central US), run the following command in the cloud shell:
+
+```shell
+./setup_turnstile.sh -n "dontusethis" -r "southcentralus"
+```
+This will take about 10 minutes so take a moment to freshen your coffee. ☕
+
+Once setup is complete, the script will provide you with a `Turnstile deployment summary`. Make note of these important values because you'll need them again here in a few moments.
+
+The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
+
+```url
+https://turn-admin-[your_deployment_name].azurewebsites.net/config/basics
+```
+
+
+
+
+
