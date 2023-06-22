@@ -1,6 +1,6 @@
 # SaaS Seating with Turnstile in 7 Easy Steps
 
-Turnstile makes it easier to build SaaS apps on Azure by automating the process of providing seats (or licenses, badges, etc.) to your users. It is easy to set up (as you're about to learn) and cost-effective allowing you to scale dynamically to meet your customer's constantly changing demands. Turnstile is designed to support any Azure-based SaaS app regardless of development stack or architecture. 
+Turnstile makes it easier to build SaaS apps on Azure by automating the process of providing seats (or licenses, badges, etc.) to your users. It's easy to set up (as you're about to learn) and cost-effective allowing you to scale dynamically to meet your customer's constantly changing demands. Turnstile is designed to support any Azure-based SaaS app regardless of development stack or architecture. 
 
 ## Before we get started
 
@@ -46,13 +46,13 @@ Assuming your deployment name is `dontusethis` and your region is `southcentralu
 ```
 This will take about 10 minutes so take a moment to freshen your coffee. ☕
 
-Once setup is complete, the script will provide you with a `Turnstile deployment summary`. Make note of these important values because you'll need them again here in a few moments.
-
-The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
+Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these important values because you'll need them again here in a few moments. The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
 
 ```url
 https://turn-admin-[your_deployment_name].azurewebsites.net/config/basics
 ```
+
+Click the link and tell Turnstile a little about your company and app so it can better tailor your user's experience.
 
 
 
