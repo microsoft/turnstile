@@ -1,4 +1,4 @@
-# SaaS Seating with Turnstile in 5 Easy Steps
+# SaaS Seating with Turnstile in 6 Easy Steps
 
 Turnstile makes it easier to build SaaS apps on Azure by automating the process of providing seats (or licenses, badges, etc.) to your users. It's easy to set up (as you're about to learn firsthand) and cost-effective allowing you to scale dynamically to meet your customer's constantly changing demands. Turnstile is designed to support any Azure-based SaaS app regardless of development stack or architecture. 
 
@@ -73,9 +73,11 @@ Turnstile publishes a variety of subscription and seat-related events designed t
 | Reduced subscription seating available |  `turn-on-low-seat-warning-[deployment_name]` | Occurs when a user-based subscription (fixed seat count) reaches <= 25% available standard seating |
 | No more seats available | `turn-on-no-seats-available-[deployment_name]` | Occurs when a user-based subscription (fixed seat count) runs out of available standard seating
 
-## 4. Create subscriptions
+## 4. Create a subscription
 
+## 5. Get a seat
 
+## 6. Update a subscription
 
 
 
