@@ -85,6 +85,7 @@ usage() {
     echo "                                              will be generated that contains all the properties from the deployment "
     echo "                                              summary as environment variables. NOTE that this file contains secrets. "
     echo "                                              Handle with extreme care and delete when no longer needed."
+    echo "[-h flag: help]...............................Just presents this usage information"
     echo
 }
 
