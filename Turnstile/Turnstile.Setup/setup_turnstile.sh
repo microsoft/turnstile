@@ -57,6 +57,8 @@ usage() {
     echo "Example: $0 -n \"dontusethis\" -r \"southcentralus\" -d \"Just an example\""
     echo "         -i \"default\" -s \"P1\" -H -p -e"
     echo
+    echo "Help:    $0 -h"
+    echo
     echo "Parameter details"
     echo "####################################################################################################################"
     echo
