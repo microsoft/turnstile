@@ -1,4 +1,4 @@
-# SaaS Seating with Turnstile in 7 Easy Steps
+# SaaS Seating with Turnstile in 5 Easy Steps
 
 Turnstile makes it easier to build SaaS apps on Azure by automating the process of providing seats (or licenses, badges, etc.) to your users. It's easy to set up (as you're about to learn firsthand) and cost-effective allowing you to scale dynamically to meet your customer's constantly changing demands. Turnstile is designed to support any Azure-based SaaS app regardless of development stack or architecture. 
 
@@ -46,7 +46,9 @@ Assuming your deployment name is `dontusethis` and your region is `southcentralu
 ```
 This will take about 10 minutes so take a moment to freshen your coffee. ☕
 
-Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these important values because you'll need them again here in a few moments. The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
+Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these important values because you'll need them again here in a few moments.
+
+The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
 
 ```url
 https://turn-admin-[deployment_name].azurewebsites.net/config/basics
@@ -55,8 +57,7 @@ https://turn-admin-[deployment_name].azurewebsites.net/config/basics
 Click the link and tell Turnstile a little about your company and app so it can better tailor your user's experience.
 
 ## 3. Configure event integrations
-
-Turnstile publishes a variety of subscription and seat-related events designed to make it easier to integrate Turnstile with your existing apps and services. By default, Turnstile also publishes a set of template Logic Apps preconfigured to handle each event type. [The Logic Apps platform provides hundreds of prebuilt connectors so you can connect and integrate apps, data, services, and systems more easily and quickly.](https://learn.microsoft.com/azure/connectors/introduction) You can focus more on designing and implementing your solution's business logic and functionality, not on figuring out how to access your resources. These logic apps can be found in the same resource group in which Turnstile was deployed. You can find the name of this resource group in the setup script's `Tursntile deployment summary`.
+Turnstile publishes a variety of subscription and seat-related events designed to make it easier to integrate with your existing apps and services. By default, Turnstile also publishes a set of template Logic Apps preconfigured to handle each event type. [The Logic Apps platform provides hundreds of prebuilt connectors so you can connect and integrate apps, data, services, and systems more easily and quickly.](https://learn.microsoft.com/azure/connectors/introduction) You can focus more on designing and implementing your solution's business logic and functionality, not on figuring out how to access your resources. These logic apps can be found in the same resource group in which Turnstile was deployed. You can find the name of this resource group in the setup script's `Tursntile deployment summary`.
 
 ### Turnstile events
 
@@ -64,6 +65,8 @@ Turnstile publishes a variety of subscription and seat-related events designed t
 | --- | --- | -- |
 | Subscription created | `turn-on-subscription-created-[deployment_name]` | 
 | Subscription updated | `turn-on-subscription-updated-[deployment_name]` |
+| Admission granted | `turn-on-admission-granted-[deployment_name]` | Occurs when a user is granted access to the app |
+| Admission denied | `turn-on-admission-denied-[deployment_name]` | Occurs when a user is denied access to the app. This event includes a code which indicates why the user was denied access. |
 | Seat reserved | `turn-on-seat-reserved-[deployment_name]` | This event includes a link that the user can use to redeem their seat. Configure this logic app to notify the user that they've been invited to use the app. |
 | Seat redeemed | `turn-on-seat-redeemed-[deployment_name]` | Occurs when a reserved seat is redeemed by its user |
 | Seat provided | `turn-on-seat-provided-[deployment_name]` | Occurs when a dynamic seat (not reserved) is provided to a user |
