@@ -213,7 +213,7 @@ p_app_service_sku="S1"
 p_integration_pack="default"
 p_use_cosmos_provisioned_throughput="$FALSE"
 
-while getopts "s:c:d:n:r:i:Hpe" opt; do
+while getopts "s:c:d:n:r:i:hHpe" opt; do
     case $opt in
         s)
             p_app_service_sku=$(echo "$OPTARG" | tr '[:lower:]' '[:upper:]') # Always uppercase for consistency...
@@ -246,9 +246,13 @@ while getopts "s:c:d:n:r:i:Hpe" opt; do
         e)
             p_create_env_file="$TRUE"
         ;;
+        h)
+            usage
+            exit 0 # Help was expected
+        ;;
         \?)
             usage
-            exit 1
+            exit 1 # Help wasn't expected
         ;;
     esac
 done
