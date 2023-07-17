@@ -296,6 +296,14 @@ resource apiApp 'Microsoft.Web/sites@2021-03-01' = {
           value: configStorageBlobName
         }
         {
+          name: 'Turnstile_SeatResultCache_StorageConnectionString'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'Turnstile_SeatResultCache_StorageContainerName'
+          value: seatResultCacheStorageContainerName
+        }
+        {
           name: 'Turnstile_PublisherConfigStorageConnectionString'
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
         }
@@ -331,6 +339,14 @@ resource userWebApp 'Microsoft.Web/sites@2021-03-01' = if (!headless) {
         {
           name: 'Turnstile_DeploymentName'
           value: deploymentName
+        }
+        {
+          name: 'Turnstile_SeatResultCache_StorageConnectionString'
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+        }
+        {
+          name: 'Turnstile_SeatResultCache_StorageContainerName'
+          value: seatResultCacheStorageContainerName
         }
         {
           name: 'Turnstile_ApiBaseUrl'

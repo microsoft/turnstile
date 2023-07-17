@@ -851,7 +851,7 @@ echo
 api_base_url="https://$api_app_name.azurewebsites.net"
 
 if [[ -n $p_create_env_file ]]; then
-    env_file_path="./$deployment_name.turnstile.env"
+    env_file_path="./$p_deployment_name.turnstile.env"
 
     echo "📄   [-e]: Writing deployment environment variables to [$env_file_path]..."
     echo
@@ -859,12 +859,12 @@ if [[ -n $p_create_env_file ]]; then
     # Alright, let's write this env file...
     # ${var//\'/\\\'} escapes single quotes.
 
-    echo "# Turnstile deployment [$deployment_name] environment variables"                  >> $env_file_path
+    echo "# Turnstile deployment [$p_deployment_name] environment variables"                >> $env_file_path
     echo                                                                                    >> $env_file_path
     echo "# WARNING: File contains secrets. Treat with extreme caution."                    >> $env_file_path
     echo "#          Delete when no longer needed."                                         >> $env_file_path
     echo                                                                                    >> $env_file_path
-    echo "TURNSTILE_DEPLOYMENT_NAME='${deployment_name//\'/\\\'}'"                          >> $env_file_path
+    echo "TURNSTILE_DEPLOYMENT_NAME='${p_deployment_name//\'/\\\'}'"                        >> $env_file_path
     echo "TURNSTILE_DEPLOYMENT_VERSION='${TURNSTILE_VERSION//\'/\\\'}'"                     >> $env_file_path
     echo "TURNSTILE_AZURE_SUBSCRIPTION_ID='${subscription_id//\'/\\\'}'"                    >> $env_file_path
     echo "TURNSTILE_AZURE_RESOURCE_GROUP_NAME='${resource_group_name//\'/\\\'}'"            >> $env_file_path
@@ -875,7 +875,7 @@ fi
 
 echo "ℹ️   Turnstile deployment summary"
 echo
-echo "Deployment name...................[$deployment_name]"
+echo "Deployment name...................[$p_deployment_name]"
 echo "Deployment version................[$TURNSTILE_VERSION]"
 echo "Deployed in Azure subscription....[$subscription_id]"
 echo "Deployed in resource group........[$resource_group_name]"
@@ -885,7 +885,7 @@ echo "Turnstile API key (secret!).......[$api_key]"
 
 if [[ "$p_headless" == "$FALSE" ]]; then
     web_app_base_url="$web_app_base_url/"
-    admin_web_app_base_url="$admin_web_app_base_url/"
+    admin_web_app_base_url="$admin_web_app_base_url"
     storage_account_base_url="https://$storage_account_name.blob.core.windows.net"
 
     if [[ -n $p_create_env_file ]]; then
