@@ -84,7 +84,7 @@ namespace Turnstile.Api.Seats
                         $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscriptionId}] " +
                         $"for user [{seatRequest.UserId}]. Subscription not found.");
 
-                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotFound));
+                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotFound, seatRequest));
                 }
                 else if (!HasAccessToSubscription(seatRequest, subscription))    // Does the user have access to the subscription?
                 {
@@ -94,7 +94,7 @@ namespace Turnstile.Api.Seats
 
                     await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.AccessDenied).ToEventGridEvent());
 
-                    return new OkObjectResult(new SeatResult(SeatResultCodes.AccessDenied, subscription));
+                    return new OkObjectResult(new SeatResult(SeatResultCodes.AccessDenied, seatRequest, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Purchased ||  // Is the subscription being configured?
                          subscription.IsBeingConfigured == true)
@@ -105,7 +105,7 @@ namespace Turnstile.Api.Seats
 
                     await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.SubscriptionNotReady).ToEventGridEvent());
 
-                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotReady, subscription));
+                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionNotReady, seatRequest, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Suspended)    // Is the subscription suspended?
                 {
@@ -115,7 +115,7 @@ namespace Turnstile.Api.Seats
 
                     await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.SubscriptionSuspended).ToEventGridEvent());
 
-                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionSuspended, subscription));
+                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionSuspended, seatRequest, subscription));
                 }
                 else if (subscription.State == SubscriptionStates.Canceled)     // Is the subscription canceled?
                 {
@@ -125,7 +125,7 @@ namespace Turnstile.Api.Seats
 
                     await events.AddAsync(new AdmissionDenied(subscription, seatRequest, SeatResultCodes.SubscriptionCanceled).ToEventGridEvent());
 
-                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionCanceled, subscription));
+                    return new OkObjectResult(new SeatResult(SeatResultCodes.SubscriptionCanceled, seatRequest, subscription));
                 }
                 else
                 {
@@ -169,7 +169,7 @@ namespace Turnstile.Api.Seats
                     $"Subscription [{subscription.SubscriptionId}] seat request [{seatRequest.RequestId}] fulfilled for " +
                     $"user [{user.UserId}]. User already has a seat [{seat.SeatId}] in this subscription.");
 
-                return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
+                return new SeatResult(SeatResultCodes.SeatProvided, seatRequest, subscription, seat);
             }
             else if (seat?.Reservation?.UserId == user.UserId &&                        // Is a seat reserved for this user?
                      seat?.Reservation?.TenantId == user.TenantId) 
@@ -181,7 +181,7 @@ namespace Turnstile.Api.Seats
                 seat = await seatsClient.RedeemSeat(subscription.SubscriptionId!, user, seat!.SeatId!) ??
                        throw new Exception($"Unable to redeem seat [{seat!.SeatId}] reserved for user [{user.TenantId}/{user.UserId}].");
 
-                return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
+                return new SeatResult(SeatResultCodes.SeatProvided, seatRequest, subscription, seat);
             }
 
             foreach (var email in seatRequest.EmailAddresses)                           // Is a seat reserved under any of this user's email addresses?
@@ -206,7 +206,7 @@ namespace Turnstile.Api.Seats
                     seat = await seatsClient.RedeemSeat(subscription.SubscriptionId!, user, seat!.SeatId!) ??
                            throw new Exception($"Unable to redeem seat [{seat!.SeatId}] reserved for user [{user.TenantId}/{user.UserId}].");
 
-                    return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
+                    return new SeatResult(SeatResultCodes.SeatProvided, seatRequest, subscription, seat);
                 }
             }
 
@@ -218,7 +218,7 @@ namespace Turnstile.Api.Seats
                     $"Unable to fulfill seat request [{seatRequest.RequestId}] in subscription [{subscription.SubscriptionId!}] " +
                     $"for user [{seatRequest.UserId}]. There are no more seats available in this subscription.");
 
-                return new SeatResult(SeatResultCodes.NoSeatsAvailable, subscription);
+                return new SeatResult(SeatResultCodes.NoSeatsAvailable, seatRequest, subscription);
             }
             else
             {
@@ -226,7 +226,7 @@ namespace Turnstile.Api.Seats
                     $"Subscription [{subscription.SubscriptionId}] seat request [{seatRequest.RequestId}] fulfilled for " +
                     $"user [{user.UserId}]. A dynamic seat was created for this user.");
 
-                return new SeatResult(SeatResultCodes.SeatProvided, subscription, seat);
+                return new SeatResult(SeatResultCodes.SeatProvided, seatRequest, subscription, seat);
             }
         }
 
