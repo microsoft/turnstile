@@ -17,7 +17,7 @@ namespace Turnstile.Services.BlobStorage
         public BlobStorageSeatResultCache(ILogger<BlobStorageSeatResultCache> logger)
         {
             const string StorageConnectionStringEnvName = "Turnstile_SeatResultCache_StorageConnectionString";
-            const string StorageContainerNameEnvName = "Tursntile_SeatResultCache_StorageContainerName";
+            const string StorageContainerNameEnvName = "Turnstile_SeatResultCache_StorageContainerName";
 
             var connectionString = GetEnvironmentVariable(StorageConnectionStringEnvName)
                 ?? throw new InvalidOperationException($"[{StorageConnectionStringEnvName}] environment variable not configured.");
