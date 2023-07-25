@@ -69,6 +69,10 @@ https://turn-admin-[deployment_name].azurewebsites.net/config/basics
 
 Click the link and tell Turnstile a little about your company and app so it can better tailor your user's experience.
 
+![Set up Turnstile](images/Setup%20up%20Turnstile.png)
+
+> You can return to this setup screen at any time by navigating to `[admin_web_app_base_url]/config/basics`.
+
 ## 3. Configure event integrations
 Turnstile publishes a variety of subscription and seat-related events designed to make it easier to integrate with your existing apps and services. By default, Turnstile also publishes a set of template Logic Apps preconfigured to handle each event type. [The Logic Apps platform provides hundreds of prebuilt connectors so you can connect and integrate apps, data, services, and systems more easily and quickly.](https://learn.microsoft.com/azure/connectors/introduction) You can focus more on designing and implementing your solution's business logic and functionality, not on figuring out how to access your resources. These logic apps can be found in the same resource group in which Turnstile was deployed. You can find the name of this resource group in the setup script's `Tursntile deployment summary`.
 
