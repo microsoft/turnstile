@@ -132,9 +132,7 @@ Let's take a closer look at the JSON object you just posted and how its properti
 
 Now that you've created your first subscription, navigate to `[user_web_app_base_url]` to finish setting it up. Normally, the customer would finish setting up their own subscription.
 
-
-
-
+![Set up your subscription](images/Set up your subscription.png)
 
 ## 6. Update a subscription
 
