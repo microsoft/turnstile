@@ -46,7 +46,17 @@ Assuming your deployment name is `dontusethis` and your region is `southcentralu
 ```
 This will take about 10 minutes so take a moment to freshen your coffee. ☕
 
-Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these important values because you'll need them again here in a few moments.
+Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these specific values because you'll need them again here in a few moments:
+
+| Doc reference | Deployment summary label | Description |
+| --- | --- | --- |
+| `[deployment_name]` | `Deployment name` | Your Turnstile deployment's unique name as provided in the `-n` setup script parameter |
+| `[subscription_id]` | `Deployed in Azure subscription` | The Azure subscription in which Turnstile has just been deployed |
+| `[resource_group]` | `Deployment in resource group` | The Azure resource group in which Turnstile has just been deployed |
+| `[api_base_url]` | `Turnstile API base URL` | The base URL of your Turnstile API |
+| `[api_key]` | `Turnstile API key (secret!)` | The API key to be used when calling your Turnstile API |
+| `[user_web_app_base_url]` | `User web app base URL` | The base URL of the user (customer) web app |
+| `[admin_web_app_base_url]` | `Admin web app base URL` | The base URL of the admin (publisher) web app |
 
 The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
 
@@ -74,6 +84,10 @@ Turnstile publishes a variety of subscription and seat-related events designed t
 | No more seats available | `turn-on-no-seats-available-[deployment_name]` | Occurs when a user-based subscription (fixed seat count) runs out of available standard seating
 
 ## 4. Create a subscription
+
+Turnstile needs to know about the SaaS subscriptions that it will be providing seats for. New subscriptions are posted to Turnstile's subscriptions API endpoint. We'll create a new subscription now to understand better how the subscriptions API works.
+
+
 
 ## 5. Get a seat
 
