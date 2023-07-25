@@ -52,7 +52,7 @@ Once the script is finished, it will provide you with a `Turnstile deployment su
 
 | Doc reference | Deployment summary label | Description |
 | --- | --- | --- |
-| `[deployment_name]` | `Deployment name` | Your Turnstile deployment's unique name as provided in the `-n` setup script parameter |
+| `[deployment_name]` | `Deployment name` | Your Turnstile deployment's unique name as configured using the `-n` setup script parameter |
 | `[subscription_id]` | `Deployed in Azure subscription` | The Azure subscription in which Turnstile has just been deployed |
 | `[resource_group]` | `Deployment in resource group` | The Azure resource group in which Turnstile has just been deployed |
 | `[azure_ad_tenant_id]` | `Azure AD tenant ID` | The Azure Active Directory tenant you used to set up Turnstile |
@@ -153,7 +153,7 @@ Navigate again to `[user_web_app_base_url`]. Since the subscription has already 
 
 You will be redirected to the SaaS app URL that you configured [earlier](#finish-setting-up-turnstile). The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` parameter value before you can use it. If you're outside of the five-minute window, [you can still use Turnstile's seats API to obtain a user's seat information as demonstrated in Turnstile's end-to-end test script](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_core_api.sh#L152).
 
-HTTP GET `[base_storage_url][decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
+`HTTP GET` `[base_storage_url][decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
 
 ```json
 {
