@@ -58,6 +58,8 @@ Once the script is finished, it will provide you with a `Turnstile deployment su
 | `[user_web_app_base_url]` | `User web app base URL` | The base URL of the user (customer) web app |
 | `[admin_web_app_base_url]` | `Admin web app base URL` | The base URL of the admin (publisher) web app |
 
+> __Note__: Setting the `-e` setup script flag will automatically output these values to `./[deployment_name].turnstile.env`. Handle this file with extreme care as it contains sensitive information like the Turnstile API key.
+
 The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
 
 ```url
