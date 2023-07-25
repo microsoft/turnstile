@@ -110,6 +110,8 @@ Using your favorite API client (Postman, cURL, etc.), POST the following JSON ob
 }
 ```
 
+The API should return `200 OK`. If not, review your [api_base_url], [api_key], and JSON payload then try again. If you're still encountering issues, please let us know by creating a new issue (if you believe there is a bug within Turnstile causing this issue) or a new discussion (we prefer to support users in the open as a learning channel for other users.)
+
 ## 5. Get a seat
 
 ## 6. Update a subscription
