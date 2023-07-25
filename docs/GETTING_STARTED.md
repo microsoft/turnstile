@@ -39,8 +39,6 @@ Now it's time to actually run the setup script. You'll need to provide a few par
 * __Deployment region (`-r`).__ [Azure is available in more than 60 regions around the globe.](https://azure.microsoft.com/explore/global-infrastructure/geographies/#overview) For a complete listing, run `az account list-locations -o table` from the cloud shell. Be sure to use the region's `Name`, not `DisplayName` or `RegionalDisplayName`.
 * Learn about additional optional parameters by running `./setup_turnstile.sh -h` from the cloud shell.
 
-> __Note__: The Turnstile setup script accepts a wide range of optional parameters allowing you to customize your deployment. Learn more by running `./setup_turnstile.sh -h` from the cloud shell.
-
 Assuming your deployment name is `dontusethis` and your region is `southcentralus` (South Central US), run the following command in the cloud shell:
 
 ```shell
@@ -55,6 +53,7 @@ Once the script is finished, it will provide you with a `Turnstile deployment su
 | `[deployment_name]` | `Deployment name` | Your Turnstile deployment's unique name as provided in the `-n` setup script parameter |
 | `[subscription_id]` | `Deployed in Azure subscription` | The Azure subscription in which Turnstile has just been deployed |
 | `[resource_group]` | `Deployment in resource group` | The Azure resource group in which Turnstile has just been deployed |
+| `[azure_ad_tenant_id]` | `Azure AD tenant ID` | The Azure Active Directory tenant you used to set up Turnstile |
 | `[api_base_url]` | `Turnstile API base URL` | The base URL of your Turnstile API |
 | `[api_key]` | `Turnstile API key (secret!)` | The API key to be used when calling your Turnstile API |
 | `[user_web_app_base_url]` | `User web app base URL` | The base URL of the user (customer) web app |
@@ -91,7 +90,25 @@ Turnstile publishes a variety of subscription and seat-related events designed t
 
 Turnstile needs to know about the SaaS subscriptions that it will be providing seats for. New subscriptions are posted to Turnstile's subscriptions API endpoint. We'll create a new subscription now to understand better how the subscriptions API works.
 
+Using your favorite API client (Postman, cURL, etc.), POST the following JSON object to `[api_base_url]/code=[api_key]`:
 
+```json
+{
+  "subscription_id": "085a0ed4-84e0-43f7-a601-461ea81667a1",
+  "subscription_name": "My first subscription!",
+  "tenant_id": "[azure_ad_tenant_id]",
+  "tenant_name": "Your company's name",
+  "total_seats": 5,
+  "offer_id": "Offer 1",
+  "plan_id": "Plan A",
+  "state": "active",
+  "is_free_trial": true,
+  "is_test_subscription": true,
+  "seating_config": {
+    "limited_overflow_seating_enabled": true
+  }
+}
+```
 
 ## 5. Get a seat
 
