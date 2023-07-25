@@ -1,6 +1,7 @@
 {
     "is_setup_complete": false,
-    "default_seating_config": {
-        
+    "default_seating_config": { },
+    "turnstile": {
+        "include_seat_result_on_access_granted_redirect": true
     }
 }
