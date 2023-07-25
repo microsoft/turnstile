@@ -9,7 +9,7 @@ First, ensure that the following prerequisites are met.
 * You have an active Azure Subscription. [If you don't already have one, get one free here.](https://azure.microsoft.com/free)
 * You can create new Azure Active Directory app registrations. In order to create app registrations, you must be a directory administrator. For more information, see [this article](https://docs.microsoft.com/azure/active-directory/roles/permissions-reference).
 * You can create resources and resource groups within the target Azure subscription. Typically, this requires at least [contributor-level access](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#contributor) to the subscription.
-* You're using an Azure Active Directory work or school account. Guest or personal account won't work.
+* You're using an Azure Active Directory work or school account. Guest or personal accounts won't work.
 
 ## 1. Clone the Turnstile GitHub repo
 
@@ -145,7 +145,7 @@ Navigate again to `[user_web_app_base_url`]. Since the subscription has already 
 
 ![Choose a subscription](images/Choose%20a%20subscription.png)
 
-You will be redirected to the SaaS app URL that you configured in step 2. The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` before you can use it.
+You will be redirected to the SaaS app URL that you configured [in the second step](#2-run-the-turnstile-setup-script). The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` before you can use it. If you're outside of the five-minute window, [you can still use Turnstile's seats API to obtain a user's seat information as demonstrated in Tursntile's end-to-end test script](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_core_api.sh#L152).
 
 HTTP GET `[base_storage_url][decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
 
