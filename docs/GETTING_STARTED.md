@@ -58,6 +58,7 @@ Once the script is finished, it will provide you with a `Turnstile deployment su
 | `[api_key]` | `Turnstile API key (secret!)` | The API key to be used when calling your Turnstile API |
 | `[user_web_app_base_url]` | `User web app base URL` | The base URL of the user (customer) web app |
 | `[admin_web_app_base_url]` | `Admin web app base URL` | The base URL of the admin (publisher) web app |
+| `[base_storage_url]` | `Storage account base URL` | The base URL of the storage account from which seat information can be obtained |
 
 > __Note__: Setting the `-e` setup script flag will automatically output these values to `./[deployment_name].turnstile.env`. Handle this file with extreme care as it contains sensitive information like the Turnstile API key.
 
@@ -142,7 +143,65 @@ Now that you've created your first subscription, navigate to `[user_web_app_base
 
 Navigate again to `[user_web_app_base_url`]. Since the subscription has already been set up, you'll be prompted to either user or administer the subscription. From the `Use` tab, select the subscription you just finished setting up to try to obtain a seat.
 
+![Choose a subscription](images/Choose%20a%20subscription.png)
 
+You will be redirected to the SaaS app URL that you configured in step 2. The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` before you can use it.
+
+HTTP GET `[base_storage_url]/[decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
+
+```json
+{
+    "request_id": "adac2243-ecb0-4b80-859f-10e593fc4538",
+    "result_code": "seat_provided",
+    "seat": {
+        "seat_id": "3b3bd4e9-3e6c-40bb-bc3f-d3afc902f2b2",
+        "subscription_id": "c4b94771-378f-42c7-ace7-10f6245f2948",
+        "occupant": {
+            "user_id": "91ffea71-...",
+            "user_name": "admin@admin.com",
+            "tenant_id": "72f988bf-...",
+            "email": "admin@admin.com"
+        },
+        "seating_strategy_name": "first_come_first_served",
+        "seat_type": "standard",
+        "reservation": null,
+        "expires_utc": "2023-08-08T00:00:00Z",
+        "created_utc": "2023-07-25T21:30:53.8993441Z",
+        "redeemed_utc": null
+    },
+    "subscription": {
+        "subscription_id": "c4b94771-378f-42c7-ace7-10f6245f2948",
+        "subscription_name": "My first subscription!",
+        "tenant_id": "72f988bf-...",
+        "tenant_name": "Microsoft",
+        "offer_id": "Offer 1",
+        "plan_id": "Plan A",
+        "state": "active",
+        "admin_role_name": "",
+        "user_role_name": "",
+        "admin_name": "Admin",
+        "admin_email": "admin@admin.com",
+        "total_seats": null,
+        "is_being_configured": false,
+        "is_free_trial": true,
+        "is_setup_complete": true,
+        "is_test_subscription": true,
+        "created_utc": "2023-07-25T21:17:02.5172313Z",
+        "state_last_updated_utc": "2023-07-25T21:17:02.5172315Z",
+        "seating_config": {
+            "seating_strategy_name": "first_come_first_served",
+            "low_seat_warning_level_pct": 0.25,
+            "limited_overflow_seating_enabled": false,
+            "seat_reservation_expiry_in_days": 14,
+            "default_seat_expiry_in_days": 14
+        },
+        "subscriber_info": {
+            "tenant_country": "US"
+        },
+        "source_subscription": null
+    }
+}
+```
 
 
 
