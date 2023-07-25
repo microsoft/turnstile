@@ -118,7 +118,7 @@ Let's take a closer look at the JSON object you just posted and how its properti
 | --- | --- |
 | `subscription_id` | We recommend using GUIDs for the subscription's unique ID. Note that you must include the same subscription ID within the URL path that you post subscription information to. |
 | `subscription_name` | The name of the subscription will be displayed within both the admin and user portals. This is a user-specified friendly display name for the subscription. |
-| `tenant_id` | The ID of the customer's Azure Active Directory tenant ID. [The tenant ID can be found within the Azure portal.](https://learn.microsoft.com/azure/active-directory/fundamentals/how-to-find-tenant) In this case, we're using your tenant ID for testing purposes. In production, this will be your customer's tenant ID. |
+| `tenant_id` | The ID of the customer's Azure Active Directory tenant. [The tenant ID can be found within the Azure portal.](https://learn.microsoft.com/azure/active-directory/fundamentals/how-to-find-tenant) In this case, we're using your tenant ID for testing purposes. In production, this will be your customer's tenant ID. |
 
 ## 5. Get a seat
 
