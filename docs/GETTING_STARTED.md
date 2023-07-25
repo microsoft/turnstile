@@ -128,9 +128,11 @@ Let's take a closer look at the JSON object you just posted and how its properti
 | `is_test_subscription` | Is this a test subscription? Indeed it is! |
 | `limited_overflow_seating_enabled` | When set to `true`, Turnstile will provide `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret these properties and possibly limit functionality for `limited` seats. |
 
-## 5. Get a seat
+## 5. Finish setting up the subscription
 
-Now that you've created your first subscription, let's try to get a seat. Navigate to `[user_web_app_base_url]` to finish setting up the new subscription and obtain a seat.
+Now that you've created your first subscription, navigate to `[user_web_app_base_url]` to finish setting it up. Normally, the customer would finish setting up their own subscription.
+
+
 
 
 
