@@ -46,6 +46,8 @@ Assuming your deployment name is `dontusethis` and your region is `southcentralu
 ```
 This will take about 10 minutes so take a moment to freshen your coffee. ☕
 
+### The deployment summary
+
 Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these specific values because you'll need them again here in a few moments:
 
 | Doc reference | Deployment summary label | Description |
@@ -61,6 +63,8 @@ Once the script is finished, it will provide you with a `Turnstile deployment su
 | `[base_storage_url]` | `Storage account base URL` | The base URL of the storage account from which seat information can be obtained |
 
 > __Note__: Setting the `-e` setup script flag will automatically output these values to `./[deployment_name].turnstile.env`. Handle this file with extreme care as it contains sensitive information like the Turnstile API key.
+
+### Finish setting up Turnstile
 
 The script will also prompt you to finish setting up Turnstile by navigating to a setup page deployed within your Azure subscription. The URL will look like this:
 
@@ -144,6 +148,8 @@ Now that you've created your first subscription, navigate to `[user_web_app_base
 Navigate again to `[user_web_app_base_url`]. Since the subscription has already been set up, you'll be prompted to either user or administer the subscription. From the `Use` tab, select the subscription you just finished setting up to try to obtain a seat.
 
 ![Choose a subscription](images/Choose%20a%20subscription.png)
+
+### User redirection and obtaining seat information
 
 You will be redirected to the SaaS app URL that you configured [in the second step](#2-run-the-turnstile-setup-script). The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` parameter value before you can use it. If you're outside of the five-minute window, [you can still use Turnstile's seats API to obtain a user's seat information as demonstrated in Turnstile's end-to-end test script](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_core_api.sh#L152).
 
