@@ -112,7 +112,7 @@ Using your favorite API client (Postman, cURL, etc.), POST the following JSON ob
 
 The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again. If you're still encountering issues, please let us know by [creating a new issue](https://github.com/microsoft/turnstile/issues/new) (if you believe there is a bug within Turnstile causing this issue) or a [new discussion](https://github.com/microsoft/turnstile/discussions/new?category=q-a) (we prefer to support users in the open as a learning channel for other users.)
 
-Let's take a closer look at the JSON object you just posted and how its properties influence the crea tion of the subscription:
+Let's take a closer look at the JSON object you just posted and how its properties influence the creation of the subscription:
 
 | Property name | Description |
 | --- | --- |
@@ -126,10 +126,13 @@ Let's take a closer look at the JSON object you just posted and how its properti
 | `state` | The initial state of the subscription; options include `active` (the subscription is ready to be used), `purchased` (the subscription has been purchased but it still being configured), `suspended` (the subscription has been temporarily suspended (e.g., for non-payment)), or `canceled` (the subscription has been canceled) |
 | `is_free_trial` | Is this a free trial subscription? |
 | `is_test_subscription` | Is this a test subscription? Indeed it is! |
-| `limited_overflow_seating_enabled` | When set to `true`, Turnstile will hand out `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret these properties and possibly limit functionality for `limited` seats. |
-
+| `limited_overflow_seating_enabled` | When set to `true`, Turnstile will provide `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret these properties and possibly limit functionality for `limited` seats. |
 
 ## 5. Get a seat
+
+Now that you've created your first subscription, let's try to get a seat. Navigate to `[user_web_app_base_url]` to finish setting up the new subscription and obtain a seat.
+
+
 
 ## 6. Update a subscription
 
