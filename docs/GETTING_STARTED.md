@@ -112,13 +112,17 @@ Using your favorite API client (Postman, cURL, etc.), POST the following JSON ob
 
 The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again. If you're still encountering issues, please let us know by [creating a new issue](https://github.com/microsoft/turnstile/issues/new) (if you believe there is a bug within Turnstile causing this issue) or a [new discussion](https://github.com/microsoft/turnstile/discussions/new?category=q-a) (we prefer to support users in the open as a learning channel for other users.)
 
-Let's take a closer look at the JSON object you just posted and how its properties influence the creation of the subscription:
+Let's take a closer look at the JSON object you just posted and how its properties influence the crea tion of the subscription:
 
 | Property name | Description |
 | --- | --- |
 | `subscription_id` | We recommend using GUIDs for the subscription's unique ID. Note that you must include the same subscription ID within the URL path that you post subscription information to. |
 | `subscription_name` | The name of the subscription will be displayed within both the admin and user portals. This is a user-specified friendly display name for the subscription. |
 | `tenant_id` | The ID of the customer's Azure Active Directory tenant. [The tenant ID can be found within the Azure portal.](https://learn.microsoft.com/azure/active-directory/fundamentals/how-to-find-tenant) In this case, we're using your tenant ID for testing purposes. In production, this will be your customer's tenant ID. |
+| `offer_id` | The name of the SaaS offering that the customer has subscribed to |
+| `plan_id` | The name of the plan (e.g., bronze, silver, gold) that the customer has subscribed to |
+| `state` | The initial state of the subscription; options include `active` (the subscription is ready to be used), `purchased` (the subscription has been purchased but it still being configured), `suspended` (the subscription has been temporarily suspended (e.g., for non-payment)), or `canceled` (the subscription has been canceled)` |
+
 
 ## 5. Get a seat
 
