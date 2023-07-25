@@ -209,7 +209,7 @@ You will be redirected to the SaaS app URL that you configured [earlier](#finish
 }
 ```
 
-Let's take a look at this seat information. The `seat` section describes the seat that was created including its ID, occupant, the strategy used to create it (either `first_come_first_served` or `monthly_active_user` depending on configuration, its type (either `standard` or `limited`), and its expiration date. The `subscription` information contains detailed information about the subscription where the seat was created.
+Let's take a look at this seat information. The `seat` section describes the seat that was created including its ID, occupant, the strategy used to create it (either `first_come_first_served` or `monthly_active_user` depending on configuration), its type (either `standard` or `limited`), and its expiration date. The `subscription` information contains detailed information about the subscription where the seat was created.
 
 ## 7. Manage subscriptions
 
