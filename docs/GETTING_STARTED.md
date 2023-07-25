@@ -147,7 +147,7 @@ Navigate again to `[user_web_app_base_url`]. Since the subscription has already 
 
 You will be redirected to the SaaS app URL that you configured in step 2. The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` before you can use it.
 
-HTTP GET `[base_storage_url]/[decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
+HTTP GET `[base_storage_url][decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
 
 ```json
 {
@@ -202,6 +202,8 @@ HTTP GET `[base_storage_url]/[decoded_tt_value]` to obtain the user's seat detai
     }
 }
 ```
+
+Let's take a look at this seat information. The `seat` section describes the seat that was created including its ID, occupant, the strategy used to create it (either `first_come_first_served` or `monthly_active_user` depending on configuration, its type (either `standard` or `limited`), and its expiration date. The `subscription` information contains detailed information about the subscription where the seat was created.
 
 
 
