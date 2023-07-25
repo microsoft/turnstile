@@ -39,7 +39,7 @@ Now it's time to actually run the setup script. You'll need to provide a few par
 * __Deployment region (`-r`).__ [Azure is available in more than 60 regions around the globe.](https://azure.microsoft.com/explore/global-infrastructure/geographies/#overview) For a complete listing, run `az account list-locations -o table` from the cloud shell. Be sure to use the region's `Name`, not `DisplayName` or `RegionalDisplayName`.
 * Learn about additional optional parameters by running `./setup_turnstile.sh -h` from the cloud shell.
 
-> __Note__: The Turnstile setup script offers a wide range of parameters allowing you to customize your deployment. Learn more by running `./setup_turnstile.sh -h` from the cloud shell.
+> __Note__: The Turnstile setup script accepts a wide range of optional parameters allowing you to customize your deployment. Learn more by running `./setup_turnstile.sh -h` from the cloud shell.
 
 Assuming your deployment name is `dontusethis` and your region is `southcentralus` (South Central US), run the following command in the cloud shell:
 
