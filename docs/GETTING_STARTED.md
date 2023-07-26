@@ -243,6 +243,8 @@ Navigate to `[user_web_app_base_url]` and click on the `Manage` tab. Click `Mana
 
 > **Note:** No invitations will be sent until you update the `turn-on-seat-reserved-[deployment_name]` logic app in the `[resource_group]` resource group. We offer customers complete flexibility in how emails are sent (e.g., Azure Communication Services, SendGrid, your own SMTP server) by design.
 
+![Reserve a seat](images/Reserve%20seat.png)
+
 
 
 
