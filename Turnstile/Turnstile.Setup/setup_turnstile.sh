@@ -405,25 +405,6 @@ if [[ "$p_headless" == "$FALSE" ]]; then
         fi
     done
 
-    echo "🛡️   Creating Azure Active Directory service principal for Turnstile user web app [$aad_app_name]..."
-
-    for i3 in {1..5}; do
-        aad_sp_id=$(az ad sp create --id "$aad_app_id" --query id --output tsv)
-
-        if [[ -z $aad_sp_id || $aad_sp_id == null ]]; then
-            if [[ $i3 == 5 ]]; then
-                echo "❌   Failed to create Azure Active Directory service principal for Turnstile user web app [$aad_app_name]. Setup failed."
-                exit 1
-            else
-                sleep_for=$((2**i3))
-                echo "⚠️   Trying to create Azure Active Directory service principal for Turnstile user web app [$aad_app_name] in [$sleep_for] seconds."
-                sleep $sleep_for
-            fi     
-        else
-            break
-        fi
-    done
-
     echo "🛡️   Creating Azure Active Directory app registration [$admin_aad_app_name] for Turnstile admin web app..."
 
     for i4 in {1..5}; do
