@@ -223,6 +223,10 @@ Both customers and SaaS publishers can manage subscriptions through convenient w
 
 ### Manage subscriptions as a customer
 
+Navigate to [user_web_app_base_url] and click on the `Manage` tab. Click `Manage My first subscription!`. A screen will appear that allows you to manage basic information about the subscription and manage and reserve seats in the subscription. Note that you'll only see this screen if your email address matches the subscription's primary admin email or you belong to the subscription admin role if you have configured one.
+
+![Customer subscription management experience](images/Customer%20manage%20subscription.png)
+
 ### Manage subscriptions as a publisher
 
 
