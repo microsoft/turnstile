@@ -125,7 +125,7 @@ to this URL...
 [api_base_url]/api/saas/subscriptions/085a0ed4-84e0-43f7-a601-461ea81667a1?code=[api_key]
 ```
 
-The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again. If you're still encountering issues, please let us know by [creating a new issue](https://github.com/microsoft/turnstile/issues/new) (if you believe there is a bug within Turnstile causing this issue) or a [new discussion](https://github.com/microsoft/turnstile/discussions/new?category=q-a) (we prefer to support users in the open as a learning channel for other users.)
+The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again.
 
 Let's take a closer look at the JSON object you just posted and how its properties influence the creation of the subscription:
 
