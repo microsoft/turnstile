@@ -99,7 +99,13 @@ Turnstile publishes a variety of subscription and seat-related events designed t
 
 Turnstile needs to know about the SaaS subscriptions that it will be providing seats for. New subscriptions are posted to Turnstile's subscriptions API endpoint. We'll create a new subscription now to understand better how the subscriptions API works.
 
-Using your favorite API client (Postman, cURL, etc.), POST the following JSON object to `[api_base_url]/api/saas/subscriptions/085a0ed4-84e0-43f7-a601-461ea81667a1?code=[api_key]`:
+Using your favorite API client (e.g., Postman), POST the following JSON object to—
+
+```url
+[api_base_url]/api/saas/subscriptions/085a0ed4-84e0-43f7-a601-461ea81667a1?code=[api_key]
+```
+
+POST this JSON—
 
 ```json
 {
