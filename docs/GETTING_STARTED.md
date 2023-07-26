@@ -255,6 +255,6 @@ Navigate to `[user_web_app_base_url]` and click on the `Manage` tab. Click `Mana
 
 ## That's it!
 
-You're ready to start providing seats to SaaS applications using Turnstile! Should you have any questions, please don't hesitate to [start a new GitHub Discussion](https://github.com/microsoft/turnstile/discussions/categories/q-a). We prefer to support users in the open as a learning channel for other users. 
+You're ready to start providing seats to your SaaS app using Turnstile! Should you have any questions, please don't hesitate to [start a new GitHub Discussion](https://github.com/microsoft/turnstile/discussions/categories/q-a). We prefer to support users in the open as a learning channel for other users. 
 
 
