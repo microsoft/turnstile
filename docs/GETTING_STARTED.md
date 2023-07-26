@@ -237,6 +237,12 @@ Click `Manage` on the subscription you would like to manage. You'll be brought t
 
 ![Admin manage subscription](images/Admin%20manage%20subscription.png)
 
+## 8. Reserve a seat for another user
+
+Navigate to `[user_web_app_base_url]` and click on the `Manage` tab. Click `Manage my first subscription!` then click on the `Reserve seat` tab. You'll be presented with a screen allowing you to enter the email address of the user you wish to reserve a seat for.
+
+> **Note:** No invitations will be sent until you update the `turn-on-seat-reserved-[deployment_name]` logic app in the `[resource_group]` resource group. We offer customers complete flexibility in how emails are sent (e.g., Azure Communication Services, SendGrid, your own SMTP server) by design.
+
 
 
 
