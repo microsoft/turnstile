@@ -19,6 +19,14 @@ Navigate to [the Azure portal](https://portal.azure.com) and [open the __Bash__ 
 git clone https://github.com/microsoft/turnstile
 ```
 
+### ⚠️ Temporary instruction
+
+Check out this branch by running the following command in the cloud shell:
+
+```shell
+git checkout cawatson-ui-work
+```
+
 ## 2. Run the Turnstile setup script
 
 Navigate to the newly cloned Tursntile repo's setup folder by running the following command in the cloud shell:
