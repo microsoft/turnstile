@@ -1,4 +1,4 @@
-# SaaS Seating with Turnstile in _x_ Easy Steps
+# SaaS Seating with Turnstile in 8 Easy Steps
 
 Turnstile makes it easier to build SaaS apps on Azure by automating the process of providing seats (or licenses, badges, etc.) to your users. It's easy to set up (as you're about to learn firsthand) and cost-effective allowing you to scale dynamically to meet your customer's frequently changing needs. Turnstile is designed to support any Azure-based SaaS app regardless of development stack or architecture. 
 
