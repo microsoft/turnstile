@@ -231,6 +231,10 @@ Navigate to `[user_web_app_base_url]` and click on the `Manage` tab. Click `Mana
 
 Navigate to `[admin_web_app_base_url]`. A screen will appear showing all subscriptions organized by state.
 
+![Admin manage subscriptions](images/Admin%20manage%20subscriptions.png)
+
+Click `Manage` on the subscription you would like to manage. You'll be brought to more a detailed screen where you can manage the subscription (including updating the subscription state) and view occupied and reserved seats.
+
 
 
 
