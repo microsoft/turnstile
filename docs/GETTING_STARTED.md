@@ -95,13 +95,13 @@ Turnstile publishes a variety of subscription and seat-related events designed t
 | --- | --- | -- |
 | Subscription created | `turn-on-subscription-created-[deployment_name]` | 
 | Subscription updated | `turn-on-subscription-updated-[deployment_name]` |
-| Admission granted | `turn-on-admission-granted-[deployment_name]` | Occurs when a user is granted access to the app |
-| Admission denied | `turn-on-admission-denied-[deployment_name]` | Occurs when a user is denied access to the app. This event includes a code which indicates why the user was denied access. |
 | Seat reserved | `turn-on-seat-reserved-[deployment_name]` | This event includes a link that the user can use to redeem their seat. Configure this logic app to notify the user that they've been invited to use the app. |
 | Seat redeemed | `turn-on-seat-redeemed-[deployment_name]` | Occurs when a reserved seat is redeemed by its user |
 | Seat provided | `turn-on-seat-provided-[deployment_name]` | Occurs when a dynamic seat (not reserved) is provided to a user |
 | Reduced subscription seating available |  `turn-on-low-seat-warning-[deployment_name]` | Occurs when a user-based subscription (fixed seat count) reaches <= 25% available standard seating |
 | No more seats available | `turn-on-no-seats-available-[deployment_name]` | Occurs when a user-based subscription (fixed seat count) runs out of available standard seating
+| Admission granted | `turn-on-admission-granted-[deployment_name]` _(coming soon)_ | Occurs when a user is granted access to the app |
+| Admission denied | `turn-on-admission-denied-[deployment_name]` _(coming soon)_ | Occurs when a user is denied access to the app. This event includes a code that indicates why the user was denied access. |
 
 ## 4. Create a subscription
 
@@ -133,7 +133,7 @@ to this URL...
 [api_base_url]/api/saas/subscriptions/085a0ed4-84e0-43f7-a601-461ea81667a1?code=[api_key]
 ```
 
-The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again.
+The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again. If you're still running into issues, please [visit our support page](./SUPPORT.md).
 
 Let's take a closer look at the JSON object you just posted and how its properties influence the creation of the subscription:
 
