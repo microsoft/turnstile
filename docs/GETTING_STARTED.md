@@ -133,7 +133,7 @@ to this URL...
 [api_base_url]/api/saas/subscriptions/085a0ed4-84e0-43f7-a601-461ea81667a1?code=[api_key]
 ```
 
-The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again. If you're still running into issues, please [visit our support page](./SUPPORT.md).
+The API should return `200 OK`. If not, review your `[api_base_url]`, `[api_key]`, and JSON payload then try again. If you're still running into issues, please [visit our support page](../SUPPORT.md).
 
 Let's take a closer look at the JSON object you just posted and how its properties influence the creation of the subscription:
 
