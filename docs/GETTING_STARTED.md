@@ -19,9 +19,9 @@ Navigate to [the Azure portal](https://portal.azure.com) and [open the __Bash__ 
 git clone https://github.com/microsoft/turnstile
 ```
 
-### ⚠️ Temporary instruction
+### ⚠️ Temporary instruction (internal)
 
-Check out this branch by running the following command in the cloud shell:
+Check out the `cawatson-ui-work` branch by running the following command in the cloud shell:
 
 ```shell
 git checkout cawatson-ui-work
@@ -56,19 +56,19 @@ This will take about 10 minutes so take a moment to freshen your coffee. ☕
 
 ### The deployment summary
 
-Once the script is finished, it will provide you with a `Turnstile deployment summary`. Make note of these specific values because you'll need them again here in a few moments:
+Once the script is finished, it will provide you with a `Turnstile deployment summary`. Throughout the rest of this document, we're going to be referring back to these values like this:
 
-| Doc reference | Deployment summary label | Description |
-| --- | --- | --- |
-| `[deployment_name]` | `Deployment name` | Your Turnstile deployment's unique name as configured using the `-n` setup script parameter |
-| `[subscription_id]` | `Deployed in Azure subscription` | The Azure subscription in which Turnstile has just been deployed |
-| `[resource_group]` | `Deployment in resource group` | The Azure resource group in which Turnstile has just been deployed |
-| `[azure_ad_tenant_id]` | `Azure AD tenant ID` | The Azure Active Directory tenant you used to set up Turnstile |
-| `[api_base_url]` | `Turnstile API base URL` | The base URL of your Turnstile API |
-| `[api_key]` | `Turnstile API key (secret!)` | The API key to be used when calling your Turnstile API |
-| `[user_web_app_base_url]` | `User web app base URL` | The base URL of the user (customer) web app |
-| `[admin_web_app_base_url]` | `Admin web app base URL` | The base URL of the admin (publisher) web app |
-| `[base_storage_url]` | `Storage account base URL` | The base URL of the storage account from which seat information can be obtained |
+| Deployment summary label | Document reference |
+| --- | --- |
+| `Deployment name` | `[deployment_name]` |
+| `Deployed in Azure subscription` | `[subscription_id]` |
+| `Deployed in resource group` | `[resource_group]` |
+| `Azure AD tenant ID` | `[azure_ad_tenant_id]` |
+| `Turnstile API base URL` | `[api_base_url]` |
+| `Turnstile API key (secret!)` | `[api_key]` |
+| `User web app base URL` | `[user_web_app_base_url]` |
+| `Admin web app base URL` | `[admin_web_app_base_url]` |
+| `Storage account base URL` | `[base_storage_url]` |
 
 > __Note__: Setting the `-e` setup script flag will automatically output these values to `./[deployment_name].turnstile.env`. Handle this file with extreme care as it contains sensitive information like the Turnstile API key.
 
