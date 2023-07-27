@@ -80,7 +80,7 @@ The script will also prompt you to finish setting up Turnstile by navigating to 
 https://turn-admin-[deployment_name].azurewebsites.net/config/basics
 ```
 
-Click the link and tell Turnstile a little about your company and app so it can better tailor your user's experience.
+Click 👆 the link and tell Turnstile a little about your company and app so it can better tailor your user's experience.
 
 ![Set up Turnstile](images/Setup%20up%20Turnstile.png)
 
@@ -161,7 +161,7 @@ Now that you've created your first subscription, navigate to `[user_web_app_base
 
 ## 6. Get a seat in the subscription
 
-Navigate again to `[user_web_app_base_url`] by clicking the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to obtain a seat.
+Navigate again to `[user_web_app_base_url`] by clicking 👆 the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to obtain a seat.
 
 ![Choose a subscription](images/Choose%20a%20subscription.png)
 
@@ -235,7 +235,7 @@ Both customers and SaaS publishers can manage subscriptions through convenient w
 
 ### Manage subscriptions as a customer
 
-Navigate to `[user_web_app_base_url]` and click on the **Manage** tab. Click `Manage My first subscription!`. You will be redirected to a screen that allows you to manage basic information about the subscription and manage and reserve seats. Note that you'll only see this screen if your email address matches the subscription's primary admin email or if you belong to the subscription admin role assuming it has been configured.
+Navigate to `[user_web_app_base_url]` and click 👆 on the **Manage** tab. Click 👆 **Manage My first subscription!**. You will be redirected to a screen that allows you to manage basic information about the subscription and manage and reserve seats. Note that you'll only see this screen if your email address matches the subscription's primary admin email or if you belong to the subscription admin role assuming it has been configured.
 
 ![Customer subscription management experience](images/Customer%20manage%20subscription.png)
 
@@ -245,13 +245,13 @@ Navigate to `[admin_web_app_base_url]`. You will be redirected to a screen showi
 
 ![Admin manage subscriptions](images/Admin%20manage%20subscriptions.png)
 
-Pick a subscription then click **Manage**. You'll be redirected to a more detailed screen where you can manage the subscription (including updating the subscription state) and view occupied and reserved seats.
+Pick a subscription then click 👆 **Manage**. You'll be redirected to a more detailed screen where you can manage the subscription (including updating the subscription state) and view occupied and reserved seats.
 
 ![Admin manage subscription](images/Admin%20manage%20subscription.png)
 
 ## 8. Reserve a seat for another user
 
-Navigate to `[user_web_app_base_url]` and click on the **Manage** tab. Click **Manage my first subscription!** then click on the **Reserve seat** tab. You'll be presented with a screen allowing you to enter the email address of the user you wish to reserve a seat for.
+Navigate to `[user_web_app_base_url]` and click 👆 on the **Manage** tab. Click 👆 **Manage my first subscription!** then click 👆 on the **Reserve seat** tab. You'll be presented with a screen allowing you to enter the email address of the user you wish to reserve a seat for.
 
 > **Note:** No invitations will be sent until you update the `turn-on-seat-reserved-[deployment_name]` logic app in `[resource_group]`. We offer customers complete flexibility in how emails are sent (e.g., Azure Communication Services, SendGrid, your own SMTP server) by design.
 
