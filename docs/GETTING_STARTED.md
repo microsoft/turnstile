@@ -157,11 +157,15 @@ Now that you've created your first subscription, navigate to `[user_web_app_base
 
 ![Set up your subscription](images/Set%20up%20your%20subscription.png)
 
+> **Note:** You can also [use the PATCH subscription API](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_core_api.sh#L26) to finish setting up the subscription programmatically.
+
 ## 6. Get a seat in the subscription
 
-Navigate again to `[user_web_app_base_url`] by clicking the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to try obtain a seat.
+Navigate again to `[user_web_app_base_url`] by clicking the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to obtain a seat.
 
 ![Choose a subscription](images/Choose%20a%20subscription.png)
+
+> **Note:** You can also use the [entry API](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_entry_api.sh#L81) to try and obtain a seat.
 
 ### User redirection and obtaining seat information
 
