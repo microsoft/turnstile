@@ -150,6 +150,7 @@ Let's take a closer look at the JSON object you just posted and how its properti
 | `is_free_trial` | Is this a free trial subscription? |
 | `is_test_subscription` | Is this a test subscription? Indeed it is! |
 | `limited_overflow_seating_enabled` | When set to `true`, Turnstile will provide `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret these properties and possibly limit functionality for `limited` seats. |
+| * Does * this * work? | |
 
 ## 5. Finish setting up the subscription
 
