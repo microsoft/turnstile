@@ -149,7 +149,7 @@ Let's take a closer look at the JSON object you just posted and how its properti
 | `state` | The initial state of the subscription as described below:<br /><br /><ul><li>`active`: subscription is ready to be used</li><li>`purchased`: subscription has been purchased but is not yet ready to be used</li><li>`suspended`: subscription has been temporarily suspended (e.g., for non-payment)</li><li>`canceled`: subscription has been permanently canceled</li></ul> |
 | `is_free_trial` | Is this a free trial subscription? |
 | `is_test_subscription` | Is this a test subscription? Indeed it is! |
-| `limited_overflow_seating_enabled` | When set to `true`, Turnstile will provide `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret these properties and possibly limit functionality for `limited` seats. |
+| `limited_overflow_seating_enabled` | When set to `true`, Turnstile will provide `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret seating types. Limiting 'limited' seat functionality (e.g., disabling certain features) is a common approach. |
 
 ## 5. Finish setting up the subscription
 
