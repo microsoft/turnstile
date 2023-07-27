@@ -146,7 +146,7 @@ Let's take a closer look at the JSON object you just posted and how its properti
 | `total_seats` | For user-based seating, the total number of seats that the customer has purchased; if this is a site-wide subscription (unlimited seating), set this to `null` or don't include it at all |
 | `offer_id` | The name of the SaaS offering that the customer has subscribed to |
 | `plan_id` | The name of the plan (e.g., bronze, silver, gold) that the customer has subscribed to |
-| `state` | The initial state of the subscription as described below:<br /><br /><ul><li>`active`: subscription is ready to be used</li><li>`purchased`: subscription has been purchased but is not yet ready to be used</li><li>`suspended`: subscription has been suspended (e.g., for non-payment)</li><li>`canceled`: subscription has been canceled</li></ul> |
+| `state` | The initial state of the subscription as described below:<br /><br /><ul><li>`active`: subscription is ready to be used</li><li>`purchased`: subscription has been purchased but is not yet ready to be used</li><li>`suspended`: subscription has been temporarily suspended (e.g., for non-payment)</li><li>`canceled`: subscription has been permanently canceled</li></ul> |
 | `is_free_trial` | Is this a free trial subscription? |
 | `is_test_subscription` | Is this a test subscription? Indeed it is! |
 | `limited_overflow_seating_enabled` | When set to `true`, Turnstile will provide `limited` seats when a user-based subscription has run out of seating. Turnstile makes no distinction between `limited` and `standard` seating; it is up to the SaaS app to interpret these properties and possibly limit functionality for `limited` seats. |
