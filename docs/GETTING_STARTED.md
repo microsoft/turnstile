@@ -159,13 +159,13 @@ Now that you've created your first subscription, navigate to `[user_web_app_base
 
 ## 6. Get a seat in the subscription
 
-Navigate again to `[user_web_app_base_url`] by clicking the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to try to obtain a seat.
+Navigate again to `[user_web_app_base_url`] by clicking the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to try obtain a seat.
 
 ![Choose a subscription](images/Choose%20a%20subscription.png)
 
 ### User redirection and obtaining seat information
 
-You will be redirected to the SaaS app URL that you configured [earlier](#finish-setting-up-turnstile). The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to download the user's seat information for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for security reasons. You'll need to URL decode the `[_tt]` parameter value before you can use it. If you're outside of the five-minute window, [you can still use Turnstile's seats API to obtain a user's seat information as demonstrated in Turnstile's end-to-end test script](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_core_api.sh#L152).
+Once you're provided with a seat, you will be redirected to the SaaS app URL that you configured [earlier](#finish-setting-up-turnstile). The URL will also contain a special query string parameter (`_tt`) that, when combined with the `[base_storage_url]`, can be used to easily download the user's seat information through a regular, unauthenticated HTTP GET call for __the next five minutes__. The name of the storage account that the `[base_storage_url]` points to is obfuscated for obvious security reasons. You'll need to URL decode the `[_tt]` parameter value before you can use it. If you're outside of the five-minute window, [you can still use Turnstile's seats API to obtain a user's seat information as demonstrated in Turnstile's end-to-end test script](https://github.com/microsoft/turnstile/blob/72412356457d1ce0645c92246b54769bbd364dcd/tests/e2e_core_api.sh#L152).
 
 `HTTP GET` `[base_storage_url][decoded_tt_value]` to obtain the user's seat details. They'll look something like this:
 
@@ -231,30 +231,30 @@ Both customers and SaaS publishers can manage subscriptions through convenient w
 
 ### Manage subscriptions as a customer
 
-Navigate to `[user_web_app_base_url]` and click on the **Manage** tab. Click `Manage My first subscription!`. A screen will appear that allows you to manage basic information about the subscription and manage and reserve seats in the subscription. Note that you'll only see this screen if your email address matches the subscription's primary admin email or you belong to the subscription admin role if you have configured one.
+Navigate to `[user_web_app_base_url]` and click on the **Manage** tab. Click `Manage My first subscription!`. You will be redirected to a screen that allows you to manage basic information about the subscription and manage and reserve seats. Note that you'll only see this screen if your email address matches the subscription's primary admin email or if you belong to the subscription admin role assuming it has been configured.
 
 ![Customer subscription management experience](images/Customer%20manage%20subscription.png)
 
 ### Manage subscriptions as a publisher
 
-Navigate to `[admin_web_app_base_url]`. A screen will appear showing all subscriptions organized by state.
+Navigate to `[admin_web_app_base_url]`. You will be redirected to a screen showing all subscriptions organized by state.
 
 ![Admin manage subscriptions](images/Admin%20manage%20subscriptions.png)
 
-Click **Manage** on the subscription you would like to manage. You'll be brought to more a detailed screen where you can manage the subscription (including updating the subscription state) and view occupied and reserved seats.
+Pick a subscription then click **Manage**. You'll be redirected to a more detailed screen where you can manage the subscription (including updating the subscription state) and view occupied and reserved seats.
 
 ![Admin manage subscription](images/Admin%20manage%20subscription.png)
 
 ## 8. Reserve a seat for another user
 
-Navigate to `[user_web_app_base_url]` and click on the `Manage` tab. Click `Manage my first subscription!` then click on the **Reserve seat** tab. You'll be presented with a screen allowing you to enter the email address of the user you wish to reserve a seat for.
+Navigate to `[user_web_app_base_url]` and click on the **Manage** tab. Click **Manage my first subscription!** then click on the **Reserve seat** tab. You'll be presented with a screen allowing you to enter the email address of the user you wish to reserve a seat for.
 
-> **Note:** No invitations will be sent until you update the `turn-on-seat-reserved-[deployment_name]` logic app in the `[resource_group]` resource group. We offer customers complete flexibility in how emails are sent (e.g., Azure Communication Services, SendGrid, your own SMTP server) by design.
+> **Note:** No invitations will be sent until you update the `turn-on-seat-reserved-[deployment_name]` logic app in `[resource_group]`. We offer customers complete flexibility in how emails are sent (e.g., Azure Communication Services, SendGrid, your own SMTP server) by design.
 
 ![Reserve a seat](images/Reserve%20seat.png)
 
 ## That's it!
 
-You're ready to start providing seats to your SaaS app using Turnstile! Should you have any questions, please don't hesitate to [start a new GitHub Discussion](https://github.com/microsoft/turnstile/discussions/categories/q-a). We prefer to support users in the open as a learning channel for other users. 
+You're ready to start providing seats to your SaaS app using Turnstile! [Check out our support page](../SUPPORT.md) if you have any questions.
 
 
