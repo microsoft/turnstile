@@ -159,7 +159,7 @@ Now that you've created your first subscription, navigate to `[user_web_app_base
 
 ## 6. Get a seat in the subscription
 
-Navigate again to `[user_web_app_base_url`]. Since the subscription has already been set up, you'll be prompted to either user or administer the subscription. From the **Use** tab, select the subscription you just finished setting up to try to obtain a seat.
+Navigate again to `[user_web_app_base_url`] by clicking the Turnstile name (e.g., __Getting Started__ in the image below.) Since the subscription has already been set up, you'll be prompted to either **Use** or **Manage** the subscription. From the **Use** tab, select the subscription you just finished setting up to try to obtain a seat.
 
 ![Choose a subscription](images/Choose%20a%20subscription.png)
 
