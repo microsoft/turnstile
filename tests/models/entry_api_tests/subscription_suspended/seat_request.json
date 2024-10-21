@@ -1,0 +1,10 @@
+{
+    "request_id": "subscription_suspended_request_id",
+    "user_id": "subscription_suspended_user_id",
+    "tenant_id": "subscription_suspended_tenant_id",
+    "emails": [
+        "subscription_suspended_user_id@microsoft.com"
+    ],
+    "roles": [
+    ]
+}

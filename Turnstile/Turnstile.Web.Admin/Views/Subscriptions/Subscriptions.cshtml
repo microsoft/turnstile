@@ -1,0 +1,229 @@
+﻿@using Turnstile.Core.Constants
+@using Turnstile.Web.Controllers
+@using Turnstile.Web.Models
+@using Turnstile.Web.Common.Extensions
+
+@{
+    ViewData["Title"] = "Manage subscriptions | Turnstile";
+}
+
+@model SubscriptionsViewModel
+
+<h1>Manage subscriptions</h1>
+<hr />
+
+@{
+    const string noSubsTabBadgeClass = "badge text-bg-secondary";
+    const string subsTabBadgeClass = "badge text-bg-danger";
+
+    var layoutModel = ViewData.GetLayoutModel()!;
+    var activeSubsBadgeClass = Model.ActiveSubscriptions.Any() ? subsTabBadgeClass : noSubsTabBadgeClass;
+    var suspendedSubsBadgeClass = Model.SuspendedSubscriptions.Any() ? subsTabBadgeClass : noSubsTabBadgeClass;
+    var canceledSubsBadgeClass = Model.CanceledSubscriptions.Any() ? subsTabBadgeClass : noSubsTabBadgeClass;
+}
+
+<ul class="nav nav-tabs" id="subTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="active-tab" data-bs-toggle="tab" data-bs-target="#active-tab-pane" type="button" role="tab" aria-controls="active-tab-pane" aria-selected="true">
+            Active
+            <span>&nbsp;<span class="@activeSubsBadgeClass">@Model.ActiveSubscriptions.Count</span></span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="suspended-tab" data-bs-toggle="tab" data-bs-target="#suspended-tab-pane" type="button" role="tab" aria-controls="active-tab-pane" aria-selected="false">
+            Suspended
+            <span>&nbsp;<span class="@suspendedSubsBadgeClass">@Model.SuspendedSubscriptions.Count</span></span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="canceled-tab" data-bs-toggle="tab" data-bs-target="#canceled-tab-pane" type="button" role="tab" aria-controls="canceled-tab-pane" aria-selected="false">
+            Canceled
+            <span>&nbsp;<span class="@canceledSubsBadgeClass">@Model.CanceledSubscriptions.Count</span></span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="subPanes">
+    <div class="tab-pane fade show active" id="active-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="active-tab" tabindex="0">
+        @if (Model.ActiveSubscriptions.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tenant</th>
+                        <th colspan="2">Subscription</th>
+                        <th />
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in Model.ActiveSubscriptions)
+                    {
+                        var isBeingConfigured = (sub.IsBeingConfigured || sub.State == SubscriptionStates.Purchased);
+
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+                            new { subscriptionId = sub.SubscriptionId });
+
+                        <tr>
+                            <td>
+                                <span>@sub.TenantName</span> <br />
+                                <small>@sub.TenantId</small>
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(sub.SubscriptionName))
+                                {
+                                    <span>@sub.SubscriptionId</span>
+                                }
+                                else
+                                {
+                                    <span>@sub.SubscriptionName</span>
+                                    @if (sub.IsFreeTrialSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                                    }
+                                    @if (sub.IsTestSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                                    }
+                                    <br />
+                                    <small>@sub.SubscriptionId</small>
+                                }
+                            </td>
+                            <td>
+                                @if (isBeingConfigured)
+                                {
+                                    <span title="This subscription is being configured and is temporarily unavailable.">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                                            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
+                                        </svg>
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="float-end">
+                                    <a class="btn btn-primary" href="@manageUrl" role="button">Manage</a>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-secondary" role="alert">
+                No active subscriptions.
+            </div>
+        }
+    </div>
+    <div class="tab-pane fade" id="suspended-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="suspended-tab" tabindex="0">
+        @if (Model.SuspendedSubscriptions.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tenant</th>
+                        <th colspan="2">Subscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in Model.SuspendedSubscriptions)
+                    {
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription,
+                            new { subscriptionId = sub.SubscriptionId });
+
+                        <tr>
+                            <td>
+                                <span>@sub.TenantName</span>
+                                @if (sub.IsFreeTrialSubscription)
+                                {
+                                    <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                                }
+                                @if (sub.IsTestSubscription)
+                                {
+                                    <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                                }
+                                <br />
+                                <small>@sub.TenantId</small>
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(sub.SubscriptionName))
+                                {
+                                    <span>@sub.SubscriptionId</span>
+                                }
+                                else
+                                {
+                                    <span>@sub.SubscriptionName</span> <br />
+                                    <small>@sub.SubscriptionId</small>
+                                }
+                            </td>
+                            <td>
+                                <span>
+                                    <a class="btn btn-primary" href="@manageUrl" role="button">Manage</a>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-secondary" role="alert">No suspended subscriptions. That's good!</div>
+        }
+    </div>
+    <div class="tab-pane fade" id="canceled-tab-pane" role="tabpanel" style="margin-top: 20px" aria-labelledby="canceled-tab" tabindex="0">
+        @if (Model.CanceledSubscriptions.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tenant</th>
+                        <th colspan="2">Subscription</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in Model.CanceledSubscriptions)
+                    {
+                        var manageUrl = Url.RouteUrl(SubscriptionsController.RouteNames.GetSubscription, new { subscriptionId = sub.SubscriptionId });
+
+                        <tr>
+                            <td>
+                                <span>@sub.TenantName</span> <br />
+                                <small>@sub.TenantId</small>
+                            </td>
+                            <td>
+                                @if (string.IsNullOrEmpty(sub.SubscriptionName))
+                                {
+                                    <span>@sub.SubscriptionId</span>
+                                }
+                                else
+                                {
+                                    <span>@sub.SubscriptionName</span>
+                                    @if (sub.IsFreeTrialSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-success" title="This is a free trial subscription.">Free trial</span></span>
+                                    }
+                                    @if (sub.IsTestSubscription)
+                                    {
+                                        <span>&nbsp;<span class="badge text-bg-info" title="This is a test subscription.">Test</span></span>
+                                    }
+                                    <br />
+                                    <small>@sub.SubscriptionId</small>
+                                }
+                            </td>
+                            <td>
+                                <span>
+                                    <a class="btn btn-primary" href="@manageUrl" role="button">Manage</a>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="alert alert-secondary" role="alert">No canceled subscriptions. That's good!</div>
+        }
+    </div>
+</div>

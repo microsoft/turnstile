@@ -1,0 +1,68 @@
+﻿@using Turnstile.Web.Admin.Models
+
+@{
+    ViewData["Title"] = "About me | Turnstile";
+}
+
+@model MeModel
+
+<h1>About me</h1>
+<lead>This is what Turnstile knows about you.</lead>
+<hr />
+
+<table>
+    <tr class="table-active">
+        <th>Name</th>
+    </tr>
+    <tr>
+        @Model.UserName
+    </tr>
+    <tr class="table-active">
+        <th>User ID</th>
+    </tr>
+    <tr>
+        @Model.UserId
+    </tr>
+    <tr class="table-active">
+        <th>Tenant ID</th>
+    </tr>
+    <tr>
+        @Model.TenantId
+    </tr>
+    <tr class="table-active">
+        <th>Email addresses</th>
+    </tr>
+    @if (@Model.Emails.Any())
+    {
+        @foreach (var email in Model.Emails)
+        {
+            <tr>
+                <td>@email</td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td><small class="text-body-secondary">No email addresses found.</small></td>
+        </tr>
+    }
+    <tr class="table-active">
+        <th>Roles</th>
+    </tr>
+    @if (Model.Roles.Any())
+    {
+        @foreach (var role in Model.Roles)
+        {
+            <tr>
+                <td>@role</td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td><small class="text-body-secondary">No roles found.</small></td>
+        </tr>
+    }
+</table>

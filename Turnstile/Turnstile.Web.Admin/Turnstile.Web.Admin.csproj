@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>aspnet-Turnstile.Web.Admin-98f9cfa4-3447-41b7-86b1-959f429555e3</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.5" NoWarn="NU1605" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.5" NoWarn="NU1605" />
+	  <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="7.0.5" />
+	  <PackageReference Include="Microsoft.Identity.Web" Version="2.15.2" />
+	  <PackageReference Include="Microsoft.Identity.Web.UI" Version="2.15.2" />
+	  <PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="2.15.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Turnstile.Core\Turnstile.Core.csproj" />
+    <ProjectReference Include="..\Turnstile.Web.Common\Turnstile.Web.Common.csproj" />
+  </ItemGroup>
+
+</Project>

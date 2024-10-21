@@ -1,0 +1,25 @@
+﻿@using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions
+@using Turnstile.Web.Common.Extensions;
+
+@{
+    var layoutModel = ViewData.GetLayoutModel()!;
+    var subContextModel = ViewData.GetSubscriptionContextModel()!;
+
+    ViewData["Title"] = $"Subscription not ready | {layoutModel.TurnstileName}";
+}
+
+<h1>Subscription not ready</h1>
+
+@if (subContextModel.CanUserAdministerSubscription)
+{
+    <lead>Please try again later. For assistance, @Html.Raw(layoutModel.ContactSupportHtml).</lead>
+}
+else
+{
+    <lead>Please try again later. For assistance, @Html.Raw(subContextModel.ContactSubscriptionAdminHtml).</lead>
+}
+
+<div style="margin-top: 20px">
+<a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
+</div>

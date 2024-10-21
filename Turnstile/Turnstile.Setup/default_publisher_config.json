@@ -1,0 +1,25 @@
+{
+    "is_setup_complete": false,
+    "default_seating_config": { },
+    "claims_config": {
+        "user_id_claims": [
+            "http://schemas.microsoft.com/identity/claims/objectidentifier"
+        ],
+        "user_name_claims": [
+            "name"
+        ],
+        "tenant_id_claims": [
+            "http://schemas.microsoft.com/identity/claims/tenantid"
+        ],
+        "email_claims": [
+            "email",
+            "preferred_username"
+        ],
+        "role_claims": [
+            "role"
+        ]
+    },
+    "turnstile_config": {
+        "include_seat_result_on_access_granted_redirect": true
+    }
+}

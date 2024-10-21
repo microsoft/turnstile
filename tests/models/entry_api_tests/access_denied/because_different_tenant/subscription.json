@@ -1,0 +1,20 @@
+{
+    "subscription_id": "access_denied_because_different_tenant_sub_id",
+    "subscription_name": "access_denied_because_different_tenant_sub",
+    "tenant_id": "access_denied_because_different_tenant_id",
+    "tenant_name": "access_denied_because_different_tenant",
+    "offer_id": "offer_1",
+    "plan_id": "plan_1",
+    "state": "active",
+    "admin_role_name": "test_admins",
+    "admin_name": "cawatson",
+    "admin_email": "cawatson@microsoft.com",
+    "total_seats": 3,
+    "seating_config": {
+        "seating_strategy_name": "first_come_first_served",
+        "low_seat_warning_level_pct": 0.25,
+        "limited_overflow_seating_enabled": true,
+        "seat_reservation_expiry_in_days": 14,
+        "default_seat_expiry_in_days": 14
+    }
+}

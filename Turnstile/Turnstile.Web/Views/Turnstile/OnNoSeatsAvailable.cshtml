@@ -1,0 +1,25 @@
+﻿@using Turnstile.Web.Controllers
+@using Turnstile.Web.Extensions;
+@using Turnstile.Web.Common.Extensions;
+
+@{
+    var layoutModel = ViewData.GetLayoutModel()!;
+    var subContextModel = ViewData.GetSubscriptionContextModel()!;
+
+    ViewData["Title"] = $"No seats available | {layoutModel.TurnstileName}";
+}
+
+<h1>No seats available</h1>
+
+@if (subContextModel.CanUserAdministerSubscription)
+{
+    <lead>No more seats available. To purchase additional seats, @Html.Raw(layoutModel.ContactSalesHtml).</lead>
+}
+else
+{
+    <lead>No more seats available. Please @Html.Raw(subContextModel.ContactSubscriptionAdminHtml) for assistance.</lead>
+}
+
+<div style="margin-top: 20px">
+    <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
+</div>

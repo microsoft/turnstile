@@ -1,0 +1,10 @@
+{
+    "request_id": "seat_provided_request_id",
+    "user_id": "seat_provided_user_id",
+    "tenant_id": "seat_provided_tenant_id",
+    "emails": [
+        "seat_provided_user_id@microsoft.com"
+    ],
+    "roles": [
+    ]
+}

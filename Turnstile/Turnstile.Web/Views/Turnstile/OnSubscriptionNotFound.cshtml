@@ -1,0 +1,17 @@
+﻿@using Turnstile.Web.Controllers;
+@using Turnstile.Web.Extensions;
+@using Turnstile.Web.Common.Extensions;
+
+@{
+    var layoutModel = ViewData.GetLayoutModel()!;
+
+    ViewData["Title"] = $"Subscription not found | {layoutModel.TurnstileName}";
+}
+
+<h1>Subscription not found</h1>
+
+<lead>For assistance, @Html.Raw(layoutModel.ContactSupportHtml).</lead>
+
+<div style="margin-top: 20px">
+    <a role="button" class="btn btn-primary" href="@Url.RouteUrl(TurnstileController.RouteNames.DefaultTurnstile)">Try again »</a>
+</div>

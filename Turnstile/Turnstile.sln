@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Core", "Turnstile.Core\Turnstile.Core.csproj", "{231A2C73-B0C2-4062-A3E2-79CEEED378DF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Services", "Turnstile.Services\Turnstile.Services.csproj", "{562E7087-661C-4262-920D-E28718915597}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web", "Turnstile.Web\Turnstile.Web.csproj", "{AD2F3FE2-79C8-4BF2-9705-A5927C2E036A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web.Admin", "Turnstile.Web.Admin\Turnstile.Web.Admin.csproj", "{89609DB9-9381-457B-961A-B6CA59420A42}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Web.Common", "Turnstile.Web.Common\Turnstile.Web.Common.csproj", "{700664F2-DD19-4798-BA8F-F8C6770299D2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Turnstile.Api", "Turnstile.Api\Turnstile.Api.csproj", "{957E41F9-F7CE-4B31-963B-9BFAD1B8B8F3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{231A2C73-B0C2-4062-A3E2-79CEEED378DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{231A2C73-B0C2-4062-A3E2-79CEEED378DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{231A2C73-B0C2-4062-A3E2-79CEEED378DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{231A2C73-B0C2-4062-A3E2-79CEEED378DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{562E7087-661C-4262-920D-E28718915597}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{562E7087-661C-4262-920D-E28718915597}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{562E7087-661C-4262-920D-E28718915597}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{562E7087-661C-4262-920D-E28718915597}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD2F3FE2-79C8-4BF2-9705-A5927C2E036A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD2F3FE2-79C8-4BF2-9705-A5927C2E036A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD2F3FE2-79C8-4BF2-9705-A5927C2E036A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD2F3FE2-79C8-4BF2-9705-A5927C2E036A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89609DB9-9381-457B-961A-B6CA59420A42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89609DB9-9381-457B-961A-B6CA59420A42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89609DB9-9381-457B-961A-B6CA59420A42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89609DB9-9381-457B-961A-B6CA59420A42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{700664F2-DD19-4798-BA8F-F8C6770299D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{700664F2-DD19-4798-BA8F-F8C6770299D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{700664F2-DD19-4798-BA8F-F8C6770299D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{700664F2-DD19-4798-BA8F-F8C6770299D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{957E41F9-F7CE-4B31-963B-9BFAD1B8B8F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{957E41F9-F7CE-4B31-963B-9BFAD1B8B8F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{957E41F9-F7CE-4B31-963B-9BFAD1B8B8F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{957E41F9-F7CE-4B31-963B-9BFAD1B8B8F3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A4D2AB25-37B7-424D-9D42-4EDAAA954B83}
+	EndGlobalSection
+EndGlobal
